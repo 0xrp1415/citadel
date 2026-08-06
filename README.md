@@ -35,6 +35,30 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; a typical run lands around **20–30 minutes**
 - **Pacing that doesn't stall** — per-turn timeouts, a host that can force-advance, and streamed AI narration
 
+## Roadmap
+
+### Foundation
+- [ ] Scaffold the app (React/Vite client + Node/Socket.io server)
+- [ ] Stand up the monorepo structure and shared config
+
+### Rooms & identity
+- [ ] User login / identification (REST entry)
+- [ ] Create an expedition (GameRoom instance)
+- [ ] Join an expedition via code
+- [ ] Join the room's Socket.io room on connect
+
+### Session & state
+- [ ] Room session lifecycle (run/encounter loop skeleton)
+- [ ] In-memory room state management (players, character sheets, round turns)
+- [ ] Broadcast scene updates / results to all clients
+
+### Game systems
+- [ ] Procedural generation (seeded RNG, dungeon gen, DCs, dice rolls)
+- [ ] AI Dungeon Master (structure free text → Action Tools, judge, narrate)
+
+### Integration
+- [ ] Wire request flow: REST → GameRoom → DungeonMaster → ProceduralEngine → GameRoom → clients
+
 ## Theme
 
 ### Lore
