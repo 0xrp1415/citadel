@@ -42,7 +42,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Stand up the repo structure — independent `backend/` + `frontend/` folders, each self-contained (deliberately not a monorepo)
 
 ### Rooms & identity
-- [ ] User login / identification (REST entry)
+- [x] User login / identification (REST entry)
 - [ ] Create an expedition (GameRoom instance)
 - [ ] Join an expedition via code
 - [ ] Join the room's Socket.io room on connect
