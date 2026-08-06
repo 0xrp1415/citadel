@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: MVP design phase.** The `.docs/` folder is the design source of truth. No code yet.
+> **Status: MVP design phase.** The `.docs/` folder is the design source of truth. Foundation scaffold complete (`backend/` + `frontend/`); game logic not yet implemented.
 
 
 ## Overview
@@ -38,8 +38,8 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 ## Roadmap
 
 ### Foundation
-- [ ] Scaffold the app (React/Vite client + Node/Socket.io server)
-- [ ] Stand up the monorepo structure and shared config
+- [x] Scaffold the app (React/Vite client + Node/Socket.io server)
+- [x] Stand up the repo structure — independent `backend/` + `frontend/` folders, each self-contained (deliberately not a monorepo)
 
 ### Rooms & identity
 - [ ] User login / identification (REST entry)
