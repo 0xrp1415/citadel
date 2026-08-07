@@ -1,24 +1,25 @@
 import { Router, type Request, type Response } from "express";
 import { UserService } from "./service.js";
+import { CheckUserExists } from "./middleware.js";
 
 const UserRouter: Router = Router();
 
-UserRouter.get("/", (req: Request, res: Response) => {
-    return UserService.Instance.getAllUsers(req, res)
+UserRouter.post("/register", (req: Request, res: Response) => {
+  return UserService.Instance.registerUser(req, res);
 });
 
-UserRouter.get("/:id", (req: Request, res: Response) => {
-    return UserService.Instance.getUserById(req, res)
+UserRouter.get("/user/:userId", (req: Request, res: Response) => {
+  return UserService.Instance.getUserInfoById(req, res);
 });
 
-
-UserRouter.post("/", (req: Request, res: Response) => {
-    return UserService.Instance.createUser(req, res)
-});
-UserRouter.put("/:id", (req: Request, res: Response) => {
-    
-    return UserService.Instance.updateUser(req, res)
-});
-
+UserRouter.get(
+  "/me",
+  (req, res, next) => {
+    return CheckUserExists(req, res, next);
+  },
+  (req: Request, res: Response) => {
+    return UserService.Instance.getCurrentUserInfo(req, res);
+  },
+);
 
 export { UserRouter };

@@ -4,3 +4,21 @@ export interface IUser
     name: string;
     createdAt: Date;
 }
+
+
+export interface IUserPublic
+{
+    name: string;
+    createdAt: Date;
+}
+
+declare global
+{
+    namespace Express
+    {
+        interface Request
+        {
+            user?: IUserPublic;
+        }
+    }
+}

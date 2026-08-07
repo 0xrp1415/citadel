@@ -1,10 +1,10 @@
-import { IUser } from "./types.js";
+import { IUser, IUserPublic } from "./types.js";
 
 export class UserRepository {
     
     private UserMap: Map<string, IUser> = new Map<string, IUser>();
     
-    public async createUser(user: IUser): Promise<IUser> {
+    public async createUser(user: IUser): Promise<IUserPublic> {
         this.UserMap.set(user._id, user);
         return user;
     }
@@ -13,7 +13,7 @@ export class UserRepository {
         return Array.from(this.UserMap.values());
     }
 
-    public async getUserById(userId: string): Promise<IUser | null> {
+    public async getUserById(userId: string): Promise<IUserPublic | null> {
         return this.UserMap.get(userId) || null;
     }
 

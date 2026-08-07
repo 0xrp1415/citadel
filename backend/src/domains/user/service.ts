@@ -1,9 +1,14 @@
 import { UserRepository } from "./repository.js";
 import type { NextFunction, Request, Response } from "express";
 import crypto from "node:crypto";
+import { IUserPublic } from "./types.js";
+import { sign } from "../../utils/hmac/sign.js";
+import { verify } from "../../utils/hmac/verify.js";
+import { config } from "dotenv";
 
 const MAX_AGE_USERS = 1000 * 60 * 60 * 24; // 24 hours
 const CLEANUP_INTERVAL = 1000 * 60 * 60; // 1 hour
+config();
 
 export class UserService {
   private UserRepository: UserRepository;
@@ -15,84 +20,110 @@ export class UserService {
     this.cleanupRepository();
   }
 
-  // All Api methods are implemented here, and they call the corresponding methods in the UserRepository class.
-  public async getAllUsers(req: Request, res: Response) {
-    return res.json({ data: await this.UserRepository.getAllUsers() });
-  }
-
-  public async getUserById(req: Request, res: Response) {
-    if (!req.params.id) {
-      return res.status(400).json({ error: "User ID is required" });
-    }
-
-    return res.status(200).json({
-      data: await this.UserRepository.getUserById(req.params.id),
-    });
-  }
-
-  public async createUser(req: Request, res: Response) {
-    if (!req.body) {
-      return res.status(400).json({ error: "User data is required" });
-    }
-
+  // Method to handle user registration
+  public async registerUser(req: Request, res: Response) {
     let { name } = req.body;
-    
+
     if (!name) {
-      return res.status(400).json({ error: "User name is required" });
+      return res.status(400).json({ error: "Name is required" });
     }
+
+    if (!process.env.USER_SECRET_KEY)
+      return res.status(500).json({ error: "Server configuration error" });
+
 
     let _id = crypto.randomUUID();
     let createdAt = new Date();
+    let user: IUserPublic = await this.UserRepository.createUser({
+      _id,
+      name,
+      createdAt,
+    });
+
+    let token = sign(_id, process.env.USER_SECRET_KEY);
+
+    let userData = {
+      name: user.name,
+      createdAt: user.createdAt,
+    };
+    
     return res
       .status(201)
-      .json({
-        data: await this.UserRepository.createUser({ _id, name, createdAt }),
-      });
+      .json({ message: "User created successfully", user: userData, token });
   }
 
-  public async updateUser(req: Request, res: Response) {
-    if (!req.params.id) {
+  public async getUserInfoById(req: Request, res: Response) {
+    let { userId } = req.params;
+
+    if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
-    if (!req.body) {
-      return res.status(400).json({ error: "User data is required" });
+
+    let user = await this.UserRepository.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-    return res.json({
-      data: await this.UserRepository.updateUser(req.params.id, req.body),
-    });
+
+    return res.status(200).json({ user });
   }
 
-  // Middlewre to check if the user exists before proceeding with the request
+  public async getCurrentUserInfo(req: Request, res: Response) {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    return res.status(200).json({ user: req.user });
+  }
+  // Middleware to check if the user exists before proceeding with the request
   public async checkUserExists(
     req: Request,
     res: Response,
     next: NextFunction,
   ) {
-    if (!req.params.id) {
-      return res.status(400).json({ error: "User ID is required" });
+    let [authMode, token] = req.headers.authorization?.split(" ") || ["", ""];
+
+    if (authMode !== "Bearer" || !token) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const user = await this.UserRepository.getUserById(req.params.id);
+    if (!process.env.USER_SECRET_KEY) {
+      return res.status(500).json({ error: "Server configuration error" });
+    }
+
+    let userId;
+    try {
+      userId = verify(token, process.env.USER_SECRET_KEY);
+    } catch (error) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    let user = await this.UserRepository.getUserById(userId);
+
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
+    req.user = user;
     next();
   }
 
   // Repository Cleanup method to clear users after a set interval, for demonstration purposes
-  //
   private async cleanupRepository() {
     setInterval(async () => {
-      const users = await this.UserRepository.getAllUsers();
-      for (const user of users) {
+      let users = await this.UserRepository.getAllUsers();
+      for (let user of users) {
         if (user.createdAt < new Date(Date.now() - MAX_AGE_USERS)) {
           await this.UserRepository.deleteUser(user._id);
         }
       }
     }, CLEANUP_INTERVAL).unref();
   }
-  
+
   // Singleton pattern to ensure only one instance of UserService exists
   public static get Instance() {
     if (this.instance === null) this.instance = new UserService();

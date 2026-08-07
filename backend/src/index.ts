@@ -2,11 +2,14 @@ import http from "node:http";
 import express from "express";
 import { Server } from "socket.io";
 import { UserRouter } from "./domains/user/index.js";
+import { config } from "dotenv";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
 const app = express();
 app.use(express.json());
+
+config();
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "citadel-backend" });
