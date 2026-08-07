@@ -64,8 +64,11 @@ export class UserService {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-
-    return res.status(200).json({ user });
+    let userData = {
+      name: user.name,
+      createdAt: user.createdAt,
+    };
+    return res.status(200).json({ user: userData });
   }
 
   public async getCurrentUserInfo(req: Request, res: Response) {
