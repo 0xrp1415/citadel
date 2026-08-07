@@ -1,9 +1,20 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { createUser, getUserById } from './api'
+import { getMe, registerUser } from './api'
 import type { User } from './api'
 
-const STORAGE_KEY = 'citadel.userId'
+const TOKEN_KEY = 'citadel.token'
+const USER_ID_KEY = 'citadel.userId'
+
+function decodeIdFromToken(token: string): string | null {
+  const payload = token.split('.')[0]
+  if (!payload) return null
+  try {
+    return atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+  } catch {
+    return null
+  }
+}
 
 type AuthStatus = 'loading' | 'anonymous' | 'authenticated'
 
@@ -21,19 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
 
   useEffect(() => {
-    const userId = localStorage.getItem(STORAGE_KEY)
-    if (!userId) {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) {
       setStatus('anonymous')
       return
     }
 
-    getUserById(userId)
+    getMe(token)
       .then((found) => {
         if (found) {
           setUser(found)
           setStatus('authenticated')
         } else {
-          localStorage.removeItem(STORAGE_KEY)
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(USER_ID_KEY)
           setStatus('anonymous')
         }
       })
@@ -41,14 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function login(name: string) {
-    const created = await createUser(name)
-    localStorage.setItem(STORAGE_KEY, created._id)
-    setUser(created)
+    const { user, token } = await registerUser(name)
+    localStorage.setItem(TOKEN_KEY, token)
+    const id = decodeIdFromToken(token)
+    if (id) localStorage.setItem(USER_ID_KEY, id)
+    setUser(user)
     setStatus('authenticated')
   }
 
   function logout() {
-    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_ID_KEY)
     setUser(null)
     setStatus('anonymous')
   }
