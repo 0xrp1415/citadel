@@ -71,11 +71,18 @@ export class UserService {
   }
 
   public async getCurrentUserInfo(req: Request, res: Response) {
-    if (!req.user) {
+    if (!req.userID) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-
-    return res.status(200).json({ user: req.user });
+    let user = await this.UserRepository.getUserById(req.userID);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    let userData = {
+      name: user.name,
+      createdAt: user.createdAt,
+    };
+    return res.status(200).json({ user: userData });
   }
   // Middleware to check if the user exists before proceeding with the request
   public async checkUserExists(
@@ -104,13 +111,7 @@ export class UserService {
       return res.status(401).json({ error: "Invalid token" });
     }
 
-    let user = await this.UserRepository.getUserById(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    req.user = { name: user.name, createdAt: user.createdAt };
+    req.userID = userId;
     next();
   }
 

@@ -18,7 +18,7 @@ declare global
     {
         interface Request
         {
-            user?: IUserPublic;
+            userID?: string;
         }
     }
 }
