@@ -31,7 +31,6 @@ export class UserService {
     if (!process.env.USER_SECRET_KEY)
       return res.status(500).json({ error: "Server configuration error" });
 
-
     let _id = crypto.randomUUID();
     let createdAt = new Date();
     let user: IUserPublic = await this.UserRepository.createUser({
@@ -46,7 +45,7 @@ export class UserService {
       name: user.name,
       createdAt: user.createdAt,
     };
-    
+
     return res
       .status(201)
       .json({ message: "User created successfully", user: userData, token });
@@ -111,7 +110,7 @@ export class UserService {
       return res.status(404).json({ error: "User not found" });
     }
 
-    req.user = user;
+    req.user = { name: user.name, createdAt: user.createdAt };
     next();
   }
 
