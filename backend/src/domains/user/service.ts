@@ -111,6 +111,10 @@ export class UserService {
       return res.status(401).json({ error: "Invalid token" });
     }
 
+    if (!(await this.UserRepository.hasUser(userId))) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     req.userID = userId;
     next();
   }

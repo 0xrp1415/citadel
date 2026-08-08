@@ -22,6 +22,10 @@ export class UserRepository {
         return user;
     }
 
+    public async hasUser(userId: string): Promise<boolean> {
+        return this.UserMap.has(userId);
+    }
+
     public async deleteUser(userId: string): Promise<boolean> {
         return this.UserMap.delete(userId);
     }
