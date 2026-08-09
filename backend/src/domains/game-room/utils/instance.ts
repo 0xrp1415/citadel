@@ -1,5 +1,7 @@
+import { Socket } from "socket.io";
 import { GameRoomPublicData, IGameRoomConfig } from "../types.js";
-import { IPlayerRoomInstance,IPlayerJSON } from "./player.js";
+import { IPlayerRoomInstance, IPlayerJSON } from "./player.js";
+import { GameRoomEventBus } from "../event.js";
 
 export class GameRoom {
   private readonly _id: string;
@@ -11,6 +13,7 @@ export class GameRoom {
   private lastActivityTimestamp: number = Date.now();
 
   private config: IGameRoomConfig;
+
   constructor(
     id: string,
     inviteCode: string,
@@ -24,23 +27,24 @@ export class GameRoom {
   }
 
   // Methods to manage players
-  public addPlayer(id: string, index: string): IPlayerRoomInstance {
-    let player: IPlayerRoomInstance = { user_id: id, index: index };
+  addPlayer(id: string, index: string): IPlayerRoomInstance {
+    let player: IPlayerRoomInstance = { user_id: id, index: index, status: "joined", socket_id: null };
     this.players.set(id, player);
 
     if (this.host === "") {
       this.transferHost(id);
     }
-    this.lastActivityTimestamp = Date.now();
+    this.callOnGameRoomUpdate();
     return player;
   }
 
-  public removePlayer(playerId: string): boolean {
+  removePlayer(playerId: string): boolean {
+    let player = this.players.get(playerId)
     let removed = this.players.delete(playerId);
     if (!removed) {
       return false;
     }
-
+    
     if (playerId === this.host) {
       const remainingPlayers = Array.from(this.players.keys());
       if (remainingPlayers.length > 0) {
@@ -50,25 +54,50 @@ export class GameRoom {
       }
     }
 
-    this.lastActivityTimestamp = Date.now();
+    this.callOnGameRoomUpdate();
     return true;
   }
 
-  public transferHost(newHostId: string): void {
+  transferHost(newHostId: string): void {
     if (this.players.has(newHostId)) {
       this.host = newHostId;
-      this.lastActivityTimestamp = Date.now();
+      this.callOnGameRoomUpdate();
     }
   }
 
-  public getPlayer(playerId: string): IPlayerRoomInstance | undefined {
+  getPlayer(playerId: string): IPlayerRoomInstance | undefined {
     return this.players.get(playerId);
   }
 
-  public hasPlayer(playerId: string): boolean {
+  hasPlayer(playerId: string): boolean {
     return this.players.has(playerId);
   }
 
+  associatePlayerWithSocket(playerId: string, socket: Socket): void {
+    let player = this.players.get(playerId);
+    if (player) {
+      socket.join(`room-${this._id}`);
+      player.socket_id = socket.id;
+      player.status = "connected";
+      this.callOnGameRoomUpdate();
+    }
+  }
+
+  dissociatePlayerFromSocket(playerId: string, socket: Socket): void {
+    let player = this.players.get(playerId);
+    if (player) {
+      socket.leave(`room-${this._id}`);
+      player.socket_id = null;
+      player.status = "disconnected";
+      this.callOnGameRoomUpdate();
+    }
+  }
+
+  private callOnGameRoomUpdate() {
+    this.lastActivityTimestamp = Date.now();
+    GameRoomEventBus.Instance.emitEvent(`room-${this.ID}`, "update", this.JSON);
+  }
+  
   // Getters
   public get ID(): string {
     return this._id;
@@ -86,6 +115,7 @@ export class GameRoom {
     return Array.from(this.players.values()).map((player) => ({
       isHost: player.user_id === this.host,
       index: player.index,
+      status: player.status,
     }));
   }
 

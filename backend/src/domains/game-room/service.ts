@@ -5,17 +5,25 @@ import crypto from "node:crypto";
 import { sign } from "../../utils/hmac/sign.js";
 import { verify } from "../../utils/hmac/verify.js";
 import {
+  GameRoomPublicData,
   IGameRoomRequest,
+  ISocketData,
   TVerifyResult,
   ZGameRoomConfigSchema,
 } from "./types.js";
+import { Server, DefaultEventsMap, Socket, ExtendedError } from "socket.io";
+import { GameRoomEventBus } from "./event.js";
 
 export class GameRoomService {
+
   private static _instance: GameRoomService;
   private repository: GameRoomRepository;
 
+  private io: Server | null = null;
+
   private constructor() {
     this.repository = new GameRoomRepository();
+    this.initGameRoomEventListeners();
   }
 
   public static get Instance(): GameRoomService {
@@ -140,6 +148,89 @@ export class GameRoomService {
     next();
   }
 
+  public leaveGameRoom(req: IGameRoomRequest, res: Response): void {
+    if (!req.roomId) {
+      res.status(400).json({ error: "Room ID is missing in the request." });
+      return;
+    }
+
+    const gameRoom = this.repository.getGameRoomById(
+      req.roomId
+    );
+
+    if (!gameRoom) {
+      res.status(404).json({ error: "Game room not found." });
+      return;
+    }
+
+    if (!gameRoom.hasPlayer(req.userId)) {
+      res.status(400).json({ error: "Player is not in the game room." });
+      return;
+    }
+
+    gameRoom.removePlayer(req.userId);
+
+    res.status(200).json({ message: "Player removed from the game room.", success: true, room: gameRoom.JSON });
+  }
+
+  // Sets up socket event handlers for the game room
+  public setupSocketHandlers(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, ISocketData>): void {
+    this.io = io;
+    io.on("connection", (socket) => {
+      let gameRoom = this.repository.getGameRoomById(socket.data.roomId);
+      if (!gameRoom) {
+        socket.disconnect(true);
+        return;
+      }
+      gameRoom.associatePlayerWithSocket(socket.data.userId, socket);
+
+      socket.on("disconnect", () => {
+        gameRoom.dissociatePlayerFromSocket(socket.data.userId, socket);
+      });
+    });
+  }
+
+  // On GameRoom Chnage Event Listeners
+  private initGameRoomEventListeners() {
+    GameRoomEventBus.Instance.on("update", (data) => this.onGameRoomUpdate(data as { to: string, data: GameRoomPublicData }))
+  }
+
+  private onGameRoomUpdate(data: { to: string, data: GameRoomPublicData }): void {
+    if (this.io)
+      this.io.to(data.to).emit(`game-room-update`, data.data)
+  }
+
+  public verifyGameRoomSocket(socket: Socket, next: (err?: ExtendedError | undefined) => void) {
+    let [authMode, token] = socket.handshake.auth.token?.split(" ") || ["", ""];
+
+    if (authMode !== "Bearer" || !token) {
+      return next(new Error("Unauthorized"));
+    }
+
+    let result = this.verifyGameRoom(token);
+    if (!result.isSuccess) {
+      return next(new Error(result.errorMessage));
+    }
+
+    // Attach room and user info to the socket object for later use
+    socket.data.roomId = result.payload.room.ID;
+    socket.data.userId = result.payload.userId;
+    socket.data.playerIndex = result.payload.playerIndex;
+    next();
+  }
+
+  // Private method to generate a random invite code
+  private generateInviteCode(): string {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let inviteCode: string;
+    do {
+      inviteCode = Array.from({ length: 6 }, () =>
+        characters.charAt(crypto.randomInt(0, characters.length)),
+      ).join("");
+    } while (this.repository.getGameRoomByInviteCode(inviteCode.toUpperCase()));
+    return inviteCode;
+  }
+
   private verifyGameRoom(
     token: string | undefined,
   ): TVerifyResult<{ room: GameRoom; userId: string; playerIndex: string }> {
@@ -219,42 +310,5 @@ export class GameRoomService {
       isSuccess: true,
       payload: { room: gameRoom, userId: userId, playerIndex: playerIndex },
     };
-  }
-
-  public leaveGameRoom(req: IGameRoomRequest, res: Response): void {
-    if (!req.roomId) {
-      res.status(400).json({ error: "Room ID is missing in the request." });
-      return;
-    }
-    
-    const gameRoom = this.repository.getGameRoomById(
-      req.roomId
-    );
-
-    if (!gameRoom) {
-      res.status(404).json({ error: "Game room not found." });
-      return;
-    }
-
-    if (!gameRoom.hasPlayer(req.userId)) {
-      res.status(400).json({ error: "Player is not in the game room." });
-      return;
-    }
-
-    gameRoom.removePlayer(req.userId);
-    
-    res.status(200).json({ message: "Player removed from the game room." , success: true, room: gameRoom.JSON });
-  }
-
-  // Private method to generate a random invite code
-  private generateInviteCode(): string {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let inviteCode: string;
-    do {
-      inviteCode = Array.from({ length: 6 }, () =>
-        characters.charAt(crypto.randomInt(0, characters.length)),
-      ).join("");
-    } while (this.repository.getGameRoomByInviteCode(inviteCode.toUpperCase()));
-    return inviteCode;
   }
 }

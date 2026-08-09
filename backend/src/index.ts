@@ -3,7 +3,7 @@ import express from "express";
 import { Server } from "socket.io";
 import { UserRouter } from "./domains/user/index.js";
 import { config } from "dotenv";
-import { GameRoomRouter } from "./domains/game-room/controller.js";
+import { GameRoomRouter, SetupGameRoomSocketHandlers } from "./domains/game-room/controller.js";
 
 config();
 
@@ -25,12 +25,7 @@ const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
 
-io.on("connection", (socket) => {
-  console.log(`client connected: ${socket.id}`);
-  socket.on("disconnect", () => {
-    console.log(`client disconnected: ${socket.id}`);
-  });
-});
+SetupGameRoomSocketHandlers(io);
 
 httpServer.listen(PORT, () => {
   console.log(`Citadel backend listening on http://localhost:${PORT}`);

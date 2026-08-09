@@ -2,6 +2,7 @@ import { Router } from "express";
 import { GameRoomService } from "./service.js";
 import { CheckUserExists } from "../user/middleware.js";
 import { IGameRoomRequest } from "./types.js";
+import { Server } from "socket.io";
 
 let GameRoomRouter: Router = Router();
 
@@ -37,4 +38,10 @@ GameRoomRouter.post(
   },
 );
 
-export { GameRoomRouter };
+function SetupGameRoomSocketHandlers(io: Server)
+{
+  io.use((socket,next ) => GameRoomService.Instance.verifyGameRoomSocket(socket, next));
+  GameRoomService.Instance.setupSocketHandlers(io);
+}
+
+export { GameRoomRouter, SetupGameRoomSocketHandlers };
