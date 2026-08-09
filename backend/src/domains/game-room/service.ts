@@ -65,6 +65,11 @@ export class GameRoomService {
 
     let player = gameRoom.addPlayer(req.userID, crypto.randomUUID());
 
+    if (!player) {
+      res.status(500).json({ error: "Failed to add host to the game room." });
+      return;
+    }
+
     this.repository.addGameRoom(gameRoom);
 
     let hash = sign(
@@ -116,6 +121,11 @@ export class GameRoomService {
 
     let player = gameRoom.addPlayer(req.userID, crypto.randomUUID());
 
+    if (!player) {
+      res.status(403).json({ error: "Game room is not joinable." });
+      return;
+    }
+
     let hash = sign(
       `${gameRoom.ID}@${req.userID}@${player.index}`,
       process.env.ROOM_SECRET_KEY,
@@ -163,9 +173,20 @@ export class GameRoomService {
       return;
     }
 
-    if (!gameRoom.hasPlayer(req.userId)) {
+    let player = gameRoom.getPlayer(req.userId);
+    if (!player) {
       res.status(400).json({ error: "Player is not in the game room." });
       return;
+    }
+
+
+
+    if (this.io && player.socket_id) {
+      let playerSocket = this.io.sockets.sockets.get(player.socket_id);
+      if (playerSocket) {
+        gameRoom.dissociatePlayerFromSocket(req.userId, playerSocket);
+        playerSocket.disconnect(true);
+      }
     }
 
     gameRoom.removePlayer(req.userId);
