@@ -79,33 +79,35 @@ export class GameRoom {
 
   associatePlayerWithSocket(playerId: string, socket: Socket): void {
     let player = this.context.getPlayer(playerId);
-    if (!player)
-      return;
-
-    if (player.socket_id && player.socket_id !== socket.id) {
-      socket.emit("association-error", "Player is already associated with another socket.");
+    if (!player) {
       socket.disconnect(true);
       return;
     }
 
+    if (player.socket_id && player.socket_id !== socket.id) {
+      socket.to(player.socket_id).disconnectSockets(true);
+    }
+
     socket.join(`room-${this._id}`);
     player.socket_id = socket.id;
-    player.status = "connected";
+    if (player.status !== "ready" && player.status !== "in-run") {
+      player.status = "connected";
+    }
     this.callOnGameRoomUpdate();
-
   }
+
 
   dissociatePlayerFromSocket(playerId: string, socket: Socket): void {
     let player = this.context.getPlayer(playerId);
+    socket.leave(`room-${this._id}`);
+
     if (!player || player.socket_id !== socket.id) {
       return;
     }
-    
-    socket.leave(`room-${this._id}`);
+
     player.socket_id = null;
     player.status = "disconnected";
     this.callOnGameRoomUpdate();
-
   }
 
   private callOnGameRoomUpdate() {

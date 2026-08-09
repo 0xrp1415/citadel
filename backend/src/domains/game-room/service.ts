@@ -163,36 +163,40 @@ export class GameRoomService {
       res.status(400).json({ error: "Room ID is missing in the request." });
       return;
     }
-
-    const gameRoom = this.repository.getGameRoomById(
-      req.roomId
-    );
-
+    const gameRoom = this.repository.getGameRoomById(req.roomId);
     if (!gameRoom) {
       res.status(404).json({ error: "Game room not found." });
       return;
     }
-
     let player = gameRoom.getPlayer(req.userId);
     if (!player) {
       res.status(400).json({ error: "Player is not in the game room." });
       return;
     }
 
-
-
-    if (this.io && player.socket_id) {
-      let playerSocket = this.io.sockets.sockets.get(player.socket_id);
-      if (playerSocket) {
-        gameRoom.dissociatePlayerFromSocket(req.userId, playerSocket);
-        playerSocket.disconnect(true);
-      }
-    }
+    let playerSocket =
+      this.io && player.socket_id
+        ? this.io.sockets.sockets.get(player.socket_id)
+        : undefined;
 
     gameRoom.removePlayer(req.userId);
 
-    res.status(200).json({ message: "Player removed from the game room.", success: true, room: gameRoom.JSON });
+    if (gameRoom.Players.length === 0) {
+      this.repository.removeGameRoomById(gameRoom.ID);   // item 5
+    }
+
+    if (playerSocket) {
+      playerSocket.disconnect(true);
+    }
+
+    res.status(200).json({
+      message: "Player removed from the game room.",
+      success: true,
+      room: gameRoom.JSON,
+    });
   }
+
+  
 
   // Sets up socket event handlers for the game room
   public setupSocketHandlers(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, ISocketData>): void {
@@ -203,11 +207,11 @@ export class GameRoomService {
         socket.disconnect(true);
         return;
       }
-      gameRoom.associatePlayerWithSocket(socket.data.userId, socket);
-
       socket.on("disconnect", () => {
         gameRoom.dissociatePlayerFromSocket(socket.data.userId, socket);
       });
+
+      gameRoom.associatePlayerWithSocket(socket.data.userId, socket);
     });
   }
 

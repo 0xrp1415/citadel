@@ -32,7 +32,7 @@ export class GameRoomRepository {
     return this._gameRooms.get(id);
   }
 
-  private removeGameRoomById(id: string): void {
+  public removeGameRoomById(id: string): void {
     const gameRoom = this._gameRooms.get(id);
     if (gameRoom) {
       this._inviteCodeToIdMap.delete(gameRoom.InviteCode);
@@ -44,7 +44,7 @@ export class GameRoomRepository {
     return setInterval(() => {
       const now = Date.now();
       for (const [id, gameRoom] of this._gameRooms.entries()) {
-        if (now - gameRoom.LastActivityTimestamp > INACTIVITY_THRESHOLD_MS) {
+        if (now - gameRoom.LastActivityTimestamp > INACTIVITY_THRESHOLD_MS || gameRoom.Players.length === 0) {
           // 30 minutes
           this.removeGameRoomById(id);
         }

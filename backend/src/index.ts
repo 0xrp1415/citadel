@@ -23,6 +23,8 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: { origin: "*" },
+  pingInterval: 10_000,
+  pingTimeout: 5_000,
 });
 
 SetupGameRoomSocketHandlers(io);
