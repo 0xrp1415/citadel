@@ -1,29 +1,35 @@
-import { NextFunction, Request, Response } from "express";
-import { GameRoomRepository } from "./repository.js";
-import { GameRoom } from "./utils/instance.js";
 import crypto from "node:crypto";
-import { sign } from "../../utils/hmac/sign.js";
-import { verify } from "../../utils/hmac/verify.js";
-import {
-  GameRoomPublicData,
-  IGameRoomRequest,
-  ISocketData,
-  TVerifyResult,
-  ZGameRoomConfigSchema,
-} from "./types.js";
-import { Server, DefaultEventsMap, Socket, ExtendedError } from "socket.io";
-import { GameRoomEventBus } from "./event.js";
+import { GameRoomRepository } from "./repository.js";
+import { GameRoom } from "./room.js";
+import { GameRoomPublicData, Result, ZGameRoomConfigSchema } from "./types.js";
+import { createRoomToken, verifyRoomToken } from "./tokens.js";
+
+type RoomBroadcaster = (roomId: string, data: GameRoomPublicData) => void;
+
+interface CreateRoomResult {
+  inviteCode: string;
+  hash: string;
+  room: GameRoomPublicData;
+}
+
+interface JoinRoomResult {
+  hash: string;
+  room: GameRoomPublicData;
+}
+
+interface LeaveRoomResult {
+  room: GameRoomPublicData;
+  socketId: string | null;
+}
 
 export class GameRoomService {
+  private static _instance: GameRoomService | null = null;
 
-  private static _instance: GameRoomService;
-  private repository: GameRoomRepository;
+  private readonly repository: GameRoomRepository;
+  private broadcaster: RoomBroadcaster = () => {};
 
-  private io: Server | null = null;
-
-  private constructor() {
-    this.repository = new GameRoomRepository();
-    this.initGameRoomEventListeners();
+  constructor(repository = new GameRoomRepository()) {
+    this.repository = repository;
   }
 
   public static get Instance(): GameRoomService {
@@ -33,218 +39,156 @@ export class GameRoomService {
     return this._instance;
   }
 
-  public createGameRoom(req: Request, res: Response): void {
-    if (!process.env.ROOM_SECRET_KEY) {
-      res.status(500).json({
+  public configureBroadcast(broadcaster: RoomBroadcaster): void {
+    this.broadcaster = broadcaster;
+  }
+
+  public createRoom(hostUserId: string, config: unknown): Result<CreateRoomResult> {
+    const secret = this.getSecret();
+    if (!secret) {
+      return {
+        ok: false,
+        status: 500,
         error: "Server configuration error: ROOM_SECRET_KEY is not set.",
-      });
-      return;
+      };
+    }
+    if (!hostUserId) {
+      return { ok: false, status: 400, error: "Host ID is missing in the request." };
     }
 
-    if (!req.userID) {
-      res.status(400).json({ error: "Host ID is missing in the request." });
-      return;
+    const parsed = ZGameRoomConfigSchema.safeParse(config);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Game room configuration is missing or invalid.",
+      };
     }
 
-    let config = ZGameRoomConfigSchema.safeParse(req.body.config);
-
-    if (!config.success) {
-      res
-        .status(400)
-        .json({ error: "Game room configuration is missing or invalid." });
-      return;
-    }
-
-    let inviteCode = this.generateInviteCode().toUpperCase();
-    let gameRoom = new GameRoom(
-      crypto.randomUUID(),
-      inviteCode,
-      req.userID,
-      config.data,
+    const roomId = crypto.randomUUID();
+    const inviteCode = this.generateInviteCode().toUpperCase();
+    const gameRoom = new GameRoom(roomId, inviteCode, hostUserId, parsed.data, (data) =>
+      this.broadcaster(roomId, data),
     );
 
-    let player = gameRoom.addPlayer(req.userID, crypto.randomUUID());
-
+    const player = gameRoom.addPlayer(hostUserId, crypto.randomUUID());
     if (!player) {
-      res.status(500).json({ error: "Failed to add host to the game room." });
-      return;
+      return { ok: false, status: 500, error: "Failed to add host to the game room." };
     }
 
     this.repository.addGameRoom(gameRoom);
 
-    let hash = sign(
-      `${gameRoom.ID}@${req.userID}@${player.index}`,
-      process.env.ROOM_SECRET_KEY,
-    );
+    const hash = createRoomToken(roomId, hostUserId, player.playerId, secret);
 
-    res
-      .status(201)
-      .json({ inviteCode: inviteCode, hash: hash, room: gameRoom.JSON });
+    return {
+      ok: true,
+      value: { inviteCode, hash, room: gameRoom.JSON },
+    };
   }
 
-  public joinGameRoom(req: Request, res: Response): void {
-    const inviteCode = req.params.inviteCode;
-    if (!process.env.ROOM_SECRET_KEY) {
-      res.status(500).json({
+  public joinRoom(userId: string, inviteCode: string): Result<JoinRoomResult> {
+    const secret = this.getSecret();
+    if (!secret) {
+      return {
+        ok: false,
+        status: 500,
         error: "Server configuration error: ROOM_SECRET_KEY is not set.",
-      });
-      return;
+      };
+    }
+    if (!userId) {
+      return { ok: false, status: 400, error: "User ID is missing in the request." };
+    }
+    if (!inviteCode?.trim()) {
+      return { ok: false, status: 400, error: "Invite code is missing in the request." };
     }
 
-    if (!req.userID) {
-      res.status(400).json({ error: "User ID is missing in the request." });
-      return;
-    }
-
-    if (!inviteCode?.trim() || typeof inviteCode !== "string") {
-      res.status(400).json({ error: "Invite code is missing in the request." });
-      return;
-    }
-
-    const gameRoom = this.repository.getGameRoomByInviteCode(
-      inviteCode.toUpperCase(),
-    );
-
+    const gameRoom = this.repository.getGameRoomByInviteCode(inviteCode.toUpperCase());
     if (!gameRoom) {
-      res.status(404).json({ error: "Game room not found." });
-      return;
+      return { ok: false, status: 404, error: "Game room not found." };
     }
-    if (gameRoom.hasPlayer(req.userID)) {
-      res.status(409).json({ error: "Player is already in the game room." });
-      return;
+    if (gameRoom.hasPlayer(userId)) {
+      return { ok: false, status: 409, error: "Player is already in the game room." };
     }
-
     if (gameRoom.Players.length >= gameRoom.Config.maxPlayers) {
-      res.status(400).json({ error: "Game room is full." });
-      return;
+      return { ok: false, status: 400, error: "Game room is full." };
     }
 
-    let player = gameRoom.addPlayer(req.userID, crypto.randomUUID());
-
+    const player = gameRoom.addPlayer(userId, crypto.randomUUID());
     if (!player) {
-      res.status(403).json({ error: "Game room is not joinable." });
-      return;
+      return { ok: false, status: 403, error: "Game room is not joinable." };
     }
 
-    let hash = sign(
-      `${gameRoom.ID}@${req.userID}@${player.index}`,
-      process.env.ROOM_SECRET_KEY,
-    );
-    res.status(200).json({ hash: hash, room: gameRoom.JSON });
+    const hash = createRoomToken(gameRoom.ID, userId, player.playerId, secret);
+
+    return { ok: true, value: { hash, room: gameRoom.JSON } };
   }
 
-  public verifyGameRoomRest(
-    req: IGameRoomRequest,
-    res: Response,
-    next: NextFunction,
-  ): void {
-    let [authMode, token] = req.headers.authorization?.split(" ") || ["", ""];
-
-    if (authMode !== "Bearer" || !token) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
+  public leaveRoom(userId: string, roomId: string): Result<LeaveRoomResult> {
+    if (!roomId) {
+      return { ok: false, status: 400, error: "Room ID is missing in the request." };
     }
-    let result = this.verifyGameRoom(token);
-    if (!result.isSuccess) {
-      res
-        .status(parseInt(result.errorCode))
-        .json({ error: result.errorMessage });
-      return;
-    }
-
-    req.roomId = result.payload.room.ID;
-    req.userId = result.payload.userId;
-    req.playerIndex = result.payload.playerIndex;
-    next();
-  }
-
-  public leaveGameRoom(req: IGameRoomRequest, res: Response): void {
-    if (!req.roomId) {
-      res.status(400).json({ error: "Room ID is missing in the request." });
-      return;
-    }
-    const gameRoom = this.repository.getGameRoomById(req.roomId);
+    const gameRoom = this.repository.getGameRoomById(roomId);
     if (!gameRoom) {
-      res.status(404).json({ error: "Game room not found." });
-      return;
+      return { ok: false, status: 404, error: "Game room not found." };
     }
-    let player = gameRoom.getPlayer(req.userId);
+
+    const player = gameRoom.getPlayer(userId);
     if (!player) {
-      res.status(400).json({ error: "Player is not in the game room." });
-      return;
+      return { ok: false, status: 400, error: "Player is not in the game room." };
     }
 
-    let playerSocket =
-      this.io && player.socket_id
-        ? this.io.sockets.sockets.get(player.socket_id)
-        : undefined;
-
-    gameRoom.removePlayer(req.userId);
+    const socketId = player.socketId;
+    gameRoom.removePlayer(userId);
 
     if (gameRoom.Players.length === 0) {
-      this.repository.removeGameRoomById(gameRoom.ID);   // item 5
+      this.repository.removeGameRoomById(gameRoom.ID);
     }
 
-    if (playerSocket) {
-      playerSocket.disconnect(true);
+    return { ok: true, value: { room: gameRoom.JSON, socketId } };
+  }
+
+  public verifyRoomMembership(token: string): Result<{ room: GameRoom; userId: string; playerId: string }> {
+    const secret = this.getSecret();
+    if (!secret) {
+      return {
+        ok: false,
+        status: 500,
+        error: "Server configuration error: ROOM_SECRET_KEY is not set.",
+      };
     }
 
-    res.status(200).json({
-      message: "Player removed from the game room.",
-      success: true,
-      room: gameRoom.JSON,
-    });
-  }
-
-  
-
-  // Sets up socket event handlers for the game room
-  public setupSocketHandlers(io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, ISocketData>): void {
-    this.io = io;
-    io.on("connection", (socket) => {
-      let gameRoom = this.repository.getGameRoomById(socket.data.roomId);
-      if (!gameRoom) {
-        socket.disconnect(true);
-        return;
-      }
-      socket.on("disconnect", () => {
-        gameRoom.dissociatePlayerFromSocket(socket.data.userId, socket);
-      });
-
-      gameRoom.associatePlayerWithSocket(socket.data.userId, socket);
-    });
-  }
-
-  // On GameRoom Chnage Event Listeners
-  private initGameRoomEventListeners() {
-    GameRoomEventBus.Instance.on("update", (data) => this.onGameRoomUpdate(data as { to: string, data: GameRoomPublicData }))
-  }
-
-  private onGameRoomUpdate(data: { to: string, data: GameRoomPublicData }): void {
-    if (this.io)
-      this.io.to(data.to).emit(`game-room-update`, data.data)
-  }
-
-  public verifyGameRoomSocket(socket: Socket, next: (err?: ExtendedError | undefined) => void) {
-    let [authMode, token] = socket.handshake.auth.token?.split(" ") || ["", ""];
-
-    if (authMode !== "Bearer" || !token) {
-      return next(new Error("Unauthorized"));
+    const payload = verifyRoomToken(token, secret);
+    if (!payload) {
+      return { ok: false, status: 400, error: "Invalid token." };
     }
 
-    let result = this.verifyGameRoom(token);
-    if (!result.isSuccess) {
-      return next(new Error(result.errorMessage));
+    const gameRoom = this.repository.getGameRoomById(payload.roomId);
+    if (!gameRoom) {
+      return { ok: false, status: 404, error: "Game room not found." };
     }
 
-    // Attach room and user info to the socket object for later use
-    socket.data.roomId = result.payload.room.ID;
-    socket.data.userId = result.payload.userId;
-    socket.data.playerIndex = result.payload.playerIndex;
-    next();
+    const player = gameRoom.getPlayer(payload.userId);
+    if (!player) {
+      return { ok: false, status: 404, error: "Player not found in the game room." };
+    }
+    if (player.playerId !== payload.playerId) {
+      return { ok: false, status: 400, error: "Player id mismatch." };
+    }
+
+    return {
+      ok: true,
+      value: { room: gameRoom, userId: payload.userId, playerId: payload.playerId },
+    };
   }
 
-  // Private method to generate a random invite code
+  public getRoomById(roomId: string): GameRoom | undefined {
+    return this.repository.getGameRoomById(roomId);
+  }
+
+  private getSecret(): string | null {
+    return process.env.ROOM_SECRET_KEY ?? null;
+  }
+
   private generateInviteCode(): string {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let inviteCode: string;
@@ -254,86 +198,5 @@ export class GameRoomService {
       ).join("");
     } while (this.repository.getGameRoomByInviteCode(inviteCode.toUpperCase()));
     return inviteCode;
-  }
-
-  private verifyGameRoom(
-    token: string | undefined,
-  ): TVerifyResult<{ room: GameRoom; userId: string; playerIndex: string }> {
-    if (!process.env.ROOM_SECRET_KEY) {
-      return {
-        isSuccess: false,
-        errorCode: "500",
-        errorMessage: "Server configuration error: ROOM_SECRET_KEY is not set.",
-      };
-    }
-
-    if (!token) {
-      return {
-        isSuccess: false,
-        errorCode: "400",
-        errorMessage: "Token is required",
-      };
-    }
-    let payload: string | null = null;
-
-    try {
-      payload = verify(token, process.env.ROOM_SECRET_KEY);
-    } catch (error) {
-      return {
-        isSuccess: false,
-        errorCode: "400",
-        errorMessage: "Invalid token",
-      };
-    }
-    if (!payload) {
-      return {
-        isSuccess: false,
-        errorCode: "400",
-        errorMessage: "Invalid token",
-      };
-    }
-
-    let [roomId, userId, playerIndex] = payload.split("@");
-
-    if (!roomId || !userId || !playerIndex) {
-      return {
-        isSuccess: false,
-        errorCode: "400",
-        errorMessage: "Invalid token format",
-      };
-    }
-
-    let gameRoom = this.repository.getGameRoomById(roomId);
-
-    if (!gameRoom) {
-      return {
-        isSuccess: false,
-        errorCode: "404",
-        errorMessage: "Game room not found",
-      };
-    }
-
-    let player = gameRoom.getPlayer(userId);
-
-    if (!player) {
-      return {
-        isSuccess: false,
-        errorCode: "404",
-        errorMessage: "Player not found in the game room",
-      };
-    }
-
-    if (player.index !== playerIndex) {
-      return {
-        isSuccess: false,
-        errorCode: "400",
-        errorMessage: "Player index mismatch",
-      };
-    }
-
-    return {
-      isSuccess: true,
-      payload: { room: gameRoom, userId: userId, playerIndex: playerIndex },
-    };
   }
 }

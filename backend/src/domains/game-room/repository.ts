@@ -1,4 +1,4 @@
-import { GameRoom } from "./utils/instance.js";
+import { GameRoom } from "./room.js";
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const INACTIVITY_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 export class GameRoomRepository {

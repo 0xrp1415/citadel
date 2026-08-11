@@ -3,7 +3,8 @@ import express from "express";
 import { Server } from "socket.io";
 import { UserRouter } from "./domains/user/index.js";
 import { config } from "dotenv";
-import { GameRoomRouter, SetupGameRoomSocketHandlers } from "./domains/game-room/controller.js";
+import { GameRoomRouter } from "./domains/game-room/controller.js";
+import {SetupGameRoomSocketHandlers} from "./domains/game-room/socket.js"
 
 config();
 
