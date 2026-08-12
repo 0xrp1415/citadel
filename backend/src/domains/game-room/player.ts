@@ -9,6 +9,7 @@ export type PlayerStatus =
 export interface Player {
   userId: string;
   playerId: string;
+  name: string;
   socketId: string | null;
   status: PlayerStatus;
   joinedAt?: number;
@@ -16,6 +17,7 @@ export interface Player {
 
 export interface PlayerPublic {
   playerId: string;
+  name: string;
   status: PlayerStatus;
   isHost: boolean;
 }

@@ -37,12 +37,13 @@ export class GameRoom implements IGameRoomContext {
 
 
   // Player Management
-  addPlayer(userId: string, playerId: string): Player | null {
+  addPlayer(userId: string, playerId: string, name: string): Player | null {
     if (this.currentState && !this.currentState.canJoinRoom()) return null;
 
     const player: Player = {
       userId,
       playerId,
+      name,
       socketId: null,
       status: "joined",
     };
@@ -192,6 +193,7 @@ export class GameRoom implements IGameRoomContext {
   get PlayersPublic(): PlayerPublic[] {
     return Array.from(this.players.values()).map(player => ({
       playerId: player.playerId,
+      name: player.name,
       status: player.status,
       isHost: player.userId === this.host,
     }));

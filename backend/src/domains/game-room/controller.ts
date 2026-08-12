@@ -10,6 +10,7 @@ GameRoomRouter.post("/create", CheckUserExists, (req, res) => {
   const result = GameRoomService.Instance.createRoom(
     req.userID ?? "",
     req.body.config,
+    req.body.name,
   );
   if (!result.ok) {
     res.status(result.status).json({ error: result.error });
@@ -22,6 +23,7 @@ GameRoomRouter.post("/join/:inviteCode", CheckUserExists, (req, res) => {
   const result = GameRoomService.Instance.joinRoom(
     req.userID ?? "",
     req.params.inviteCode ?? "",
+    req.body.name,
   );
   if (!result.ok) {
     res.status(result.status).json({ error: result.error });

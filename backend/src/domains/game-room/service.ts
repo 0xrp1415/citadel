@@ -46,7 +46,7 @@ export class GameRoomService {
 
 
 
-  public createRoom(hostUserId: string, config: unknown): Result<CreateRoomResult> {
+  public createRoom(hostUserId: string, config: unknown, name?: string): Result<CreateRoomResult> {
     const secret = this.getSecret();
     if (!secret) {
       return {
@@ -74,7 +74,7 @@ export class GameRoomService {
       this.broadcaster(roomId, data),
     );
 
-    const player = gameRoom.addPlayer(hostUserId, crypto.randomUUID());
+    const player = gameRoom.addPlayer(hostUserId, crypto.randomUUID(), name?.trim() || "Prisoner");
     if (!player) {
       return { ok: false, status: 500, error: "Failed to add host to the game room." };
     }
@@ -89,7 +89,7 @@ export class GameRoomService {
     };
   }
 
-  public joinRoom(userId: string, inviteCode: string): Result<JoinRoomResult> {
+  public joinRoom(userId: string, inviteCode: string, name?: string): Result<JoinRoomResult> {
     const secret = this.getSecret();
     if (!secret) {
       return {
@@ -116,7 +116,7 @@ export class GameRoomService {
       return { ok: false, status: 400, error: "Game room is full." };
     }
 
-    const player = gameRoom.addPlayer(userId, crypto.randomUUID());
+    const player = gameRoom.addPlayer(userId, crypto.randomUUID(), name?.trim() || "Prisoner");
     if (!player) {
       return { ok: false, status: 403, error: "Game room is not joinable." };
     }
