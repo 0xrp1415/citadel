@@ -215,6 +215,24 @@ export class GameRoomService {
       : { ok: false, status: 400, error: result.error };
   }
   
+  public confirmStartGame(userId: string, roomId: string): Result<boolean> {
+    if (!roomId) {
+      return { ok: false, status: 400, error: "Room ID is missing in the request." };
+    }
+
+    let gameRoom = this.repository.getGameRoomById(roomId);
+
+    if (!gameRoom) {
+      return { ok: false, status: 404, error: "Game room not found." };
+    }
+
+    const result = gameRoom.receivePlayerAction(userId, "confirm_start");
+
+    return result.success
+      ? { ok: true, value: true }
+      : { ok: false, status: 400, error: result.error };
+  }
+
   public executePlayerAction(userId: string, roomId: string, action: string): Result<boolean> {
     if (!roomId) {
       return { ok: false, status: 400, error: "Room ID is missing in the request." };

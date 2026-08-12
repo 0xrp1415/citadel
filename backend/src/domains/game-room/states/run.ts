@@ -20,6 +20,11 @@ export class InRunState extends GameRoomState<TActions> {
     }
 
     receivePlayerAction(userId: string, action: "player_play"): ActionResponse {
-        return { success: true };
+        switch (action) {
+            case "player_play":
+                return { success: true };
+            default:
+                return { success: false, error: "Invalid action type for InRunState: " + action };
+        }
     }
 }

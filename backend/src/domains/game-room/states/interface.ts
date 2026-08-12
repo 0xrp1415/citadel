@@ -9,4 +9,5 @@ export interface IGameRoomContext {
     setState(state: GameRoomState): void;
     getPlayer(playerId: string): Player | undefined;
     setPlayersStatus(status: Player["status"]): void;
+    removePlayer(userId: string): boolean;
 }

@@ -11,6 +11,7 @@ export interface Player {
   playerId: string;
   socketId: string | null;
   status: PlayerStatus;
+  joinedAt?: number;
 }
 
 export interface PlayerPublic {

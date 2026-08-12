@@ -25,8 +25,3 @@ export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; status: number; error: string };
 
-export interface ISocketData {
-  userId: string;
-  roomId: string;
-  playerId: string;
-}

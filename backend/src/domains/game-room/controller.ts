@@ -81,6 +81,21 @@ GameRoomRouter.post("/start", requireRoomToken, (req, res) => {
   res.status(200).json({ success: true });
 });
 
+GameRoomRouter.post("/confirm-start", requireRoomToken, (req, res) => {
+  const roomRequest = req as IGameRoomRequest;
+  const result = GameRoomService.Instance.confirmStartGame(
+    roomRequest.userId,
+    roomRequest.roomId,
+  );
+
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  res.status(200).json({ success: true });
+});
+
 GameRoomRouter.post("/action", requireRoomToken, (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const action = req.body.action ?? "";

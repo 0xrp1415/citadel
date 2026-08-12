@@ -5,7 +5,6 @@ import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
 
 
-
 export class GameRoom implements IGameRoomContext {
   private readonly _id: string;
   private readonly _inviteCode: string;
@@ -17,6 +16,7 @@ export class GameRoom implements IGameRoomContext {
   private host: string;
   private lastActivityAt: number = Date.now();
   private currentState: GameRoomState | null = null;
+
 
   constructor(
     id: string,
@@ -32,6 +32,9 @@ export class GameRoom implements IGameRoomContext {
     this.broadcast = broadcast;
     this.setState(new LobbyState(this));
   }
+
+
+
 
   // Player Management
   addPlayer(userId: string, playerId: string): Player | null {
@@ -121,7 +124,7 @@ export class GameRoom implements IGameRoomContext {
 
   // Handle State Transitions
   setState(newState: GameRoomState) {
-    if (this.currentState && newState.ID == this.currentState.ID)
+    if (this.currentState && newState.ID === this.currentState.ID)
       throw new Error("Moving to Same State");
 
 
@@ -132,12 +135,10 @@ export class GameRoom implements IGameRoomContext {
   }
 
   // Handle Player State
-  setPlayersStatus(status: Player["status"], shouldNotify: boolean = true): void {
+  setPlayersStatus(status: Player["status"]): void {
     for (const player of this.players.values()) {
       player.status = status;
     }
-    if (shouldNotify) this.notify();
-
   }
 
   // Handle Player Actions
