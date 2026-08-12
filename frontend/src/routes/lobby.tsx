@@ -5,6 +5,7 @@ import { useAuth } from '../auth'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { Fleuron } from '../components/Fleuron'
+import { PermitCopy } from '../components/PermitCopy'
 import { setStage } from '../stages'
 import {
   confirmStart,
@@ -426,8 +427,12 @@ function LiveRoom({
 
         <div className="permit">
           <span className="permit__label">Permit nº</span>
-          <span className="permit__code">{inviteCode ?? '——'}</span>
-          <span className="permit__note">share this code — seats go to the first to arrive</span>
+          {inviteCode ? (
+            <PermitCopy code={inviteCode} className="permit__code-copy" />
+          ) : (
+            <span className="permit__code">——</span>
+          )}
+          <span className="permit__note">click to copy — share it with your party</span>
         </div>
 
         <dl className="idline" style={{ marginTop: '1.1rem' }}>
