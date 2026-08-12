@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getMe, registerUser } from './api'
 import type { User } from './api'
+import { clearRoomSession } from './roomSession'
 
 const TOKEN_KEY = 'citadel.token'
 const USER_ID_KEY = 'citadel.userId'
@@ -20,6 +21,7 @@ type AuthStatus = 'loading' | 'anonymous' | 'authenticated'
 
 interface AuthContextValue {
   user: User | null
+  token: string | null
   status: AuthStatus
   login: (name: string) => Promise<void>
   logout: () => void
@@ -29,23 +31,27 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY))
   const [status, setStatus] = useState<AuthStatus>('loading')
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    if (!token) {
+    const stored = localStorage.getItem(TOKEN_KEY)
+    if (!stored) {
+      setToken(null)
       setStatus('anonymous')
       return
     }
 
-    getMe(token)
+    getMe(stored)
       .then((found) => {
         if (found) {
           setUser(found)
+          setToken(stored)
           setStatus('authenticated')
         } else {
           localStorage.removeItem(TOKEN_KEY)
           localStorage.removeItem(USER_ID_KEY)
+          setToken(null)
           setStatus('anonymous')
         }
       })
@@ -58,18 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const id = decodeIdFromToken(token)
     if (id) localStorage.setItem(USER_ID_KEY, id)
     setUser(user)
+    setToken(token)
     setStatus('authenticated')
   }
 
   function logout() {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_ID_KEY)
+    clearRoomSession()
     setUser(null)
+    setToken(null)
     setStatus('anonymous')
   }
 
   return (
-    <AuthContext.Provider value={{ user, status, login, logout }}>
+    <AuthContext.Provider value={{ user, token, status, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

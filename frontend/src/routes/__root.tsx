@@ -60,22 +60,21 @@ function Root() {
       <main className="page">
         <Outlet />
       </main>
-      <footer className="recordbar">
-        <div className="recordbar__inner">
+      <footer className="waypoint">
+        <div className="waypoint__inner">
           {STAGES.map((stage, i) => {
             const state = i < activeIndex ? 'past' : i > activeIndex ? 'future' : 'active'
             return (
               <Fragment key={stage.path}>
-                {i > 0 && (
-                  <span className="recordbar__sep" aria-hidden="true">
-                    ·
-                  </span>
-                )}
+                {i > 0 && <span className="waypoint__track" aria-hidden="true" />}
                 <span
-                  className={`recordbar__stage recordbar__stage--${state}`}
+                  className={`waypoint__item waypoint__item--${state}`}
                   aria-current={state === 'active' ? 'step' : undefined}
                 >
-                  {stage.label}
+                  <span className="waypoint__marker" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span className="waypoint__label">{stage.label}</span>
                 </span>
               </Fragment>
             )
