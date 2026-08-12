@@ -43,8 +43,8 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 
 ### Rooms & identity
 - [x] User login / identification (REST entry)
-- [ ] Create an expedition (GameRoom instance)
-- [ ] Join an expedition via code
+- [x] Create an expedition (GameRoom instance)
+- [x] Join an expedition via code
 - [ ] Join the room's Socket.io room on connect
 
 ### Session & state
