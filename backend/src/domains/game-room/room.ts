@@ -1,36 +1,41 @@
 import { GameRoomPublicData, IGameRoomConfig } from "./types.js";
 import { Player, PlayerPublic } from "./player.js";
+import { GameRoomState } from "./states/abstract.js";
+import { LobbyState } from "./states/start.js";
+import { IGameRoomContext } from "./states/interface.js";
 
-export class GameRoom {
+
+
+export class GameRoom implements IGameRoomContext {
   private readonly _id: string;
   private readonly _inviteCode: string;
 
   private readonly players = new Map<string, Player>();
-  private readonly config: IGameRoomConfig;
+  private config: IGameRoomConfig;
   private readonly broadcast: (data: GameRoomPublicData) => void;
 
   private host: string;
   private lastActivityAt: number = Date.now();
-  private joinable: boolean = true;
+  private currentState: GameRoomState | null = null;
 
   constructor(
     id: string,
     inviteCode: string,
     host: string,
     config: IGameRoomConfig,
-    broadcast: (data: GameRoomPublicData) => void = () => {},
+    broadcast: (data: GameRoomPublicData) => void = () => { },
   ) {
     this._id = id;
     this._inviteCode = inviteCode;
     this.host = host;
     this.config = config;
     this.broadcast = broadcast;
+    this.setState(new LobbyState(this));
   }
 
+  // Player Management
   addPlayer(userId: string, playerId: string): Player | null {
-    if (!this.joinable) {
-      return null;
-    }
+    if (this.currentState && !this.currentState.canJoinRoom()) return null;
 
     const player: Player = {
       userId,
@@ -70,6 +75,7 @@ export class GameRoom {
     }
   }
 
+  // Handle socket connections and disconnections
   setSocket(userId: string, socketId: string): void {
     const player = this.players.get(userId);
     if (!player) {
@@ -94,10 +100,7 @@ export class GameRoom {
     this.notify();
   }
 
-  setJoinable(isJoinable: boolean): void {
-    this.joinable = isJoinable;
-  }
-
+  // Player Reading
   getPlayer(userId: string): Player | undefined {
     return this.players.get(userId);
   }
@@ -106,10 +109,60 @@ export class GameRoom {
     return this.players.has(userId);
   }
 
-  private notify(): void {
+
+  // Handle Config Updates
+  updateConfig(config: IGameRoomConfig) {
+    if (this.currentState && !this.currentState.canChangeConfig()) return false;
+
+    this.config = config;
+    this.notify();
+    return true;
+  }
+
+  // Handle State Transitions
+  setState(newState: GameRoomState) {
+    if (this.currentState && newState.ID == this.currentState.ID)
+      throw new Error("Moving to Same State");
+
+
+    this.currentState?.onExitState()
+    this.currentState = newState;
+    this.currentState.onEnterState();
+    this.notify();
+  }
+
+  // Handle Player State
+  setPlayersStatus(status: Player["status"], shouldNotify: boolean = true): void {
+    for (const player of this.players.values()) {
+      player.status = status;
+    }
+    if (shouldNotify) this.notify();
+
+  }
+
+  // Handle Player Actions
+  receivePlayerAction(userId: string, action: string) {
+    if (!this.currentState) {
+      return { success: false, error: "No current state" };
+    }
+
+    const player = this.players.get(userId);
+
+    if (!player) {
+      return { success: false, error: "Player not found" };
+    }
+
+    const response = this.currentState.receivePlayerAction(player.userId, action);
+    if (response.success) this.notify();
+    return response;
+  }
+
+  // Handle Room Updates
+  notify(): void {
     this.lastActivityAt = Date.now();
     this.broadcast(this.JSON);
   }
+
 
   get ID(): string {
     return this._id;
@@ -131,12 +184,12 @@ export class GameRoom {
     return this.lastActivityAt;
   }
 
-  get IsRoomJoinable(): boolean {
-    return this.joinable;
+  get Players(): Player[] {
+    return Array.from(this.players.values())
   }
 
-  get Players(): PlayerPublic[] {
-    return Array.from(this.players.values()).map((player) => ({
+  get PlayersPublic(): PlayerPublic[] {
+    return Array.from(this.players.values()).map(player => ({
       playerId: player.playerId,
       status: player.status,
       isHost: player.userId === this.host,
@@ -147,8 +200,9 @@ export class GameRoom {
     return {
       inviteCode: this._inviteCode,
       totalPlayers: this.players.size,
-      players: this.Players,
+      players: this.PlayersPublic,
       config: this.config,
+      status: this.currentState?.ID || "unknown",
     };
   }
 }

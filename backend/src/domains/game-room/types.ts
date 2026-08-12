@@ -8,10 +8,11 @@ export const ZGameRoomConfigSchema = z.object({
 export type IGameRoomConfig = z.infer<typeof ZGameRoomConfigSchema>;
 
 export interface GameRoomPublicData {
-  players: PlayerPublic[];
-  totalPlayers: number;
-  inviteCode: string;
-  config: IGameRoomConfig;
+  readonly players: PlayerPublic[];
+  readonly totalPlayers: number;
+  readonly inviteCode: string;
+  readonly config: IGameRoomConfig;
+  readonly status: string;
 }
 
 export interface IGameRoomRequest extends Request {
