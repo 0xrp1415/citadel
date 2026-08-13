@@ -4,6 +4,8 @@ import { PlayerPublic } from "./player.js";
 
 export const ZGameRoomConfigSchema = z.object({
   maxPlayers: z.number().int().min(3).max(8).default(4),
+  
+
 });
 export type IGameRoomConfig = z.infer<typeof ZGameRoomConfigSchema>;
 

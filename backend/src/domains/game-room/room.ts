@@ -1,8 +1,9 @@
 import { GameRoomPublicData, IGameRoomConfig } from "./types.js";
-import { Player, PlayerPublic } from "./player.js";
+import { Player, PlayerPublic, PlayerRunEntity } from "./player.js";
 import { GameRoomState } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
+import { GameRoomEntityStatsDefaults } from "./defaults.js";
 
 
 export class GameRoom implements IGameRoomContext {
@@ -10,6 +11,8 @@ export class GameRoom implements IGameRoomContext {
   private readonly _inviteCode: string;
 
   private readonly players = new Map<string, Player>();
+  private readonly playerRunEntities = new Map<string, PlayerRunEntity>();
+
   private config: IGameRoomConfig;
   private readonly broadcast: (data: GameRoomPublicData) => void;
 
@@ -46,8 +49,11 @@ export class GameRoom implements IGameRoomContext {
       name,
       socketId: null,
       status: "joined",
+      joinedAt: Date.now(),
     };
     this.players.set(userId, player);
+
+    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults() );
 
     if (this.host === "") {
       this.host = userId;
@@ -58,10 +64,11 @@ export class GameRoom implements IGameRoomContext {
   }
 
   removePlayer(userId: string): boolean {
-    const removed = this.players.delete(userId);
-    if (!removed) {
+    if (!this.players.delete(userId)) {
       return false;
     }
+
+    this.playerRunEntities.delete(userId);
 
     if (userId === this.host) {
       const next = Array.from(this.players.values())[0];
@@ -117,6 +124,16 @@ export class GameRoom implements IGameRoomContext {
     return this.players.has(userId);
   }
 
+  // Player Run Entity Management
+  resetPlayerRunEntityStats(userId: string): boolean {
+    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults())
+    return true;
+  }
+
+  public getPlayerRunEntity(userId: string): PlayerRunEntity | undefined {
+    return this.playerRunEntities.get(userId);
+  }
+   
 
   // Handle Config Updates
   updateConfig(config: IGameRoomConfig) {
@@ -200,6 +217,7 @@ export class GameRoom implements IGameRoomContext {
       name: player.name,
       status: player.status,
       isHost: player.userId === this.host,
+      stats: (this.playerRunEntities.get(player.userId) ?? GameRoomEntityStatsDefaults()).JSON
     }));
   }
 
