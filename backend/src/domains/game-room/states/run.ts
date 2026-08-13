@@ -19,7 +19,7 @@ export class InRunState extends GameRoomState<TActions> {
         return false;
     }
 
-    receivePlayerAction(userId: string, action: "player_play"): ActionResponse {
+    receivePlayerAction(userId: string, action: "player_play", payload?: unknown): ActionResponse {
         switch (action) {
             case "player_play":
                 return { success: true };

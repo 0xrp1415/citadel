@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth'
@@ -11,6 +11,7 @@ import {
   confirmStart,
   createRoom,
   joinRoom,
+  kickPlayer,
   leaveRoom,
   startGame,
   toggleReady,
@@ -171,6 +172,19 @@ function Lobby() {
     }
   }
 
+  async function handleKick(targetPlayerId: string) {
+    if (!roomToken) return
+    setActionError(null)
+    setBusy(true)
+    try {
+      await kickPlayer(roomToken, targetPlayerId)
+    } catch (err) {
+      setActionError(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handlePartySize(size: number) {
     if (!roomToken) return
     setPartySize(size)
@@ -233,6 +247,7 @@ function Lobby() {
           onReady={handleReady}
           onStart={handleStart}
           onConfirmStart={handleConfirmStart}
+          onKick={handleKick}
           onLeave={handleLeave}
         />
       ) : (
@@ -345,6 +360,7 @@ interface LiveRoomProps {
   onReady: () => void
   onStart: () => void
   onConfirmStart: () => void
+  onKick: (playerId: string) => void
   onLeave: () => void
 }
 
@@ -363,6 +379,7 @@ function LiveRoom({
   onReady,
   onStart,
   onConfirmStart,
+  onKick,
   onLeave,
 }: LiveRoomProps) {
   const slotCount = room?.config.maxPlayers ?? 4
@@ -370,6 +387,24 @@ function LiveRoom({
     { length: slotCount },
     (_, i) => room?.players[i],
   )
+
+  const [pendingKick, setPendingKick] = useState<string | null>(null)
+  const kickTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (kickTimerRef.current !== null) window.clearTimeout(kickTimerRef.current)
+    }
+  }, [])
+
+  function requestKick(playerId: string) {
+    if (kickTimerRef.current !== null) window.clearTimeout(kickTimerRef.current)
+    setPendingKick(playerId)
+    kickTimerRef.current = window.setTimeout(() => {
+      setPendingKick(null)
+      kickTimerRef.current = null
+    }, 3000)
+  }
 
   const condition = room?.status === 'in-run'
     ? 'Cast off — the descent is underway'
@@ -403,6 +438,25 @@ function LiveRoom({
                 )}
                 {player.playerId === selfPlayerId && (
                   <span className="board__tag board__tag--you">you</span>
+                )}
+                {isHost && !player.isHost && room?.status === 'lobby' && (
+                  <button
+                    type="button"
+                    className={
+                      pendingKick === player.playerId
+                        ? 'board__kick board__kick--confirm'
+                        : 'board__kick'
+                    }
+                    onClick={() => {
+                      if (pendingKick === player.playerId) {
+                        onKick(player.playerId)
+                      } else {
+                        requestKick(player.playerId)
+                      }
+                    }}
+                  >
+                    {pendingKick === player.playerId ? `Expel ${player.name}?` : 'Expel'}
+                  </button>
                 )}
               </li>
             ) : (

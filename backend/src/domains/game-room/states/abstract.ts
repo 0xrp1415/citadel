@@ -12,7 +12,7 @@ export abstract class GameRoomState<TActions extends string = string> {
 
     abstract onEnterState(): void;
     abstract onExitState(): void;
-    abstract receivePlayerAction(userId: string, action: TActions): ActionResponse;
+    abstract receivePlayerAction(userId: string, action: TActions, payload?: unknown): ActionResponse;
     abstract canJoinRoom(): boolean;
     abstract canChangeConfig(): boolean;
 

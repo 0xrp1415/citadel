@@ -109,6 +109,10 @@ export class GameRoom implements IGameRoomContext {
     return this.players.get(userId);
   }
 
+  getPlayerByPlayerId(playerId: string): Player | undefined {
+    return Array.from(this.players.values()).find((p) => p.playerId === playerId);
+  }
+
   hasPlayer(userId: string): boolean {
     return this.players.has(userId);
   }
@@ -143,7 +147,7 @@ export class GameRoom implements IGameRoomContext {
   }
 
   // Handle Player Actions
-  receivePlayerAction(userId: string, action: string) {
+  receivePlayerAction(userId: string, action: string, payload?: unknown) {
     if (!this.currentState) {
       return { success: false, error: "No current state" };
     }
@@ -154,7 +158,7 @@ export class GameRoom implements IGameRoomContext {
       return { success: false, error: "Player not found" };
     }
 
-    const response = this.currentState.receivePlayerAction(player.userId, action);
+    const response = this.currentState.receivePlayerAction(player.userId, action, payload);
     if (response.success) this.notify();
     return response;
   }

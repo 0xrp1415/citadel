@@ -98,6 +98,28 @@ GameRoomRouter.post("/confirm-start", requireRoomToken, (req, res) => {
   res.status(200).json({ success: true });
 });
 
+GameRoomRouter.post("/kick", requireRoomToken, (req, res) => {
+  const roomRequest = req as IGameRoomRequest;
+  const targetPlayerId = req.body.playerId ?? "";
+
+  const result = GameRoomService.Instance.kickPlayer(
+    roomRequest.userId,
+    roomRequest.roomId,
+    targetPlayerId,
+  );
+
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+
+  if (result.value.socketId) {
+    disconnectSocket(result.value.socketId, { event: "game-room-kicked", data: {} });
+  }
+
+  res.status(200).json({ success: true, room: result.value.room });
+});
+
 GameRoomRouter.post("/action", requireRoomToken, (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const action = req.body.action ?? "";

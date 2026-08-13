@@ -4,8 +4,9 @@ import { InRunState } from "./run.js";
 const START_GAME = "start_game";
 const PLAYER_TOGGLE_READY = "player_toggle_ready";
 const CONFIRM_START = "confirm_start";
+const PLAYER_KICK = "player_kick";
 
-type TActions = typeof START_GAME | typeof PLAYER_TOGGLE_READY | typeof CONFIRM_START;
+type TActions = typeof START_GAME | typeof PLAYER_TOGGLE_READY | typeof CONFIRM_START | typeof PLAYER_KICK;
 
 export class LobbyState extends GameRoomState<TActions> {
     protected id: string = "lobby";
@@ -27,7 +28,7 @@ export class LobbyState extends GameRoomState<TActions> {
         return true;
     }
 
-    receivePlayerAction(userId: string, action: TActions): ActionResponse {
+    receivePlayerAction(userId: string, action: TActions, payload?: unknown): ActionResponse {
         switch (action) {
             case START_GAME:
                 return this.handleStart(userId);
@@ -35,6 +36,8 @@ export class LobbyState extends GameRoomState<TActions> {
                 return this.handleConfirmStart(userId);
             case PLAYER_TOGGLE_READY:
                 return this.handlePlayerToggleReady(userId);
+            case PLAYER_KICK:
+                return this.handleKick(userId, payload);
             default:
                 return { success: false, error: "Invalid action type for LobbyState: " + action };
         }
@@ -93,6 +96,33 @@ export class LobbyState extends GameRoomState<TActions> {
         }
 
         return this.validateAndStart(userId);
+    }
+
+    private handleKick(userId: string, payload?: unknown): ActionResponse {
+        if (userId !== this.gameRoom.Host)
+            return { success: false, error: "Only the host can expel a member." };
+
+        const targetPlayerId =
+            typeof payload === "object" && payload !== null && "targetPlayerId" in payload
+                ? String((payload as { targetPlayerId: unknown }).targetPlayerId)
+                : "";
+
+        if (!targetPlayerId) {
+            return { success: false, error: "No player was named for expulsion." };
+        }
+
+        const target = this.gameRoom.getPlayerByPlayerId(targetPlayerId);
+        if (!target) {
+            return { success: false, error: "Player not found in the game room." };
+        }
+
+        if (target.userId === this.gameRoom.Host) {
+            return { success: false, error: "The host cannot expel themselves." };
+        }
+
+        this.gameRoom.removePlayer(target.userId);
+
+        return { success: true };
     }
 
     private validateAndStart(userId: string): ActionResponse {

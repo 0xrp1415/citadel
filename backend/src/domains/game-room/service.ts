@@ -22,6 +22,11 @@ interface LeaveRoomResult {
   socketId: string | null;
 }
 
+interface KickPlayerResult {
+  room: GameRoomPublicData;
+  socketId: string | null;
+}
+
 export class GameRoomService {
   private static _instance: GameRoomService | null = null;
 
@@ -150,8 +155,36 @@ export class GameRoomService {
     return { ok: true, value: { room: gameRoom.JSON, socketId } };
   }
 
-  public updateRoomConfig(userId: string, roomId: string, config: unknown): Result<GameRoomPublicData> {
+  public kickPlayer(userId: string, roomId: string, targetPlayerId: string): Result<KickPlayerResult> {
     if (!roomId) {
+      return { ok: false, status: 400, error: "Room ID is missing in the request." };
+    }
+
+    const gameRoom = this.repository.getGameRoomById(roomId);
+    if (!gameRoom) {
+      return { ok: false, status: 404, error: "Game room not found." };
+    }
+
+    if (userId !== gameRoom.Host) {
+      return { ok: false, status: 403, error: "Only the host can expel a member." };
+    }
+
+    const target = gameRoom.getPlayerByPlayerId(targetPlayerId);
+    if (!target) {
+      return { ok: false, status: 404, error: "Player not found in the game room." };
+    }
+
+    const socketId = target.socketId;
+    const result = gameRoom.receivePlayerAction(userId, "player_kick", { targetPlayerId });
+
+    if (!result.success) {
+      return { ok: false, status: 400, error: result.error };
+    }
+
+    return { ok: true, value: { room: gameRoom.JSON, socketId } };
+  }
+
+  public updateRoomConfig(userId: string, roomId: string, config: unknown): Result<GameRoomPublicData> {    if (!roomId) {
       return { ok: false, status: 400, error: "Room ID is missing in the request." };
     }
 

@@ -89,6 +89,13 @@ export async function confirmStart(roomToken: string): Promise<void> {
   await request<unknown>('/api/rooms/confirm-start', roomToken, { method: 'POST' })
 }
 
+export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {
+  await request<unknown>('/api/rooms/kick', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ playerId }),
+  })
+}
+
 export async function updateRoomConfig(roomToken: string, config: RoomConfig): Promise<void> {
   await request<unknown>('/api/rooms/room', roomToken, {
     method: 'PUT',

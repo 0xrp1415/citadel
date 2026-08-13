@@ -994,6 +994,37 @@
   color: var(--color-mist);
 }
 
+.board__kick {
+  flex: 0 0 auto;
+  padding: 0.22rem 0.55rem;
+  border: 1px dashed rgba(196, 84, 42, 0.4);
+  background: none;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-rust);
+  cursor: pointer;
+}
+
+.board__kick:hover {
+  color: var(--color-chalk);
+  background-color: var(--color-rust);
+  border-style: solid;
+}
+
+.board__kick--confirm {
+  color: var(--color-chalk);
+  background-color: var(--color-rust);
+  border-style: solid;
+}
+
+.board__kick:focus-visible {
+  outline: 1.5px solid var(--color-rust);
+  outline-offset: 2px;
+}
+
 .hostrow {
   display: flex;
   align-items: center;

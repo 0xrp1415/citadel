@@ -37,8 +37,15 @@ export function SetupGameRoomSocketHandlers(io: Server): void {
   });
 }
 
-export function disconnectSocket(socketId: string): void {
-  activeIo?.sockets.sockets.get(socketId)?.disconnect(true);
+export function disconnectSocket(socketId: string, notice?: { event: string; data: unknown }): void {
+  const socket = activeIo?.sockets.sockets.get(socketId);
+  if (!socket) {
+    return;
+  }
+  if (notice) {
+    socket.emit(notice.event, notice.data);
+  }
+  socket.disconnect(true);
 }
 
 function verifyRoomSocket(socket: Socket, next: (err?: ExtendedError) => void): void {
