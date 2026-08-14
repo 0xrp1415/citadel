@@ -153,7 +153,7 @@ export class PlayerRunEntity {
     return true;
   }
 
-  public useSkillPoints(stat: keyof IStats, points: number) {
+  public useSkillPoints(stat: keyof IStats, points: number): boolean {
     if (points <= 0 || points > this.skill_points) {
       return false;
     }

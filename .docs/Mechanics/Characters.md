@@ -42,6 +42,7 @@ How a character is built at the staging grounds.
 - **50 bonus points** — allocated freely to match playstyle
 - **Cap** — no stat may exceed **40 at creation**; the cap rises +1 per stat per level ([[Mechanics/Leveling]])
 - **Gear** — every character starts with a basic weapon and armor (see [[Mechanics/Equipment]])
+- **Gold** — every character starts with **200 gold**, spent at the merchant ([[Mechanics/Stasis]])
 
 > Mana is **not** a character stat — it's per-battle state (see [[Mechanics/Mana]]).
 

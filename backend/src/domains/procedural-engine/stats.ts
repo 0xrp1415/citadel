@@ -25,9 +25,7 @@ export class EntityStats {
         this.agility = agility;
     }
 
-    
-
-    public increaseStatBy(stat: keyof IStats, amount: number):boolean {
+    public increaseStatBy(stat: keyof IStats, amount: number): boolean {
         if (this.Stats[stat] + amount < 0) {
             return false;
         }

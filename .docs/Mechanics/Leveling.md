@@ -5,6 +5,7 @@ How characters grow during a run.
 - Every encounter grants **XP to all players equally** — no player earns more than another
 - Each player tracks their **own XP and level** individually; equal grants keep the party leveling together
 - Dismantling dropped gear grants a **small XP bump** ([[Mechanics/Equipment]])
+- **Threshold** — reaching the next level costs `level³` XP (your current level, cubed): 1 → 8 → 27 → 64 → …
 
 ## Leveling up
 
