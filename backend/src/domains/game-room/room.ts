@@ -1,6 +1,6 @@
-import { GameRoomPublicData, IGameRoomConfig } from "./types.js";
+import { GameRoomPublicData, IGameRoomConfig, Result } from "./types.js";
 import { Player, PlayerPublic, PlayerRunEntity } from "./player.js";
-import { GameRoomState } from "./states/abstract.js";
+import { GameRoomState, ActionResponse } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
 import { GameRoomEntityStatsDefaults } from "./defaults.js";
@@ -86,6 +86,25 @@ export class GameRoom implements IGameRoomContext {
     }
   }
 
+  kickPlayer(hostUserId: string, targetPlayerId: string): Result<{ socketId: string | null }> {
+    if (hostUserId !== this.host) {
+      return { ok: false, status: 403, error: "Only the host can expel a member." };
+    }
+
+    const target = this.getPlayerByPlayerId(targetPlayerId);
+    if (!target) {
+      return { ok: false, status: 404, error: "Player not found in the game room." };
+    }
+
+    if (target.userId === this.host) {
+      return { ok: false, status: 400, error: "The host cannot expel themselves." };
+    }
+
+    this.removePlayer(target.userId);
+
+    return { ok: true, value: { socketId: target.socketId } };
+  }
+
   // Handle socket connections and disconnections
   setSocket(userId: string, socketId: string): void {
     const player = this.players.get(userId);
@@ -164,7 +183,7 @@ export class GameRoom implements IGameRoomContext {
   }
 
   // Handle Player Actions
-  receivePlayerAction(userId: string, action: string, payload?: unknown) {
+  receivePlayerAction(userId: string, action: string, payload?: unknown): ActionResponse {
     if (!this.currentState) {
       return { success: false, error: "No current state" };
     }

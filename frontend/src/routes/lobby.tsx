@@ -8,13 +8,11 @@ import { Fleuron } from '../components/Fleuron'
 import { PermitCopy } from '../components/PermitCopy'
 import { setStage } from '../stages'
 import {
-  confirmStart,
   createRoom,
   joinRoom,
   kickPlayer,
   leaveRoom,
-  startGame,
-  toggleReady,
+  sendAction,
   updateRoomConfig,
 } from '../rooms'
 import type { PlayerPublic, RoomData } from '../rooms'
@@ -140,7 +138,7 @@ function Lobby() {
     if (!roomToken) return
     setActionError(null)
     try {
-      await toggleReady(roomToken)
+      await sendAction(roomToken, 'player_toggle_ready')
     } catch (err) {
       setActionError(errorMessage(err))
     }
@@ -151,7 +149,7 @@ function Lobby() {
     setActionError(null)
     setBusy(true)
     try {
-      await startGame(roomToken)
+      await sendAction(roomToken, 'start_game')
     } catch (err) {
       setActionError(errorMessage(err))
     } finally {
@@ -164,7 +162,7 @@ function Lobby() {
     setActionError(null)
     setBusy(true)
     try {
-      await confirmStart(roomToken)
+      await sendAction(roomToken, 'confirm_start')
     } catch (err) {
       setActionError(errorMessage(err))
     } finally {

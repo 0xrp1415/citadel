@@ -52,52 +52,6 @@ GameRoomRouter.post("/leave", requireRoomToken, (req, res) => {
   });
 });
 
-GameRoomRouter.post("/ready", requireRoomToken, (req, res) => {
-  const roomRequest = req as IGameRoomRequest;
-  
-  const result = GameRoomService.Instance.setPlayerReadyStatus(
-    roomRequest.userId,
-    roomRequest.roomId,
-  );
-  
-  if (!result.ok) {
-    res.status(result.status).json({ error: result.error });
-    return;
-  }
-  
-  res.status(200).json({ success: true });
-});
-
-GameRoomRouter.post("/start", requireRoomToken, (req, res) => {
-  const roomRequest = req as IGameRoomRequest;
-  const result = GameRoomService.Instance.startGame(
-    roomRequest.userId,
-    roomRequest.roomId,
-  );
-  
-  if (!result.ok) {
-    res.status(result.status).json({ error: result.error });
-    return;
-  }
-
-  res.status(200).json({ success: true });
-});
-
-GameRoomRouter.post("/confirm-start", requireRoomToken, (req, res) => {
-  const roomRequest = req as IGameRoomRequest;
-  const result = GameRoomService.Instance.confirmStartGame(
-    roomRequest.userId,
-    roomRequest.roomId,
-  );
-
-  if (!result.ok) {
-    res.status(result.status).json({ error: result.error });
-    return;
-  }
-
-  res.status(200).json({ success: true });
-});
-
 GameRoomRouter.post("/kick", requireRoomToken, (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const targetPlayerId = req.body.playerId ?? "";
@@ -117,24 +71,26 @@ GameRoomRouter.post("/kick", requireRoomToken, (req, res) => {
     disconnectSocket(result.value.socketId, { event: "game-room-kicked", data: {} });
   }
 
-  res.status(200).json({ success: true, room: result.value.room });
+  res.status(200).json({ success: true });
 });
 
 GameRoomRouter.post("/action", requireRoomToken, (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const action = req.body.action ?? "";
-  
+  const payload = req.body.payload ?? undefined;
+
   const result = GameRoomService.Instance.executePlayerAction(
     roomRequest.userId,
     roomRequest.roomId,
     action,
+    payload,
   );
-  
+
   if (!result.ok) {
     res.status(result.status).json({ error: result.error });
     return;
   }
-  
+
   res.status(200).json({ success: true });
 });
 

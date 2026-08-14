@@ -1,6 +1,6 @@
 import { IGameRoomContext } from "./interface.js";
 
-export type ActionResponse = { success: true } | { success: false, error: string }
+export type ActionResponse = { success: true } | { success: false; error: string }
 
 export abstract class GameRoomState<TActions extends string = string> {
     protected gameRoom: IGameRoomContext;

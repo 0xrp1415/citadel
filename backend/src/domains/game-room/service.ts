@@ -22,11 +22,6 @@ interface LeaveRoomResult {
   socketId: string | null;
 }
 
-interface KickPlayerResult {
-  room: GameRoomPublicData;
-  socketId: string | null;
-}
-
 export class GameRoomService {
   private static _instance: GameRoomService | null = null;
 
@@ -155,35 +150,6 @@ export class GameRoomService {
     return { ok: true, value: { room: gameRoom.JSON, socketId } };
   }
 
-  public kickPlayer(userId: string, roomId: string, targetPlayerId: string): Result<KickPlayerResult> {
-    if (!roomId) {
-      return { ok: false, status: 400, error: "Room ID is missing in the request." };
-    }
-
-    const gameRoom = this.repository.getGameRoomById(roomId);
-    if (!gameRoom) {
-      return { ok: false, status: 404, error: "Game room not found." };
-    }
-
-    if (userId !== gameRoom.Host) {
-      return { ok: false, status: 403, error: "Only the host can expel a member." };
-    }
-
-    const target = gameRoom.getPlayerByPlayerId(targetPlayerId);
-    if (!target) {
-      return { ok: false, status: 404, error: "Player not found in the game room." };
-    }
-
-    const socketId = target.socketId;
-    const result = gameRoom.receivePlayerAction(userId, "player_kick", { targetPlayerId });
-
-    if (!result.success) {
-      return { ok: false, status: 400, error: result.error };
-    }
-
-    return { ok: true, value: { room: gameRoom.JSON, socketId } };
-  }
-
   public updateRoomConfig(userId: string, roomId: string, config: unknown): Result<GameRoomPublicData> {    if (!roomId) {
       return { ok: false, status: 400, error: "Room ID is missing in the request." };
     }
@@ -210,78 +176,41 @@ export class GameRoomService {
   }
 
 
-  public setPlayerReadyStatus(userId: string, roomId: string): Result<boolean> {
+  public kickPlayer(userId: string, roomId: string, targetPlayerId: string): Result<{ socketId: string | null }> {
     if (!roomId) {
       return { ok: false, status: 400, error: "Room ID is missing in the request." };
     }
 
-    let gameRoom = this.repository.getGameRoomById(roomId);
+    const gameRoom = this.repository.getGameRoomById(roomId);
+    if (!gameRoom) {
+      return { ok: false, status: 404, error: "Game room not found." };
+    }
+
+    if (!targetPlayerId) {
+      return { ok: false, status: 400, error: "No player was named for expulsion." };
+    }
+
+    return gameRoom.kickPlayer(userId, targetPlayerId);
+  }
+
+  public executePlayerAction(userId: string, roomId: string, action: string, payload?: unknown): Result<boolean> {
+    if (!roomId) {
+      return { ok: false, status: 400, error: "Room ID is missing in the request." };
+    }
+
+    const gameRoom = this.repository.getGameRoomById(roomId);
 
     if (!gameRoom) {
       return { ok: false, status: 404, error: "Game room not found." };
-    };
-
-    let action_response = gameRoom.receivePlayerAction(userId, "player_toggle_ready");
-
-    if (!action_response.success) {
-      return { ok: false, status: 400, error: action_response.error };
     }
-    
+
+    const result = gameRoom.receivePlayerAction(userId, action, payload);
+
+    if (!result.success) {
+      return { ok: false, status: 400, error: result.error };
+    }
+
     return { ok: true, value: true };
-  }
-
-  public startGame(userId: string, roomId: string): Result<boolean> {
-    if (!roomId) {
-      return { ok: false, status: 400, error: "Room ID is missing in the request." };
-    }
-
-    let gameRoom = this.repository.getGameRoomById(roomId);
-
-    if (!gameRoom) {
-      return { ok: false, status: 404, error: "Game room not found." };
-    }
-
-    const result = gameRoom.receivePlayerAction(userId, "start_game");
-
-    return result.success
-      ? { ok: true, value: true }
-      : { ok: false, status: 400, error: result.error };
-  }
-  
-  public confirmStartGame(userId: string, roomId: string): Result<boolean> {
-    if (!roomId) {
-      return { ok: false, status: 400, error: "Room ID is missing in the request." };
-    }
-
-    let gameRoom = this.repository.getGameRoomById(roomId);
-
-    if (!gameRoom) {
-      return { ok: false, status: 404, error: "Game room not found." };
-    }
-
-    const result = gameRoom.receivePlayerAction(userId, "confirm_start");
-
-    return result.success
-      ? { ok: true, value: true }
-      : { ok: false, status: 400, error: result.error };
-  }
-
-  public executePlayerAction(userId: string, roomId: string, action: string): Result<boolean> {
-    if (!roomId) {
-      return { ok: false, status: 400, error: "Room ID is missing in the request." };
-    }
-
-    let gameRoom = this.repository.getGameRoomById(roomId);
-
-    if (!gameRoom) {
-      return { ok: false, status: 404, error: "Game room not found." };
-    }
-
-    const result = gameRoom.receivePlayerAction(userId, action);
-
-    return result.success
-      ? { ok: true, value: true }
-      : { ok: false, status: 400, error: result.error };
   }
 
 

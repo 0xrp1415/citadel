@@ -77,16 +77,11 @@ export async function leaveRoom(roomToken: string): Promise<void> {
   await request<unknown>('/api/rooms/leave', roomToken, { method: 'POST' })
 }
 
-export async function toggleReady(roomToken: string): Promise<void> {
-  await request<unknown>('/api/rooms/ready', roomToken, { method: 'POST' })
-}
-
-export async function startGame(roomToken: string): Promise<void> {
-  await request<unknown>('/api/rooms/start', roomToken, { method: 'POST' })
-}
-
-export async function confirmStart(roomToken: string): Promise<void> {
-  await request<unknown>('/api/rooms/confirm-start', roomToken, { method: 'POST' })
+export async function sendAction(roomToken: string, action: string, payload?: unknown): Promise<void> {
+  await request<unknown>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action, payload }),
+  })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {
