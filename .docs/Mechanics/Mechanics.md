@@ -2,7 +2,7 @@
 - **[[Mechanics/Characters]]** — stats, race, bonus points
 - **[[Mechanics/Leveling]]** — XP, levels, stat points
 - **[[Mechanics/Stasis]]** — the rest room and merchant
-- **[[Mechanics/Equipment]]** — weapon, armor, drops
+- **[[Mechanics/Equipment]]** — weapon, armor slots, drops
 - **[[Mechanics/Items]]** — consumables: potions, keys, lockpicks
 - **[[Mechanics/Abilities]]** — scrolls, passive vs active, slots
 - **[[Mechanics/Mana]]** — the per-battle resource
