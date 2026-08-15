@@ -1,9 +1,10 @@
 import { GameRoomPublicData, IGameRoomConfig, Result } from "./types.js";
-import { Player, PlayerPublic, PlayerRunEntity } from "./player.js";
+import { Player, PlayerPublic, PlayerRunEntity, PlayerRunEntityRace } from "./player.js";
 import { GameRoomState, ActionResponse } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
 import { GameRoomEntityStatsDefaults } from "./defaults.js";
+import { IStats } from "../procedural-engine/domain.js";
 
 
 export class GameRoom implements IGameRoomContext {
@@ -152,7 +153,27 @@ export class GameRoom implements IGameRoomContext {
   public getPlayerRunEntity(userId: string): PlayerRunEntity | undefined {
     return this.playerRunEntities.get(userId);
   }
-   
+
+  setPlayerRace(userId: string, race: PlayerRunEntityRace): boolean {
+    const playerRunEntity = this.playerRunEntities.get(userId);
+
+    if (!playerRunEntity) {
+      return false;
+    }
+
+    playerRunEntity.setRace(race);
+    return true;
+  }
+  
+  changePlayerStatsBy(userId: string, stat: keyof IStats, amount: number): boolean {
+    const playerRunEntity = this.playerRunEntities.get(userId);
+
+    if (!playerRunEntity) {
+      return false;
+    }
+
+    return playerRunEntity.increaseBaseStatBy(stat, amount);
+  }
 
   // Handle Config Updates
   updateConfig(config: IGameRoomConfig) {
