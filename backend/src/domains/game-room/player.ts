@@ -103,6 +103,11 @@ export class PlayerRunEntity {
     if (this.BaseStats[stat] + amount < 0 || this.BaseStats[stat] + amount > this.MaxBaseStat) {
       return false;
     }
+
+    if (stat === "hp") {
+      this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
+    }
+    
     return this.base_stats.increaseStatBy(stat, amount);
   }
 
@@ -172,10 +177,7 @@ export class PlayerRunEntity {
     if (!this.increaseBaseStatBy(stat, points)) {
       return false;
     }
-    if (stat === "hp") {
-      this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
-    }
-    
+
     this.skill_points -= points;
     return true;
   }
