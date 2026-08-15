@@ -1,14 +1,78 @@
 export type PlayerStatus = 'joined' | 'connected' | 'ready' | 'disconnected' | 'left' | 'in-run'
 
+export interface Stats {
+  hp: number
+  strength: number
+  dexterity: number
+  intelligence: number
+  wisdom: number
+  agility: number
+}
+
+export type GearSlot = 'head' | 'chest' | 'greaves'
+
+export interface ArmorPiece {
+  armorId: string
+  armorName: string
+  description: string
+  stats: Stats
+  gear_position: GearSlot
+}
+
+export interface ArmorSlots {
+  head: ArmorPiece
+  chest: ArmorPiece
+  greaves: ArmorPiece
+}
+
+export interface WeaponPiece {
+  weaponId: string
+  weaponName: string
+  description: string
+  stats: Stats
+}
+
+export type ConsumableType = 'health_potion' | 'gold_key' | 'lockpick'
+export type Consumables = Record<ConsumableType, number>
+export type Race = 'elf' | 'dwarf' | 'human' | 'orc' | 'goblin' | 'troll'
+
+export interface PlayerRunEntity {
+  base_stats: Stats
+  stat_modifiers: Stats
+  armor_stats: ArmorSlots
+  weapon_stats: WeaponPiece
+  level: number
+  experience: number
+  skill_points: number
+  gold: number
+  race: Race
+  consumables: Consumables
+  health: { MaxHealth: number; CurrentHealth: number }
+}
+
 export interface PlayerPublic {
   playerId: string
   name: string
   status: PlayerStatus
   isHost: boolean
+  stats: PlayerRunEntity
 }
 
 export interface RoomConfig {
   maxPlayers: number
+  seed: string
+}
+
+const SEED_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+
+export function generateSeed(length = 6): string {
+  const out = new Array<string>(length)
+  const bytes = new Uint32Array(length)
+  crypto.getRandomValues(bytes)
+  for (let i = 0; i < length; i++) {
+    out[i] = SEED_CHARS[bytes[i] % SEED_CHARS.length]
+  }
+  return out.join('')
 }
 
 export interface RoomData {
@@ -82,6 +146,18 @@ export async function sendAction(roomToken: string, action: string, payload?: un
     method: 'POST',
     body: JSON.stringify({ action, payload }),
   })
+}
+
+export async function setPlayerRace(roomToken: string, race: Race): Promise<void> {
+  await sendAction(roomToken, 'SET_PLAYER_RACE', race)
+}
+
+export async function changePlayerStatsBy(
+  roomToken: string,
+  stat: keyof Stats,
+  amount: number,
+): Promise<void> {
+  await sendAction(roomToken, 'CHANGE_PLAYER_STATS', { stat, amount })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {

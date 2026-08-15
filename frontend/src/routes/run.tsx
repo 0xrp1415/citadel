@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
-import type { PlayerPublic, RoomData } from '../rooms'
+import type { ConsumableType, PlayerPublic, PlayerRunEntity, RoomData, Stats } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 
@@ -147,6 +147,10 @@ function Run() {
         </section>
       </LedgerFrame>
 
+      <aside className="descent__rail descent__rail--map" aria-label="Descent map">
+        <MapCard />
+      </aside>
+
       {openPlayer && (
         <DossierCard
           player={openPlayer}
@@ -179,8 +183,8 @@ function PartyManifest({
     <div className="board">
       <div className="board__head">
         <span className="board__title">Party manifest</span>
-        <span className="board__sub">
-          {room ? `${room.totalPlayers} in the descent · permit ${room.inviteCode}` : '· —'}
+        <span className="board__sub board__sub--muted">
+          {room ? `${room.totalPlayers} in the descent` : '· —'}
         </span>
       </div>
       <ol className="board__list">
@@ -226,92 +230,179 @@ function PartyManifest({
   )
 }
 
-const DOSSIER_FIELDS = ['Vitality', 'Strength', 'Agility', 'Wits', 'Resolve', 'Provision']
+interface MapRoom {
+  id: string
+  cover: string
+  x: number
+  y: number
+  missed?: boolean
+}
 
-const GEAR_POOL = [
-  'brass longsword',
-  'lantern spear',
-  'hide buckler',
-  'coil-bound greaves',
-  'waxen hauberk',
-  'officer’s blade',
-  'pinned half-plate',
-  'knotted mace',
-  'glass visor',
-  'trail satchel',
+const MAP_NODES: MapRoom[] = [
+  { id: 'm1', cover: 'Gatehall', x: 50, y: 8 },
+  { id: 'm2', cover: 'Vestry', x: 50, y: 21 },
+  { id: 'm3', cover: 'Warden’s Hall', x: 24, y: 36 },
+  { id: 'm4', cover: 'Sunken Gallery', x: 76, y: 36, missed: true },
+  { id: 'm5', cover: 'Bone Crypt', x: 50, y: 51 },
+  { id: 'm6', cover: 'The Gantlet', x: 24, y: 66 },
+  { id: 'm7', cover: 'Mirror Well', x: 76, y: 66, missed: true },
+  { id: 'm8', cover: 'Sealed Door', x: 50, y: 80 },
+  { id: 'm9', cover: 'The Deep', x: 50, y: 93 },
 ]
 
-const ITEM_POOL = [
-  'salt ration ×3',
-  'water-skin',
-  'bandage roll',
-  'torch · short',
-  'smoke pellet',
-  'rope · 20ft',
-  'whetstone',
-  'bitter tincture',
+const MAP_EDGES: [string, string][] = [
+  ['m1', 'm2'],
+  ['m2', 'm3'],
+  ['m2', 'm4'],
+  ['m3', 'm5'],
+  ['m4', 'm5'],
+  ['m5', 'm6'],
+  ['m5', 'm7'],
+  ['m6', 'm8'],
+  ['m7', 'm8'],
+  ['m8', 'm9'],
 ]
 
-const ANNOTATIONS = [
-  'The officer flags a fine edge — kept sharp since the second landing.',
-  'The file notes the whetstone is loaned, and will be returned at the gate.',
-  'The officer recorded no remarks since the warden gate.',
-  'The lantern is carried low tonight; the file asks it stay lit.',
+const VISITED_ROOMS = new Set([MAP_NODES[0].id])
+
+function MapCard() {
+  const [hovered, setHovered] = useState<MapRoom | null>(null)
+  const nodeById = new Map(MAP_NODES.map((n) => [n.id, n]))
+
+  const parentsOf = (id: string): string[] =>
+    MAP_EDGES.filter(([, to]) => to === id).map(([from]) => from)
+
+  const roomStatus = (id: string): 'seen' | 'frontier' | 'hidden' => {
+    if (VISITED_ROOMS.has(id)) return 'seen'
+    return parentsOf(id).some((pid) => VISITED_ROOMS.has(pid)) ? 'frontier' : 'hidden'
+  }
+
+  return (
+    <section className="board map" aria-label="Descent map">
+      <div className="board__head">
+        <span className="board__title">Descent map</span>
+        <span className="board__sub board__sub--muted">charted</span>
+      </div>
+      <div className="map__canvas">
+        <svg
+          className="map__svg"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <marker
+              id="map-arrow"
+              viewBox="0 0 6 6"
+              refX="5"
+              refY="3"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L6 3 L0 6 z" fill="rgba(90, 74, 52, 0.5)" />
+            </marker>
+          </defs>
+          {MAP_EDGES.map(([from, to]) => {
+            const a = nodeById.get(from)
+            const b = nodeById.get(to)
+            if (!a || !b || roomStatus(from) === 'hidden' || roomStatus(to) === 'hidden') {
+              return null
+            }
+            return (
+              <line
+                key={`${from}-${to}`}
+                className="map__edge"
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                markerEnd="url(#map-arrow)"
+              />
+            )
+          })}
+        </svg>
+        {MAP_NODES.map((room, i) => {
+          const status = roomStatus(room.id)
+          if (status === 'hidden') return null
+          const isCurrent = VISITED_ROOMS.has(room.id)
+          return (
+            <button
+              type="button"
+              key={room.id}
+              className={`map__node${status === 'frontier' ? ' map__node--frontier' : ''}${
+                isCurrent ? ' map__node--current' : ''
+              }${room.missed && status === 'seen' ? ' map__node--missed' : ''}${
+                hovered?.id === room.id ? ' map__node--active' : ''
+              }`}
+              style={{ left: `${room.x}%`, top: `${room.y}%` }}
+              onMouseEnter={() => setHovered(room)}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(room)}
+              onBlur={() => setHovered(null)}
+              aria-label={
+                status === 'frontier'
+                  ? 'Unexplored chamber'
+                  : `${room.cover}${room.missed ? ' — missed item' : ''}`
+              }
+              aria-describedby="map-cover"
+            >
+              <span className="map__node-index">
+                {status === 'frontier' ? '?' : String(i + 1).padStart(2, '0')}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <div className="map__cover" id="map-cover" role="status" aria-live="polite">
+        {hovered ? (
+          roomStatus(hovered.id) === 'seen' ? (
+            <>
+              <span className="map__cover-name">{hovered.cover}</span>
+              {hovered.missed && <span className="map__cover-miss">missed item</span>}
+            </>
+          ) : (
+            <span className="map__cover-name map__cover-name--unknown">unexplored chamber</span>
+          )
+        ) : (
+          <span className="map__cover-name map__cover-name--idle">hover a room</span>
+        )}
+      </div>
+    </section>
+  )
+}
+
+const DOSSIER_FIELDS: { label: string; key: keyof Stats }[] = [
+  { label: 'Vitality', key: 'hp' },
+  { label: 'Strength', key: 'strength' },
+  { label: 'Dexterity', key: 'dexterity' },
+  { label: 'Agility', key: 'agility' },
+  { label: 'Wits', key: 'intelligence' },
+  { label: 'Resolve', key: 'wisdom' },
 ]
 
-interface DossierData {
-  stats: number[]
-  health: { current: number; max: number }
-  gear: string[]
-  items: string[]
+const CONSUMABLE_LABELS: Record<ConsumableType, string> = {
+  health_potion: 'health potion',
+  gold_key: 'gold key',
+  lockpick: 'lockpick',
 }
 
-function mulberry32(seed: number): () => number {
-  return () => {
-    seed |= 0
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+function gearList(stats: PlayerRunEntity): string[] {
+  return [
+    stats.weapon_stats.weaponName,
+    stats.armor_stats.head.armorName,
+    stats.armor_stats.chest.armorName,
+    stats.armor_stats.greaves.armorName,
+  ]
+}
+
+function itemList(stats: PlayerRunEntity): string[] {
+  const items: string[] = []
+  for (const type of Object.keys(CONSUMABLE_LABELS) as ConsumableType[]) {
+    const count = stats.consumables[type]
+    if (count > 0) items.push(`${CONSUMABLE_LABELS[type]} ×${count}`)
   }
-}
-
-function seedFrom(input: string): number {
-  let h = 2166136261
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return h >>> 0
-}
-
-function pickRandom<T>(rand: () => number, pool: readonly T[], count: number): T[] {
-  const copy = [...pool]
-  const out: T[] = []
-  while (copy.length > 0 && out.length < count) {
-    out.push(copy.splice(Math.floor(rand() * copy.length), 1)[0])
-  }
-  return out
-}
-
-function dossierFor(player: PlayerPublic): DossierData {
-  const rand = mulberry32(seedFrom(player.playerId))
-  const roll = (min: number, max: number) => min + Math.floor(rand() * (max - min + 1))
-
-  const vitality = roll(8, 18)
-  const maxHealth = vitality + 10
-  const current = Math.max(1, maxHealth - roll(0, 8))
-
-  return {
-    stats: [vitality, roll(6, 18), roll(6, 18), roll(6, 18), roll(6, 18), roll(6, 18)],
-    health: { current, max: maxHealth },
-    gear: pickRandom(rand, GEAR_POOL, 3),
-    items: pickRandom(rand, ITEM_POOL, 3),
-  }
-}
-
-function annotationFor(playerId: string): string {
-  return ANNOTATIONS[seedFrom(playerId) % ANNOTATIONS.length]
+  return items
 }
 
 interface DossierCardProps {
@@ -332,8 +423,15 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  const data = dossierFor(player)
-  const healthPct = Math.round((data.health.current / data.health.max) * 100)
+  const stats = player.stats
+  const health = stats.health
+  const healthPct =
+    health.MaxHealth > 0
+      ? Math.round((health.CurrentHealth / health.MaxHealth) * 100)
+      : 0
+
+  const gear = gearList(stats)
+  const items = itemList(stats)
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -414,10 +512,10 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
           </header>
 
           <dl className="filecard__stats">
-            {DOSSIER_FIELDS.map((field, i) => (
-              <div className="filecard__stat" key={field}>
-                <dt className="filecard__k">{field}</dt>
-                <dd className="filecard__v">{data.stats[i]}</dd>
+            {DOSSIER_FIELDS.map((field) => (
+              <div className="filecard__stat" key={field.key}>
+                <dt className="filecard__k">{field.label}</dt>
+                <dd className="filecard__v">{stats.base_stats[field.key]}</dd>
               </div>
             ))}
           </dl>
@@ -428,9 +526,9 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
               <span className="filecard__health-fill" style={{ width: `${healthPct}%` }} />
             </span>
             <span className="filecard__health-num">
-              {data.health.current}
+              {health.CurrentHealth}
               <span className="filecard__slash">/</span>
-              {data.health.max}
+              {health.MaxHealth}
             </span>
           </div>
 
@@ -438,7 +536,7 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
             <div className="filecard__col">
               <span className="filecard__col-k">Gear</span>
               <ul className="filecard__list">
-                {data.gear.map((item) => (
+                {gear.map((item) => (
                   <li className="filecard__item" key={item}>
                     {item}
                   </li>
@@ -448,16 +546,23 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
             <div className="filecard__col">
               <span className="filecard__col-k">Items</span>
               <ul className="filecard__list">
-                {data.items.map((item) => (
-                  <li className="filecard__item" key={item}>
-                    {item}
-                  </li>
-                ))}
+                {items.length > 0 ? (
+                  items.map((item) => (
+                    <li className="filecard__item" key={item}>
+                      {item}
+                    </li>
+                  ))
+                ) : (
+                  <li className="filecard__item">none carried</li>
+                )}
               </ul>
             </div>
           </div>
 
-          <p className="filecard__note">{annotationFor(player.playerId)}</p>
+          <p className="filecard__note">
+            Lv {stats.level} · {stats.race} · {stats.gold} gold · {stats.skill_points} point
+            {stats.skill_points === 1 ? '' : 's'} unspent
+          </p>
 
           <footer className="filecard__foot">
             <button
