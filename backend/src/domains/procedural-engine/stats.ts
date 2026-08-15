@@ -4,7 +4,7 @@ export interface IStats {
     dexterity: number,
     intelligence: number,
     wisdom: number,
-    agility: number
+    agility: number,
 }
 
 export class EntityStats {
@@ -29,7 +29,7 @@ export class EntityStats {
         if (this.Stats[stat] + amount < 0) {
             return false;
         }
-    
+
         switch (stat) {
             case "hp":
                 this.hp += amount;

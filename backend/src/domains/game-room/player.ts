@@ -1,4 +1,4 @@
-import { EntityStats, IStats } from "../procedural-engine/domain.js";
+import { EntityHealthStatImpl, EntityStats, IEntityHealthStatGetters, IStats } from "../procedural-engine/domain.js";
 import { NullStatsGenerator } from "./defaults.js";
 
 export type PlayerStatus =
@@ -67,16 +67,18 @@ export type PlayerRunEntityJSON = {
   gold: number;
   race: PlayerRunEntityRace;
   consumables: Consumables;
+  health: IEntityHealthStatGetters;
 };
 
 export const BASE_MAX_PLAYER_BASE_STAT = 40;
-
+export const BASE_PLAYER_HP = 100;
 export type PlayerRunEntityRace = "elf" | "dwarf" | "human" | "orc" | "goblin" | "troll";
 
 
 export class PlayerRunEntity {
   private base_stats: EntityStats;
   private stat_modifiers: EntityStats = NullStatsGenerator();
+  private health: EntityHealthStatImpl;
 
   private armor_stat: PlayerRunEntityArmors;
   private weapon_stat: PlayerRunEntityWeapon;
@@ -93,6 +95,7 @@ export class PlayerRunEntity {
     this.base_stats = new EntityStats(initialStats);
     this.armor_stat = initialArmorStats;
     this.weapon_stat = initialWeaponStats;
+    this.health = new EntityHealthStatImpl(this.base_stats.Stats.hp, this.level, BASE_PLAYER_HP);
   }
 
   // Stat Management
@@ -112,13 +115,21 @@ export class PlayerRunEntity {
   }
 
   public increaseStatModifierBy(stat: keyof IStats, amount: number): boolean {
-    return this.stat_modifiers.increaseStatBy(stat, amount);
+    let result = this.stat_modifiers.increaseStatBy(stat, amount);
+    return result;
   }
 
+  // Health Management
+  public changeHealthBy(amount: number): void {
+    this.health.changeCurrentHealthBy(amount);
+  }
+
+  // Race Setter
   public setRace(race: PlayerRunEntityRace) {
     this.race = race;
   }
 
+  // Gold Management
   public changeGoldBy(amt: number) {
     if (this.gold + amt < 0) {
       return false;
@@ -161,16 +172,22 @@ export class PlayerRunEntity {
     if (!this.increaseBaseStatBy(stat, points)) {
       return false;
     }
-
+    if (stat === "hp") {
+      this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
+    }
+    
     this.skill_points -= points;
     return true;
   }
+
+
 
   // Getters
   // Armor Stats and Modifiers Getters
   public get ArmorStats(): PlayerRunEntityArmors {
     return this.armor_stat;
   }
+
 
   public get StatChangeByArmor(): IStats {
     const totalArmorStats: IStats = {
@@ -200,6 +217,13 @@ export class PlayerRunEntity {
   // Level , Experience, and Skill Points Getters
   public get Level(): number {
     return this.level;
+  }
+
+  public get Health(): IEntityHealthStatGetters {
+    return {
+      MaxHealth: this.health.MaxHealth,
+      CurrentHealth: this.health.CurrentHealth
+    };
   }
 
   public get Experience(): number {
@@ -251,7 +275,8 @@ export class PlayerRunEntity {
       skill_points: this.SkillPoints,
       gold: this.gold,
       race: this.race,
-      consumables: this.Consumables
+      consumables: this.Consumables,
+      health: this.Health
     }
   }
 }
