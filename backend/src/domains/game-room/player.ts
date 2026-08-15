@@ -104,11 +104,12 @@ export class PlayerRunEntity {
       return false;
     }
 
-    if (stat === "hp") {
+    const changed = this.base_stats.increaseStatBy(stat, amount);
+    if (changed && stat === "hp") {
       this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
     }
-    
-    return this.base_stats.increaseStatBy(stat, amount);
+
+    return changed;
   }
 
   public SetArmorStatFor(gear: keyof PlayerRunEntityArmors, armorStat: PlayerRunEntityArmor) {

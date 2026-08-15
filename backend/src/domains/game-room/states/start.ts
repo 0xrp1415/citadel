@@ -7,7 +7,7 @@ const START_GAME = "start_game";
 const PLAYER_TOGGLE_READY = "player_toggle_ready";
 const CONFIRM_START = "confirm_start";
 const SET_PLAYER_RACE = "SET_PLAYER_RACE";
-const CHANGE_PLAYER_STATS = "CHANGE_PLAYER_STATS_BY";
+const CHANGE_PLAYER_STATS = "CHANGE_PLAYER_STATS";
 
 type TActions = typeof START_GAME | typeof PLAYER_TOGGLE_READY | typeof CONFIRM_START | typeof SET_PLAYER_RACE | typeof CHANGE_PLAYER_STATS;
 
