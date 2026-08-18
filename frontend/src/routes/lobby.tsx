@@ -85,6 +85,8 @@ function Lobby() {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const [partySize, setPartySize] = useState(4)
+  const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [joinCode, setJoinCode] = useState('')
   const [seed, setSeed] = useState(() => generateSeed())
   const [createOpen, setCreateOpen] = useState(false)
@@ -114,7 +116,13 @@ function Lobby() {
     if (room?.config.seed) {
       setSeed(room.config.seed)
     }
-  }, [room?.config.maxPlayers, room?.config.seed])
+    if (room?.config.mapSize) {
+      setMapSize(room.config.mapSize)
+    }
+    if (room?.config.difficulty) {
+      setDifficulty(room.config.difficulty)
+    }
+  }, [room?.config.maxPlayers, room?.config.seed, room?.config.mapSize, room?.config.difficulty])
 
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const me = room?.players.find((p) => p.playerId === selfPlayerId)
@@ -128,7 +136,7 @@ function Lobby() {
     setBusy(true)
     try {
       const res = await createRoom(
-        { maxPlayers: partySize, seed: seed.trim() },
+        { maxPlayers: partySize, seed: seed.trim(), mapSize, difficulty },
         user?.name ?? 'Prisoner',
         token,
       )
@@ -216,7 +224,29 @@ function Lobby() {
     setPartySize(size)
     setActionError(null)
     try {
-      await updateRoomConfig(roomToken, { maxPlayers: size, seed })
+      await updateRoomConfig(roomToken, { maxPlayers: size, seed, mapSize, difficulty })
+    } catch (err) {
+      setActionError(errorMessage(err))
+    }
+  }
+
+  async function handleMapSize(size: 'small' | 'medium' | 'large') {
+    if (!roomToken) return
+    setMapSize(size)
+    setActionError(null)
+    try {
+      await updateRoomConfig(roomToken, { maxPlayers: partySize, seed, mapSize: size, difficulty })
+    } catch (err) {
+      setActionError(errorMessage(err))
+    }
+  }
+
+  async function handleDifficulty(diff: 'easy' | 'medium' | 'hard') {
+    if (!roomToken) return
+    setDifficulty(diff)
+    setActionError(null)
+    try {
+      await updateRoomConfig(roomToken, { maxPlayers: partySize, seed, mapSize, difficulty: diff })
     } catch (err) {
       setActionError(errorMessage(err))
     }
@@ -228,13 +258,21 @@ function Lobby() {
     setBusy(true)
     const next = generateSeed()
     try {
-      await updateRoomConfig(roomToken, { maxPlayers: partySize, seed: next })
+      await updateRoomConfig(roomToken, { maxPlayers: partySize, seed: next, mapSize, difficulty })
       setSeed(next)
     } catch (err) {
       setActionError(errorMessage(err))
     } finally {
       setBusy(false)
     }
+  }
+
+  function handleSeedChange(value: string) {
+    setSeed(value)
+    if (!roomToken) return
+    updateRoomConfig(roomToken, { maxPlayers: partySize, seed: value, mapSize, difficulty }).catch(
+      (err) => setActionError(errorMessage(err)),
+    )
   }
 
   async function handleSetRace(race: Race) {
@@ -286,8 +324,8 @@ function Lobby() {
       : connected
         ? room
           ? 'The expedition is filed. Await your party.'
-          : 'The register opens. Await the officer\u2019s word.'
-        : 'The line is down — retrying the connection\u2026'
+          : "The register opens. Await the officer's word."
+        : 'The line is down — retrying the connection…'
 
   return (
     <LedgerFrame wide>
@@ -308,16 +346,21 @@ function Lobby() {
           me={me}
           hasGhosts={hasGhosts}
           partySize={partySize}
+          mapSize={mapSize}
+          difficulty={difficulty}
           seed={seed}
           busy={busy}
           actionError={actionError}
           onPartySize={handlePartySize}
+          onMapSize={handleMapSize}
+          onDifficulty={handleDifficulty}
           onReady={handleReady}
           onStart={handleStart}
           onConfirmStart={handleConfirmStart}
           onKick={handleKick}
           onLeave={handleLeave}
           onRerollSeed={handleRerollSeed}
+          onSeedChange={handleSeedChange}
           onSetRace={handleSetRace}
           onChangeStat={handleChangeStat}
         />
@@ -395,11 +438,9 @@ function Lobby() {
             <CreateGameModal
               name={user?.name ?? 'Unnamed'}
               partySize={partySize}
-              seed={seed}
               busy={busy}
               error={error}
               onPartySize={setPartySize}
-              onSeed={setSeed}
               onSubmit={handleCreate}
               onClose={() => setCreateOpen(false)}
             />
@@ -491,11 +532,9 @@ function FileCardModal({ num, label, closeLabel, ariaLabel, onClose, children }:
 interface CreateGameModalProps {
   name: string
   partySize: number
-  seed: string
   busy: boolean
   error: string | null
   onPartySize: (size: number) => void
-  onSeed: (seed: string) => void
   onSubmit: (event: FormEvent) => void
   onClose: () => void
 }
@@ -503,11 +542,9 @@ interface CreateGameModalProps {
 function CreateGameModal({
   name,
   partySize,
-  seed,
   busy,
   error,
   onPartySize,
-  onSeed,
   onSubmit,
   onClose,
 }: CreateGameModalProps) {
@@ -549,33 +586,6 @@ function CreateGameModal({
             ))}
           </select>
         </div>
-        <div className="seedrow" style={{ marginTop: '0.9rem' }}>
-          <label className="field__label" htmlFor="modal-run-seed">
-            Run seed
-          </label>
-          <span className="seedrow__control">
-            <input
-              id="modal-run-seed"
-              className="input seedrow__input"
-              value={seed}
-              onChange={(e) => onSeed(e.target.value.toUpperCase())}
-              placeholder="ABCDEF"
-              maxLength={64}
-              spellCheck={false}
-            />
-            <button
-              type="button"
-              className="btn btn--ghost seedrow__reroll"
-              disabled={busy}
-              onClick={() => onSeed(generateSeed())}
-            >
-              Reroll
-            </button>
-          </span>
-          <span className="seedrow__note">
-            the same seed and party descend the same tower
-          </span>
-        </div>
         {error && (
           <p className="intake__error" role="alert">
             {error}
@@ -585,7 +595,7 @@ function CreateGameModal({
           <button
             type="submit"
             className="btn btn--primary"
-            disabled={busy || seed.trim().length === 0}
+            disabled={busy}
           >
             Register the expedition
           </button>
@@ -599,11 +609,16 @@ interface ManageModalProps {
   players: PlayerPublic[]
   pendingKick: string | null
   partySize: number
+  mapSize: 'small' | 'medium' | 'large'
+  difficulty: 'easy' | 'medium' | 'hard'
   seed: string
   busy: boolean
   connected: boolean
   onPartySize: (size: number) => void
+  onMapSize: (size: 'small' | 'medium' | 'large') => void
+  onDifficulty: (diff: 'easy' | 'medium' | 'hard') => void
   onRerollSeed: () => void
+  onSeedChange: (seed: string) => void
   onKick: (playerId: string) => void
   onRequestKick: (playerId: string) => void
   onClose: () => void
@@ -613,11 +628,16 @@ function ManageModal({
   players,
   pendingKick,
   partySize,
+  mapSize,
+  difficulty,
   seed,
   busy,
   connected,
   onPartySize,
+  onMapSize,
+  onDifficulty,
   onRerollSeed,
+  onSeedChange,
   onKick,
   onRequestKick,
   onClose,
@@ -731,10 +751,50 @@ function ManageModal({
                 ))}
               </select>
             </div>
+            <div className="field">
+              <label className="field__label" htmlFor="settings-map-size">
+                Map size
+              </label>
+              <select
+                id="settings-map-size"
+                className="select"
+                value={mapSize}
+                disabled={busy}
+                onChange={(e) => onMapSize(e.target.value as 'small' | 'medium' | 'large')}
+              >
+                <option value="small">small · 10–15 rooms</option>
+                <option value="medium">medium · 25–30 rooms</option>
+                <option value="large">large · 35–40 rooms</option>
+              </select>
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="settings-difficulty">
+                Difficulty
+              </label>
+              <select
+                id="settings-difficulty"
+                className="select"
+                value={difficulty}
+                disabled={busy}
+                onChange={(e) => onDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
+              >
+                <option value="easy">easy</option>
+                <option value="medium">medium</option>
+                <option value="hard">hard</option>
+              </select>
+            </div>
             <div className="seedrow">
               <span className="field__label">Run seed</span>
               <span className="seedrow__control">
-                <span className="seedrow__value">{seed || '——'}</span>
+                <input
+                  className="input seedrow__input"
+                  value={seed}
+                  disabled={busy || !connected}
+                  onChange={(e) => onSeedChange(e.target.value.toUpperCase())}
+                  placeholder="ABCDEF"
+                  maxLength={64}
+                  spellCheck={false}
+                />
                 <button
                   type="button"
                   className="btn btn--ghost seedrow__reroll"
@@ -768,16 +828,21 @@ interface LiveRoomProps {
   me: PlayerPublic | undefined
   hasGhosts: boolean
   partySize: number
+  mapSize: 'small' | 'medium' | 'large'
+  difficulty: 'easy' | 'medium' | 'hard'
   seed: string
   busy: boolean
   actionError: string | null
   onPartySize: (size: number) => void
+  onMapSize: (size: 'small' | 'medium' | 'large') => void
+  onDifficulty: (diff: 'easy' | 'medium' | 'hard') => void
   onReady: () => void
   onStart: () => void
   onConfirmStart: () => void
   onKick: (playerId: string) => void
   onLeave: () => void
   onRerollSeed: () => void
+  onSeedChange: (seed: string) => void
   onSetRace: (race: Race) => void
   onChangeStat: (stat: keyof Stats, amount: number) => void
 }
@@ -791,16 +856,21 @@ function LiveRoom({
   me,
   hasGhosts,
   partySize,
+  mapSize,
+  difficulty,
   seed,
   busy,
   actionError,
   onPartySize,
+  onMapSize,
+  onDifficulty,
   onReady,
   onStart,
   onConfirmStart,
   onKick,
   onLeave,
   onRerollSeed,
+  onSeedChange,
   onSetRace,
   onChangeStat,
 }: LiveRoomProps) {
@@ -972,11 +1042,16 @@ function LiveRoom({
           players={room?.players ?? []}
           pendingKick={pendingKick}
           partySize={partySize}
+          mapSize={mapSize}
+          difficulty={difficulty}
           seed={seed}
           busy={busy}
           connected={connected}
           onPartySize={onPartySize}
+          onMapSize={onMapSize}
+          onDifficulty={onDifficulty}
           onRerollSeed={onRerollSeed}
+          onSeedChange={onSeedChange}
           onKick={onKick}
           onRequestKick={requestKick}
           onClose={() => setManageOpen(false)}

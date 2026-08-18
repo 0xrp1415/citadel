@@ -43,7 +43,7 @@ export function OfficerLine({
   return (
     <p className={`officer ${className}`.trim()}>
       <span className="officer__mark" aria-hidden="true">
-        {'\u2192 '}
+        {'→ '}
       </span>
       {shown}
       {typing && <span className="caret" aria-hidden="true" />}

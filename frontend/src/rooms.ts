@@ -61,6 +61,8 @@ export interface PlayerPublic {
 export interface RoomConfig {
   maxPlayers: number
   seed: string
+  difficulty: 'easy' | 'medium' | 'hard'
+  mapSize: 'small' | 'medium' | 'large'
 }
 
 const SEED_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -75,12 +77,42 @@ export function generateSeed(length = 6): string {
   return out.join('')
 }
 
+export interface RoomPublicJSON {
+  type: string
+  baseDifficulty: number
+  distanceBonus: number
+  isCurrentRoom: boolean
+  adjacentRooms: {
+    left: number | null
+    right: number | null
+    up: number | null
+    down: number | null
+  }
+}
+
+export interface PassagePublicJSON {
+  id: number
+  roomA: number
+  roomB: number
+  direction: 'left' | 'right' | 'up' | 'down' | null
+  event: { type: string; requiredStat: string; difficulty: number } | null
+  unlocked: boolean
+}
+
+export interface MapPublicJSON {
+  rooms: RoomPublicJSON[]
+  passages: PassagePublicJSON[]
+}
+
 export interface RoomData {
   inviteCode: string
   totalPlayers: number
   players: PlayerPublic[]
   config: RoomConfig
   status: string
+  floor: number
+  currentRoom: { type: string }
+  map: MapPublicJSON | null
 }
 
 export interface CreateRoomResult {
