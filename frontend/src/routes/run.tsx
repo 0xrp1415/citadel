@@ -312,7 +312,7 @@ const ROOM_LABELS: Record<string, string> = {
 function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () => void }) {
   const map = room.map
   const currentRoom = room.currentRoom
-  const roomIndex = 0
+  const roomIndex = currentRoom.index
 
   const adj = map?.rooms[roomIndex]?.adjacentRooms
   const neighbors = adj

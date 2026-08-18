@@ -111,7 +111,7 @@ export interface RoomData {
   config: RoomConfig
   status: string
   floor: number
-  currentRoom: { type: string }
+  currentRoom: { type: string; index: number }
   map: MapPublicJSON | null
 }
 

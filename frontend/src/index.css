@@ -1103,23 +1103,8 @@
   white-space: nowrap;
 }
 
-.seedrow__value {
-  font-family: var(--font-data);
-  font-size: 0.95rem;
-  letter-spacing: 0.22em;
-  color: var(--color-ink);
-}
-
 .grounds__fleuron {
   margin-top: 1.15rem;
-}
-
-.grounds__note {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  line-height: 1.7;
-  color: var(--color-mist);
-  margin: 1.1rem 0 0;
 }
 
 .grounds__actions {
@@ -2029,24 +2014,6 @@
   color: var(--color-teal);
 }
 
-/* ---------- filecard full-screen modifier ---------- */
-
-.filecard--fullscreen {
-  padding: 0;
-  background: rgba(60, 49, 40, 0.6);
-  backdrop-filter: blur(2px);
-}
-
-.filecard--fullscreen .filecard {
-  width: 100vw;
-  max-width: 100vw;
-  height: 100vh;
-  max-height: 100vh;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-}
-
 /* ---------- current room card ---------- */
 
 .currentroom__body {
@@ -2364,10 +2331,6 @@
 
 .record__row--data {
   color: var(--color-ink);
-}
-
-.record__row--dim {
-  color: var(--color-mist);
 }
 
 .record__indent {
