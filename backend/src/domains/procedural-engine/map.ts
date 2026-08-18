@@ -77,9 +77,16 @@ function GenerateRoomConnections(rng: MulberryRNG, roomCount: number): { rooms: 
     let nextId = 1;
     let pos = { x: 0, y: 0 };
     let prevRoom = startRoom;
+    let lastDir: Direction | null = null;
 
     while (nextId < roomCount) {
-        const dir = rng.pick(DIRECTIONS);
+        const candidates: Direction[] = lastDir
+            ? DIRECTIONS.filter((d) => d !== OPPOSITE[lastDir!])
+            : DIRECTIONS;
+        const dir: Direction = (lastDir && candidates.includes(lastDir) && rng.chance(0.40))
+            ? lastDir
+            : rng.pick(candidates);
+        lastDir = dir;
         const offset = OFFSETS[dir];
         const target = { x: pos.x + offset.dx, y: pos.y + offset.dy };
         const key = `${target.x},${target.y}`;
