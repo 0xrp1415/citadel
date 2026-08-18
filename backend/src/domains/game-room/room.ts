@@ -22,6 +22,7 @@ export class GameRoom implements IGameRoomContext {
   private currentState: GameRoomState | null = null;
   private _floor: number = 1;
   private _currentDifficulty: IGameRoomConfig["difficulty"] = "medium";
+  private _currentRoomId: number = 0;
   private _map: IMap | null = null;
 
 
@@ -232,7 +233,7 @@ export class GameRoom implements IGameRoomContext {
   // Map Generation
   public GenerateRoom(): void {
     const rng = MulberryRNG.fromSeed(this.config.seed + this._floor);
-    const mapConfig = difficultyToMapConfig(this._currentDifficulty);
+    const mapConfig = difficultyToMapConfig(this._currentDifficulty, this.config.mapSize);
     this._map = GenerateMap(rng, mapConfig);
   }
 
@@ -268,6 +269,10 @@ export class GameRoom implements IGameRoomContext {
     return this._floor;
   }
 
+  get CurrentRoomId(): number {
+    return this._currentRoomId;
+  }
+
   get CurrentDifficulty(): IGameRoomConfig["difficulty"] {
     return this._currentDifficulty;
   }
@@ -295,6 +300,7 @@ export class GameRoom implements IGameRoomContext {
   }
 
   get JSON(): GameRoomPublicData {
+    const currentRoomType = this._map?.rooms[this._currentRoomId]?.type ?? "grace";
     return {
       inviteCode: this._inviteCode,
       totalPlayers: this.players.size,
@@ -302,31 +308,45 @@ export class GameRoom implements IGameRoomContext {
       config: this.config,
       status: this.currentState?.ID || "unknown",
       floor: this._floor,
-      map: this._map ? serializeMap(this._map) : null,
+      currentRoom: { type: currentRoomType },
+      map: this._map ? serializeMap(this._map, this._currentRoomId) : null,
     };
   }
 }
 
-function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"]): IMapConfig {
-  switch (difficulty) {
-    case "easy":   return { minRoomCount: 6, maxRoomCount: 10 };
-    case "hard":   return { minRoomCount: 12, maxRoomCount: 18 };
-    default:       return { minRoomCount: 8, maxRoomCount: 15 };
-  }
+function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"], mapSize: IGameRoomConfig["mapSize"]): IMapConfig {
+  const sizeRanges: Record<string, { min: number; max: number }> = {
+    small:  { min: 10, max: 15 },
+    medium: { min: 25, max: 30 },
+    large:  { min: 35, max: 40 },
+  };
+  const range = sizeRanges[mapSize] ?? sizeRanges.medium!;
+
+  const difficultyScale: Record<string, number> = {
+    easy: 0.8,
+    medium: 1,
+    hard: 1.2,
+  };
+  const scale = difficultyScale[difficulty] ?? 1;
+
+  return {
+    minRoomCount: Math.round(range.min * scale),
+    maxRoomCount: Math.round(range.max * scale),
+  };
 }
 
-function serializeMap(map: IMap): IMapPublicJSON {
-  const rooms: IMapPublicJSON["rooms"] = {};
-  for (const [id, meta] of Object.entries(map.rooms)) {
-    const roomId = Number(id);
-    rooms[roomId] = {
-      id: meta.id,
+function serializeMap(map: IMap, currentRoomId: number): IMapPublicJSON {
+  const sortedIds = Object.keys(map.rooms).map(Number).sort((a, b) => a - b);
+  const rooms: IRoomPublicJSON[] = sortedIds.map((roomId) => {
+    const meta = map.rooms[roomId]!;
+    return {
       type: meta.type,
       baseDifficulty: meta.baseDifficulty,
       distanceBonus: meta.distanceBonus,
+      isCurrentRoom: roomId === currentRoomId,
       adjacentRooms: deriveAdjacentRooms(roomId, map.passages),
     };
-  }
+  });
   const passages: IMapPublicJSON["passages"] = map.passages.map((p) => ({
     id: p.ID,
     roomA: p.RoomA,

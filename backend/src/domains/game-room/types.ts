@@ -6,15 +6,16 @@ export const ZGameRoomConfigSchema = z.object({
   maxPlayers: z.number().int().min(3).max(8).default(4),
   seed: z.string(),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+  mapSize: z.enum(["small", "medium", "large"]).default("medium"),
 });
 
 export type IGameRoomConfig = z.infer<typeof ZGameRoomConfigSchema>;
 
 export interface IRoomPublicJSON {
-    id: number;
     type: string;
     baseDifficulty: number;
     distanceBonus: number;
+    isCurrentRoom: boolean;
     adjacentRooms: {
         left: number | null;
         right: number | null;
@@ -33,7 +34,7 @@ export interface IPassagePublicJSON {
 }
 
 export interface IMapPublicJSON {
-    rooms: Record<number, IRoomPublicJSON>;
+    rooms: IRoomPublicJSON[];
     passages: IPassagePublicJSON[];
 }
 
@@ -44,6 +45,7 @@ export interface GameRoomPublicData {
   readonly config: IGameRoomConfig;
   readonly status: string;
   readonly floor: number;
+  readonly currentRoom: { type: string };
   readonly map: IMapPublicJSON | null;
 }
 
