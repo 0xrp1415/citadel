@@ -5,9 +5,37 @@ import { PlayerPublic } from "./player.js";
 export const ZGameRoomConfigSchema = z.object({
   maxPlayers: z.number().int().min(3).max(8).default(4),
   seed: z.string(),
+  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
 });
 
 export type IGameRoomConfig = z.infer<typeof ZGameRoomConfigSchema>;
+
+export interface IRoomPublicJSON {
+    id: number;
+    type: string;
+    baseDifficulty: number;
+    distanceBonus: number;
+    adjacentRooms: {
+        left: number | null;
+        right: number | null;
+        up: number | null;
+        down: number | null;
+    };
+}
+
+export interface IPassagePublicJSON {
+    id: number;
+    roomA: number;
+    roomB: number;
+    direction: string | null;
+    event: { type: string; requiredStat: string; difficulty: number } | null;
+    unlocked: boolean;
+}
+
+export interface IMapPublicJSON {
+    rooms: Record<number, IRoomPublicJSON>;
+    passages: IPassagePublicJSON[];
+}
 
 export interface GameRoomPublicData {
   readonly players: PlayerPublic[];
@@ -15,6 +43,8 @@ export interface GameRoomPublicData {
   readonly inviteCode: string;
   readonly config: IGameRoomConfig;
   readonly status: string;
+  readonly floor: number;
+  readonly map: IMapPublicJSON | null;
 }
 
 export interface IGameRoomRequest extends Request {
@@ -26,4 +56,3 @@ export interface IGameRoomRequest extends Request {
 export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; status: number; error: string };
-

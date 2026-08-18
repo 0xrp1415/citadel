@@ -134,6 +134,7 @@ export class LobbyState extends GameRoomState<TActions> {
             return { success: false, error: "Host is disconnected." };
         }
 
+        this.gameRoom.resetRun();
         this.gameRoom.setState(new InRunState(this.gameRoom));
 
         return { success: true };

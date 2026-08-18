@@ -1,10 +1,10 @@
-import { GameRoomPublicData, IGameRoomConfig, Result } from "./types.js";
+import { GameRoomPublicData, IGameRoomConfig, IMapPublicJSON, IRoomPublicJSON, Result } from "./types.js";
 import { Player, PlayerPublic, PlayerRunEntity, PlayerRunEntityRace } from "./player.js";
 import { GameRoomState, ActionResponse } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
 import { GameRoomEntityStatsDefaults } from "./defaults.js";
-import { IStats } from "../procedural-engine/domain.js";
+import { IStats, MulberryRNG, GenerateMap, IMap, IMapConfig, Passage } from "../procedural-engine/domain.js";
 
 
 export class GameRoom implements IGameRoomContext {
@@ -20,6 +20,9 @@ export class GameRoom implements IGameRoomContext {
   private host: string;
   private lastActivityAt: number = Date.now();
   private currentState: GameRoomState | null = null;
+  private _floor: number = 1;
+  private _currentDifficulty: IGameRoomConfig["difficulty"] = "medium";
+  private _map: IMap | null = null;
 
 
   constructor(
@@ -226,6 +229,24 @@ export class GameRoom implements IGameRoomContext {
     this.broadcast(this.JSON);
   }
 
+  // Map Generation
+  public GenerateRoom(): void {
+    const rng = MulberryRNG.fromSeed(this.config.seed + this._floor);
+    const mapConfig = difficultyToMapConfig(this._currentDifficulty);
+    this._map = GenerateMap(rng, mapConfig);
+  }
+
+  public nextFloor(): void {
+    this._floor++;
+    this.GenerateRoom();
+  }
+
+  public resetRun(): void {
+    this._floor = 1;
+    this._currentDifficulty = this.config.difficulty;
+    this.GenerateRoom();
+  }
+
 
   get ID(): string {
     return this._id;
@@ -241,6 +262,18 @@ export class GameRoom implements IGameRoomContext {
 
   get Config(): IGameRoomConfig {
     return this.config;
+  }
+
+  get Floor(): number {
+    return this._floor;
+  }
+
+  get CurrentDifficulty(): IGameRoomConfig["difficulty"] {
+    return this._currentDifficulty;
+  }
+
+  get Map(): IMap | null {
+    return this._map;
   }
 
   get LastActivityTimestamp(): number {
@@ -268,6 +301,61 @@ export class GameRoom implements IGameRoomContext {
       players: this.PlayersPublic,
       config: this.config,
       status: this.currentState?.ID || "unknown",
+      floor: this._floor,
+      map: this._map ? serializeMap(this._map) : null,
     };
   }
+}
+
+function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"]): IMapConfig {
+  switch (difficulty) {
+    case "easy":   return { minRoomCount: 6, maxRoomCount: 10 };
+    case "hard":   return { minRoomCount: 12, maxRoomCount: 18 };
+    default:       return { minRoomCount: 8, maxRoomCount: 15 };
+  }
+}
+
+function serializeMap(map: IMap): IMapPublicJSON {
+  const rooms: IMapPublicJSON["rooms"] = {};
+  for (const [id, meta] of Object.entries(map.rooms)) {
+    const roomId = Number(id);
+    rooms[roomId] = {
+      id: meta.id,
+      type: meta.type,
+      baseDifficulty: meta.baseDifficulty,
+      distanceBonus: meta.distanceBonus,
+      adjacentRooms: deriveAdjacentRooms(roomId, map.passages),
+    };
+  }
+  const passages: IMapPublicJSON["passages"] = map.passages.map((p) => ({
+    id: p.ID,
+    roomA: p.RoomA,
+    roomB: p.RoomB,
+    direction: p.Direction,
+    event: p.Event,
+    unlocked: p.Unlocked,
+  }));
+  return { rooms, passages };
+}
+
+const OPPOSITE: Record<string, string> = {
+  up: "down",
+  down: "up",
+  left: "right",
+  right: "left",
+};
+
+function deriveAdjacentRooms(roomId: number, passages: Passage[]): IRoomPublicJSON["adjacentRooms"] {
+  const result: IRoomPublicJSON["adjacentRooms"] = { left: null, right: null, up: null, down: null };
+  for (const passage of passages) {
+    if (passage.roomA === roomId && passage.Direction !== null) {
+      result[passage.Direction] = passage.roomB;
+    } else if (passage.roomB === roomId && passage.Direction !== null) {
+      const reverse = OPPOSITE[passage.Direction];
+      if (reverse === "left" || reverse === "right" || reverse === "up" || reverse === "down") {
+        result[reverse] = passage.roomA;
+      }
+    }
+  }
+  return result;
 }
