@@ -308,7 +308,7 @@ export class GameRoom implements IGameRoomContext {
       config: this.config,
       status: this.currentState?.ID || "unknown",
       floor: this._floor,
-      currentRoom: { type: currentRoomType },
+      currentRoom: { type: currentRoomType, index: this._currentRoomId },
       map: this._map ? serializeMap(this._map, this._currentRoomId) : null,
     };
   }

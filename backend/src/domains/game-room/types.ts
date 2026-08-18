@@ -45,7 +45,7 @@ export interface GameRoomPublicData {
   readonly config: IGameRoomConfig;
   readonly status: string;
   readonly floor: number;
-  readonly currentRoom: { type: string };
+  readonly currentRoom: { type: string; index: number };
   readonly map: IMapPublicJSON | null;
 }
 
