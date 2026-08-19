@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: MVP design phase.** The `.docs/` folder is the design source of truth. Foundation scaffold complete (`backend/` + `frontend/`); game logic not yet implemented.
+> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, and character system are implemented. Gameplay loop (combat, encounters, AI DM, stasis) is not yet built.
 
 
 ## Overview
@@ -45,19 +45,79 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] User login / identification (REST entry)
 - [x] Create an expedition (GameRoom instance)
 - [x] Join an expedition via code
-- [ ] Join the room's Socket.io room on connect
+- [x] Join the room's Socket.io room on connect
 
 ### Session & state
-- [ ] Room session lifecycle (run/encounter loop skeleton)
-- [ ] In-memory room state management (players, character sheets, round turns)
-- [ ] Broadcast scene updates / results to all clients
+- [x] Room session lifecycle (run/encounter loop skeleton)
+- [x] In-memory room state management (players, character sheets, config)
+- [x] Broadcast scene updates / results to all clients
+- [ ] Run/encounter game loop (InRunState is a stub — accepts actions but processes nothing)
+- [ ] Round/turn system (shared action economy: 3 moves per round)
+- [ ] Per-turn timeouts and host force-advance
 
-### Game systems
-- [ ] Procedural generation (seeded RNG, dungeon gen, DCs, dice rolls)
-- [ ] AI Dungeon Master (structure free text → Action Tools, judge, narrate)
+### Characters
+- [x] Stat system (STR / DEX / INT / WIS / AGI / HP)
+- [x] Lobby character creation (50-point budget, floor 20, cap 40)
+- [x] Race selection (cosmetic: elf / dwarf / human / orc / goblin / troll)
+- [x] Run-scoped leveling (cubic XP curve, +3 skill points per level)
+- [x] Skill point allocation
+- [ ] Abilities from scrolls (1 active + 2 passive slots)
+- [ ] Mana system (costs mana in combat, free outside)
+- [ ] In-run stat modification and level-up UI
+- [ ] Per-encounter XP awards and boss bonus XP
 
-### Integration
-- [ ] Wire request flow: REST → GameRoom → DungeonMaster → ProceduralEngine → GameRoom → clients
+### Procedural generation
+- [x] Seeded RNG (MulberryRNG, FNV-1a string hash)
+- [x] Dungeon map generation (random walk, weighted direction bias, backtracking, cross-linking)
+- [x] Room types (GRACE / NORMAL / BOSS / PUZZLE / MINIBOSS / TREASURE / SECRET)
+- [x] Graph-diameter start/boss selection with depth-based room type assignment
+- [x] Miniboss placement (triangular distribution, same-type adjacency gap)
+- [x] Secret rooms (new dead-end branches, not converted normals; count by map size)
+- [x] Passage events (combat / puzzle / challenge with stat requirements, depth-scaled)
+- [x] Map serialization and frontend rendering (BFS grid layout, pan/zoom, type coloring)
+- [ ] Dice roll resolution (d20 + stat + modifiers vs DC)
+- [ ] DC calculation system
+- [ ] Action resolution pipeline
+
+### Equipment & gear
+- [x] Data model (weapon / armor slots, consumables, gold)
+- [x] Default starter gear (wooden helmet / chestplate / greaves / bat)
+- [x] Consumables (health potion, gold key, lockpick)
+- [ ] Gear catalog / loot tables
+- [ ] Gear drop logic (rewards from rooms)
+- [ ] Equip / unequip actions
+- [ ] Merchant / shop (buy / sell in stasis rooms)
+- [ ] Gear dismantling for XP
+
+### AI Dungeon Master
+- [ ] Structure free text into Action Tools (intent / target / detail / resource)
+- [ ] Judge actions (ADMISSIBLE / DENIED / request for detail)
+- [ ] Narrate outcomes (streamed prose)
+- [ ] Provider-agnostic agent interface (port pattern, swappable)
+
+### Frontend
+- [x] Login / identity page
+- [x] Lobby (expedition management, invite codes, player roster, host controls, character modal)
+- [x] Run page layout (party manifest, field log, room card)
+- [x] Map visualization (interactive canvas with pan/zoom, room type colors, connectors)
+- [ ] Action input UI (text field for player actions)
+- [ ] Real-time transcript from server (replacing hardcoded placeholder)
+- [ ] Scene description display
+- [ ] Move counter / shared action economy display
+- [ ] Fog of war / explored vs unexplored rooms
+- [ ] Room navigation from map
+
+### Combat & encounters
+- [ ] Combat state and encounter loop
+- [ ] Monster / enemy definitions
+- [ ] Damage calculation
+- [ ] Fainting & revive mechanics
+- [ ] Full party wipe = run end
+
+### Stasis rooms
+- [ ] Grace room rest behavior (HP restore)
+- [ ] In-run stat point spending
+- [ ] Merchant / shop UI
 
 ## Theme
 
