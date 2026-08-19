@@ -380,46 +380,34 @@ function computePositions(map: MapPublicJSON): Map<number, { x: number; y: numbe
     left:  { dx: -1, dy: 0 },
     right: { dx: 1, dy: 0 },
   }
-  const reverse: Record<string, string> = { up: 'down', down: 'up', left: 'right', right: 'left' }
+  const dirs = ['up', 'down', 'left', 'right'] as const
 
   const positions = new Map<number, { x: number; y: number }>()
-  positions.set(0, { x: 0, y: 0 })
+  positions.set(map.startRoomIndex, { x: 0, y: 0 })
 
-  const visited = new Set<number>([0])
-  const queue = [0]
+  const visited = new Set<number>([map.startRoomIndex])
+  const queue = [map.startRoomIndex]
 
   while (queue.length > 0) {
-    const currentIdx = queue.shift()!
-    const currentPos = positions.get(currentIdx)!
+    const idx = queue.shift()!
+    const pos = positions.get(idx)!
+    const room = map.rooms[idx]!
 
-    for (const passage of map.passages) {
-      let otherIdx: number | null = null
-      let dir: string | null = null
-
-      if (passage.roomA === currentIdx && passage.direction) {
-        otherIdx = passage.roomB
-        dir = passage.direction
-      } else if (passage.roomB === currentIdx && passage.direction) {
-        otherIdx = passage.roomA
-        dir = reverse[passage.direction] ?? null
-      }
-
-      if (otherIdx !== null && dir !== null && !visited.has(otherIdx)) {
-        const off = offsets[dir]
-        if (off) {
-          positions.set(otherIdx, { x: currentPos.x + off.dx, y: currentPos.y + off.dy })
-          visited.add(otherIdx)
-          queue.push(otherIdx)
-        }
-      }
+    for (const dir of dirs) {
+      const neighborIdx = room.adjacentRooms[dir]
+      if (neighborIdx === null || visited.has(neighborIdx)) continue
+      const off = offsets[dir]!
+      positions.set(neighborIdx, { x: pos.x + off.dx, y: pos.y + off.dy })
+      visited.add(neighborIdx)
+      queue.push(neighborIdx)
     }
   }
 
   let fx = 0
   for (let i = 0; i < map.rooms.length; i++) {
     if (!positions.has(i)) {
-      fx += 2
       positions.set(i, { x: fx, y: 0 })
+      fx++
     }
   }
 

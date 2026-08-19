@@ -102,6 +102,7 @@ export interface PassagePublicJSON {
 export interface MapPublicJSON {
   rooms: RoomPublicJSON[]
   passages: PassagePublicJSON[]
+  startRoomIndex: number
 }
 
 export interface RoomData {

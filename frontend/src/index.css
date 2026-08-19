@@ -1381,6 +1381,15 @@
   color: var(--color-teal);
 }
 
+/* secret — dotted ink */
+.map__room--secret {
+  border-color: var(--color-ink);
+  border-style: dotted;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  opacity: 0.6;
+}
+
 /* legend */
 .map__legend {
   display: flex;
