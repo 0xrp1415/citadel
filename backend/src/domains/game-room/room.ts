@@ -58,7 +58,7 @@ export class GameRoom implements IGameRoomContext {
     };
     this.players.set(userId, player);
 
-    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults() );
+    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults());
 
     if (this.host === "") {
       this.host = userId;
@@ -168,7 +168,7 @@ export class GameRoom implements IGameRoomContext {
     playerRunEntity.setRace(race);
     return true;
   }
-  
+
   changePlayerStatsBy(userId: string, stat: keyof IStats, amount: number): boolean {
     const playerRunEntity = this.playerRunEntities.get(userId);
 
@@ -176,7 +176,18 @@ export class GameRoom implements IGameRoomContext {
       return false;
     }
 
-    return playerRunEntity.increaseBaseStatBy(stat, amount);
+
+    let result = playerRunEntity.modifySkill(stat, amount);
+
+    if (!result) {
+      return false;
+    }
+
+    if (stat === "hp") {
+      playerRunEntity.resetHealth();
+    }
+
+    return true;
   }
 
   // Handle Config Updates
@@ -317,9 +328,9 @@ export class GameRoom implements IGameRoomContext {
 
 function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"], mapSize: IGameRoomConfig["mapSize"]): IMapConfig {
   const sizeRanges: Record<string, { min: number; max: number; secrets: number }> = {
-    small:  { min: 10, max: 15, secrets: 1 },
+    small: { min: 10, max: 15, secrets: 1 },
     medium: { min: 25, max: 30, secrets: 2 },
-    large:  { min: 35, max: 40, secrets: 4 },
+    large: { min: 35, max: 40, secrets: 4 },
   };
   const range = sizeRanges[mapSize] ?? sizeRanges.medium!;
 

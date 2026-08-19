@@ -91,11 +91,14 @@ export class PlayerRunEntity {
 
   private race: PlayerRunEntityRace = "human"; // only cosmetics
 
-  constructor(initialStats: IStats, initialArmorStats: PlayerRunEntityArmors, initialWeaponStats: PlayerRunEntityWeapon) {
+  constructor(initialStats: IStats, initialArmorStats: PlayerRunEntityArmors, initialWeaponStats: PlayerRunEntityWeapon, initialSkillPoints: number = 0, initialGold: number = 200, initialRace: PlayerRunEntityRace = "human") {
     this.base_stats = new EntityStats(initialStats);
     this.armor_stat = initialArmorStats;
     this.weapon_stat = initialWeaponStats;
     this.health = new EntityHealthStatImpl(this.base_stats.Stats.hp, this.level, BASE_PLAYER_HP);
+    this.skill_points = initialSkillPoints;
+    this.gold = initialGold;
+    this.race = initialRace;
   }
 
   // Stat Management
@@ -104,12 +107,7 @@ export class PlayerRunEntity {
       return false;
     }
 
-    const changed = this.base_stats.increaseStatBy(stat, amount);
-    if (changed && stat === "hp") {
-      this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
-    }
-
-    return changed;
+    return this.base_stats.increaseStatBy(stat, amount);
   }
 
   public SetArmorStatFor(gear: keyof PlayerRunEntityArmors, armorStat: PlayerRunEntityArmor) {
@@ -128,6 +126,12 @@ export class PlayerRunEntity {
   // Health Management
   public changeHealthBy(amount: number): void {
     this.health.changeCurrentHealthBy(amount);
+  }
+
+  public resetHealth(): void {
+    let previousCurrentHealthPercent = this.health.CurrentHealth / this.health.MaxHealth;
+    this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
+    this.health.changeCurrentHealthBy((this.health.MaxHealth * previousCurrentHealthPercent) - this.health.CurrentHealth);
   }
 
   // Race Setter
@@ -170,8 +174,8 @@ export class PlayerRunEntity {
     return true;
   }
 
-  public useSkillPoints(stat: keyof IStats, points: number): boolean {
-    if (points <= 0 || points > this.skill_points) {
+  public modifySkill(stat: keyof IStats, points: number): boolean {
+    if (points > this.skill_points) {
       return false;
     }
 

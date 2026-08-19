@@ -76,7 +76,7 @@ export const NullStatsGenerator = (): EntityStats => (new EntityStats({
     wisdom: 0,
     agility: 0
 }));
-
+export const DefaultSkillPoints = (): number => 50;
 export const GameRoomEntityStatsDefaults = (): PlayerRunEntity => (new PlayerRunEntity({
     hp: 20,
     strength: 20,
@@ -84,4 +84,4 @@ export const GameRoomEntityStatsDefaults = (): PlayerRunEntity => (new PlayerRun
     intelligence: 20,
     wisdom: 20,
     agility: 20
-}, DEFAULT_ARMOUR_GENERATOR(), DEFAULT_WEAPON_GENERATOR())); 
+}, DEFAULT_ARMOUR_GENERATOR(), DEFAULT_WEAPON_GENERATOR(),  DefaultSkillPoints() )); 
