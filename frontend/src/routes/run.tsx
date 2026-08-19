@@ -4,6 +4,7 @@ import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
 import type { ConsumableType, MapPublicJSON, PlayerPublic, PlayerRunEntity, RoomData, Stats } from '../rooms'
+import { changePlayerStatsBy } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 
@@ -31,6 +32,18 @@ const TRANSCRIPT: RecordLine[] = [
   { id: 'r10', speaker: 'data', text: "the warden's blade finds your flank", indent: true },
 ]
 
+const SHEET_STATS: { key: keyof Stats; label: string }[] = [
+  { key: 'hp', label: 'Vitality' },
+  { key: 'strength', label: 'Strength' },
+  { key: 'dexterity', label: 'Dexterity' },
+  { key: 'agility', label: 'Agility' },
+  { key: 'intelligence', label: 'Wits' },
+  { key: 'wisdom', label: 'Resolve' },
+]
+
+const STAT_FLOOR = 20
+const STAT_CAP = 40
+
 function statusLabel(status: PlayerPublic['status']): string {
   switch (status) {
     case 'ready':
@@ -56,7 +69,20 @@ function Run() {
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
   const [mapOpen, setMapOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
   const returnFocusRef = useRef<HTMLElement | null>(null)
+
+  const handleChangeStat = useCallback(async (stat: keyof Stats, amount: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    try {
+      await changePlayerStatsBy(roomToken, stat, amount)
+    } catch {
+      // backend rejects via encounter guard; silent
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken])
 
   useEffect(() => {
     if (!roomToken) {
@@ -185,6 +211,8 @@ function Run() {
           player={openPlayer}
           players={room?.players ?? []}
           selfPlayerId={selfPlayerId}
+          busy={busy}
+          onChangeStat={handleChangeStat}
           onClose={() => setOpenPlayerId(null)}
           onSwitch={setOpenPlayerId}
         />
@@ -713,11 +741,13 @@ interface DossierCardProps {
   player: PlayerPublic
   players: PlayerPublic[]
   selfPlayerId: string | null
+  busy: boolean
+  onChangeStat: (stat: keyof Stats, amount: number) => void
   onClose: () => void
   onSwitch: (playerId: string) => void
 }
 
-function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: DossierCardProps) {
+function DossierCard({ player, players, selfPlayerId, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
   const index = players.findIndex((p) => p.playerId === player.playerId)
   const previous = index > 0 ? players[index - 1] : players[players.length - 1]
   const next = index < players.length - 1 ? players[index + 1] : players[0]
@@ -870,26 +900,76 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
             </div>
           </div>
 
-          <dl className="filecard__stats">
-            {DOSSIER_FIELDS.map((field) => {
-              const base = stats.base_stats[field.key]
-              const mod = stats.stat_modifiers[field.key]
-              const total = base + mod
-              return (
-                <div className="filecard__stat" key={field.key}>
-                  <dt className="filecard__k">{field.label}</dt>
-                  <dd className="filecard__v">
-                    {total}
-                    {mod !== 0 && (
-                      <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
-                        {mod > 0 ? `+${mod}` : mod}
+          {(() => {
+            const isSelf = player.playerId === selfPlayerId
+            const canModify = isSelf && stats.skill_points > 0
+            return canModify ? (
+              <ul className="sheet__stats sheet__stats--file">
+                {SHEET_STATS.map(({ key, label }) => {
+                  const base = stats.base_stats[key]
+                  const mod = stats.stat_modifiers[key]
+                  return (
+                    <li className="sheet__row" key={key}>
+                      <span className="sheet__row-k">{label}</span>
+                      <span className="sheet__row-v">
+                        {base}
+                        {mod !== 0 && (
+                          <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
+                            {mod > 0 ? `+${mod}` : mod}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </dd>
-                </div>
-              )
-            })}
-          </dl>
+                      <span className="sheet__row-steppers">
+                        <button
+                          type="button"
+                          className="btn btn--ghost sheet__step"
+                          disabled={busy || base <= STAT_FLOOR}
+                          onClick={() => onChangeStat(key, -1)}
+                          aria-label={`lower ${label}`}
+                        >
+                          --
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--ghost sheet__step"
+                          disabled={busy || base >= STAT_CAP || stats.skill_points <= 0}
+                          onClick={() => onChangeStat(key, +1)}
+                          aria-label={`raise ${label}`}
+                        >
+                          +
+                        </button>
+                      </span>
+                    </li>
+                  )
+                })}
+                <li className="sheet__row sheet__row--meta">
+                  <span className="sheet__row-k">Skill points</span>
+                  <span className="sheet__row-v">{stats.skill_points}</span>
+                </li>
+              </ul>
+            ) : (
+              <dl className="filecard__stats">
+                {DOSSIER_FIELDS.map((field) => {
+                  const base = stats.base_stats[field.key]
+                  const mod = stats.stat_modifiers[field.key]
+                  const total = base + mod
+                  return (
+                    <div className="filecard__stat" key={field.key}>
+                      <dt className="filecard__k">{field.label}</dt>
+                      <dd className="filecard__v">
+                        {total}
+                        {mod !== 0 && (
+                          <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
+                            {mod > 0 ? `+${mod}` : mod}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  )
+                })}
+              </dl>
+            )
+          })()}
 
           <div className="filecard__weapon">
             <span className="filecard__weapon-k">Weapon</span>
@@ -939,12 +1019,6 @@ function DossierCard({ player, players, selfPlayerId, onClose, onSwitch }: Dossi
               </ul>
             </div>
           </div>
-
-          {stats.skill_points > 0 && (
-            <p className="filecard__note filecard__note--warn">
-              {stats.skill_points} skill point{stats.skill_points === 1 ? '' : 's'} unspent
-            </p>
-          )}
 
           <footer className="filecard__foot">
             <button
