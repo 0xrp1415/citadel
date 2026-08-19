@@ -235,6 +235,7 @@ export class GameRoom implements IGameRoomContext {
     const rng = MulberryRNG.fromSeed(this.config.seed + this._floor);
     const mapConfig = difficultyToMapConfig(this._currentDifficulty, this.config.mapSize);
     this._map = GenerateMap(rng, mapConfig);
+    this._currentRoomId = this._map.startRoomIndex;
   }
 
   public nextFloor(): void {
@@ -315,10 +316,10 @@ export class GameRoom implements IGameRoomContext {
 }
 
 function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"], mapSize: IGameRoomConfig["mapSize"]): IMapConfig {
-  const sizeRanges: Record<string, { min: number; max: number }> = {
-    small:  { min: 10, max: 15 },
-    medium: { min: 25, max: 30 },
-    large:  { min: 35, max: 40 },
+  const sizeRanges: Record<string, { min: number; max: number; secrets: number }> = {
+    small:  { min: 10, max: 15, secrets: 1 },
+    medium: { min: 25, max: 30, secrets: 2 },
+    large:  { min: 35, max: 40, secrets: 4 },
   };
   const range = sizeRanges[mapSize] ?? sizeRanges.medium!;
 
@@ -332,6 +333,7 @@ function difficultyToMapConfig(difficulty: IGameRoomConfig["difficulty"], mapSiz
   return {
     minRoomCount: Math.round(range.min * scale),
     maxRoomCount: Math.round(range.max * scale),
+    secretCount: range.secrets,
   };
 }
 
@@ -355,7 +357,7 @@ function serializeMap(map: IMap, currentRoomId: number): IMapPublicJSON {
     event: p.Event,
     unlocked: p.Unlocked,
   }));
-  return { rooms, passages };
+  return { rooms, passages, startRoomIndex: map.startRoomIndex };
 }
 
 const OPPOSITE: Record<string, string> = {

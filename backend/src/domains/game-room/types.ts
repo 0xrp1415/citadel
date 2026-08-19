@@ -34,8 +34,9 @@ export interface IPassagePublicJSON {
 }
 
 export interface IMapPublicJSON {
-    rooms: IRoomPublicJSON[];
-    passages: IPassagePublicJSON[];
+  rooms: IRoomPublicJSON[];
+  passages: IPassagePublicJSON[];
+  startRoomIndex: number;
 }
 
 export interface GameRoomPublicData {
