@@ -16,6 +16,7 @@ export interface Player {
   socketId: string | null;
   status: PlayerStatus;
   joinedAt?: number;
+  disconnectedAt: number | null;
 }
 
 export interface PlayerPublic {
@@ -23,6 +24,7 @@ export interface PlayerPublic {
   name: string;
   status: PlayerStatus;
   isHost: boolean;
+  disconnectedAt: number | null;
   stats: PlayerRunEntityJSON
 }
 

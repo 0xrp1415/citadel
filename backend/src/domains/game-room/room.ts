@@ -8,11 +8,14 @@ import { IStats, MulberryRNG, GenerateMap, IMap, IMapConfig, Passage } from "../
 
 
 export class GameRoom implements IGameRoomContext {
+  private static readonly DISCONNECT_TIMEOUT_MS = 60_000;
+
   private readonly _id: string;
   private readonly _inviteCode: string;
 
   private readonly players = new Map<string, Player>();
   private readonly playerRunEntities = new Map<string, PlayerRunEntity>();
+  private readonly disconnectTimers = new Map<string, NodeJS.Timeout>();
 
   private config: IGameRoomConfig;
   private readonly broadcast: (data: GameRoomPublicData) => void;
@@ -55,6 +58,7 @@ export class GameRoom implements IGameRoomContext {
       socketId: null,
       status: "joined",
       joinedAt: Date.now(),
+      disconnectedAt: null,
     };
     this.players.set(userId, player);
 
@@ -69,6 +73,12 @@ export class GameRoom implements IGameRoomContext {
   }
 
   removePlayer(userId: string): boolean {
+    const timer = this.disconnectTimers.get(userId);
+    if (timer) {
+      clearTimeout(timer);
+      this.disconnectTimers.delete(userId);
+    }
+
     if (!this.players.delete(userId)) {
       return false;
     }
@@ -117,7 +127,14 @@ export class GameRoom implements IGameRoomContext {
       return;
     }
 
+    const timer = this.disconnectTimers.get(userId);
+    if (timer) {
+      clearTimeout(timer);
+      this.disconnectTimers.delete(userId);
+    }
+
     player.socketId = socketId;
+    player.disconnectedAt = null;
     if (player.status !== "ready" && player.status !== "in-run") {
       player.status = "connected";
     }
@@ -132,6 +149,14 @@ export class GameRoom implements IGameRoomContext {
 
     player.socketId = null;
     player.status = "disconnected";
+    player.disconnectedAt = Date.now();
+
+    const timer = setTimeout(() => {
+      this.disconnectTimers.delete(userId);
+      this.removePlayer(userId);
+    }, GameRoom.DISCONNECT_TIMEOUT_MS);
+    this.disconnectTimers.set(userId, timer);
+
     this.notify();
   }
 
@@ -307,6 +332,7 @@ export class GameRoom implements IGameRoomContext {
       name: player.name,
       status: player.status,
       isHost: player.userId === this.host,
+      disconnectedAt: player.disconnectedAt,
       stats: (this.playerRunEntities.get(player.userId) ?? GameRoomEntityStatsDefaults()).JSON
     }));
   }
