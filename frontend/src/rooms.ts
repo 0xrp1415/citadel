@@ -55,6 +55,7 @@ export interface PlayerPublic {
   name: string
   status: PlayerStatus
   isHost: boolean
+  disconnectedAt: number | null
   stats: PlayerRunEntity
 }
 

@@ -6,6 +6,7 @@ import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { Fleuron } from '../components/Fleuron'
 import { PermitCopy } from '../components/PermitCopy'
+import { DisconnectCountdown } from '../components/DisconnectCountdown'
 import { setStage } from '../stages'
 import {
   changePlayerStatsBy,
@@ -932,6 +933,9 @@ function LiveRoom({
                 )}
                 {player.playerId === selfPlayerId && (
                   <span className="board__tag board__tag--you">you</span>
+                )}
+                {player.status === 'disconnected' && player.disconnectedAt != null && (
+                  <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
                 )}
               </li>
             ) : (

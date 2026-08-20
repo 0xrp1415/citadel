@@ -7,6 +7,7 @@ import type { ConsumableType, MapPublicJSON, PlayerPublic, PlayerRunEntity, Room
 import { changePlayerStatsBy } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
+import { DisconnectCountdown } from '../components/DisconnectCountdown'
 
 export const Route = createFileRoute('/run')({
   component: Run,
@@ -296,21 +297,27 @@ function PartyManifest({
                   </div>
                 </div>
                 <div className="board__detail">
-                  <span className="board__race">{RACE_LABELS[s.race] ?? s.race}</span>
-                  <span className="board__sep">·</span>
-                  <span className="board__level">Lv.{s.level}</span>
-                  <span className="board__sep">·</span>
-                  <span className="board__hp">
-                    <span className="board__hp-track">
-                      <span
-                        className={`board__hp-fill${hpPct <= 25 ? ' board__hp-fill--low' : ''}`}
-                        style={{ width: `${hpPct}%` }}
-                      />
-                    </span>
-                    <span className="board__hp-num">
-                      {s.health.CurrentHealth}/{s.health.MaxHealth}
-                    </span>
-                  </span>
+                  {player.status === 'disconnected' && player.disconnectedAt != null ? (
+                    <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
+                  ) : (
+                    <>
+                      <span className="board__race">{RACE_LABELS[s.race] ?? s.race}</span>
+                      <span className="board__sep">·</span>
+                      <span className="board__level">Lv.{s.level}</span>
+                      <span className="board__sep">·</span>
+                      <span className="board__hp">
+                        <span className="board__hp-track">
+                          <span
+                            className={`board__hp-fill${hpPct <= 25 ? ' board__hp-fill--low' : ''}`}
+                            style={{ width: `${hpPct}%` }}
+                          />
+                        </span>
+                        <span className="board__hp-num">
+                          {s.health.CurrentHealth}/{s.health.MaxHealth}
+                        </span>
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </li>
