@@ -212,6 +212,7 @@ function Run() {
           player={openPlayer}
           players={room?.players ?? []}
           selfPlayerId={selfPlayerId}
+          currentRoomType={room?.currentRoom.type ?? 'grace'}
           busy={busy}
           onChangeStat={handleChangeStat}
           onClose={() => setOpenPlayerId(null)}
@@ -224,15 +225,6 @@ function Run() {
       )}
     </div>
   )
-}
-
-const RACE_LABELS: Record<string, string> = {
-  human: 'Human',
-  elf: 'Elf',
-  dwarf: 'Dwarf',
-  orc: 'Orc',
-  goblin: 'Goblin',
-  troll: 'Troll',
 }
 
 interface PartyManifestProps {
@@ -301,8 +293,6 @@ function PartyManifest({
                     <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
                   ) : (
                     <>
-                      <span className="board__race">{RACE_LABELS[s.race] ?? s.race}</span>
-                      <span className="board__sep">·</span>
                       <span className="board__level">Lv.{s.level}</span>
                       <span className="board__sep">·</span>
                       <span className="board__hp">
@@ -748,13 +738,14 @@ interface DossierCardProps {
   player: PlayerPublic
   players: PlayerPublic[]
   selfPlayerId: string | null
+  currentRoomType: string
   busy: boolean
   onChangeStat: (stat: keyof Stats, amount: number) => void
   onClose: () => void
   onSwitch: (playerId: string) => void
 }
 
-function DossierCard({ player, players, selfPlayerId, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
+function DossierCard({ player, players, selfPlayerId, currentRoomType, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
   const index = players.findIndex((p) => p.playerId === player.playerId)
   const previous = index > 0 ? players[index - 1] : players[players.length - 1]
   const next = index < players.length - 1 ? players[index + 1] : players[0]
@@ -860,8 +851,6 @@ function DossierCard({ player, players, selfPlayerId, busy, onChangeStat, onClos
             <span className="filecard__kicker">on file with the officer</span>
             <h2 className="filecard__name">{player.name}</h2>
             <div className="filecard__identity">
-              <span className="filecard__race">{stats.race}</span>
-              <span className="filecard__sep">·</span>
               <span className="filecard__level">Lv. {stats.level}</span>
               <span className="filecard__sep">·</span>
               <span className="filecard__gold">{stats.gold} gold</span>
@@ -909,7 +898,7 @@ function DossierCard({ player, players, selfPlayerId, busy, onChangeStat, onClos
 
           {(() => {
             const isSelf = player.playerId === selfPlayerId
-            const canModify = isSelf && stats.skill_points > 0
+            const canModify = isSelf && stats.skill_points > 0 && currentRoomType === 'grace'
             return canModify ? (
               <ul className="sheet__stats sheet__stats--file">
                 {SHEET_STATS.map(({ key, label }) => {

@@ -34,7 +34,6 @@ export interface WeaponPiece {
 
 export type ConsumableType = 'health_potion' | 'gold_key' | 'lockpick'
 export type Consumables = Record<ConsumableType, number>
-export type Race = 'elf' | 'dwarf' | 'human' | 'orc' | 'goblin' | 'troll'
 
 export interface PlayerRunEntity {
   base_stats: Stats
@@ -45,7 +44,6 @@ export interface PlayerRunEntity {
   experience: number
   skill_points: number
   gold: number
-  race: Race
   consumables: Consumables
   health: { MaxHealth: number; CurrentHealth: number }
 }
@@ -180,10 +178,6 @@ export async function sendAction(roomToken: string, action: string, payload?: un
     method: 'POST',
     body: JSON.stringify({ action, payload }),
   })
-}
-
-export async function setPlayerRace(roomToken: string, race: Race): Promise<void> {
-  await sendAction(roomToken, 'SET_PLAYER_RACE', race)
 }
 
 export async function changePlayerStatsBy(

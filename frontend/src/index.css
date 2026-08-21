@@ -1062,10 +1062,7 @@
   color: var(--color-mist);
 }
 
-.board__race {
-  text-transform: uppercase;
-  font-weight: 600;
-}
+
 
 .board__sep {
   opacity: 0.4;
@@ -1735,10 +1732,7 @@
   color: var(--color-mist);
 }
 
-.filecard__race {
-  color: var(--color-rust);
-  font-weight: 600;
-}
+
 
 .filecard__level {
   color: var(--color-teal);

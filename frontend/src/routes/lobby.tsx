@@ -9,17 +9,15 @@ import { PermitCopy } from '../components/PermitCopy'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
 import { setStage } from '../stages'
 import {
-  changePlayerStatsBy,
   createRoom,
   generateSeed,
   joinRoom,
   kickPlayer,
   leaveRoom,
   sendAction,
-  setPlayerRace,
   updateRoomConfig,
 } from '../rooms'
-import type { PlayerPublic, Race, RoomData, Stats } from '../rooms'
+import type { PlayerPublic, RoomData } from '../rooms'
 import {
   clearRoomSession,
   decodeRoomToken,
@@ -34,21 +32,6 @@ export const Route = createFileRoute('/lobby')({
 })
 
 const PARTY_SIZES = [3, 4, 5, 6, 7, 8]
-
-const RACES: Race[] = ['elf', 'dwarf', 'human', 'orc', 'goblin', 'troll']
-
-const SHEET_STATS: { key: keyof Stats; label: string }[] = [
-  { key: 'hp', label: 'Vitality' },
-  { key: 'strength', label: 'Strength' },
-  { key: 'dexterity', label: 'Dexterity' },
-  { key: 'agility', label: 'Agility' },
-  { key: 'intelligence', label: 'Wits' },
-  { key: 'wisdom', label: 'Resolve' },
-]
-
-const STAT_FLOOR = 20
-const STAT_CAP = 40
-const CREATE_BUDGET = 50
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'The record could not be completed.'
@@ -276,32 +259,6 @@ function Lobby() {
     )
   }
 
-  async function handleSetRace(race: Race) {
-    if (!roomToken) return
-    setActionError(null)
-    setBusy(true)
-    try {
-      await setPlayerRace(roomToken, race)
-    } catch (err) {
-      setActionError(errorMessage(err))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleChangeStat(stat: keyof Stats, amount: number) {
-    if (!roomToken) return
-    setActionError(null)
-    setBusy(true)
-    try {
-      await changePlayerStatsBy(roomToken, stat, amount)
-    } catch (err) {
-      setActionError(errorMessage(err))
-    } finally {
-      setBusy(false)
-    }
-  }
-
   async function handleLeave() {
     if (!roomToken) return
     setBusy(true)
@@ -362,8 +319,6 @@ function Lobby() {
           onLeave={handleLeave}
           onRerollSeed={handleRerollSeed}
           onSeedChange={handleSeedChange}
-          onSetRace={handleSetRace}
-          onChangeStat={handleChangeStat}
         />
       ) : (
         <>
@@ -844,8 +799,6 @@ interface LiveRoomProps {
   onLeave: () => void
   onRerollSeed: () => void
   onSeedChange: (seed: string) => void
-  onSetRace: (race: Race) => void
-  onChangeStat: (stat: keyof Stats, amount: number) => void
 }
 
 function LiveRoom({
@@ -872,8 +825,6 @@ function LiveRoom({
   onLeave,
   onRerollSeed,
   onSeedChange,
-  onSetRace,
-  onChangeStat,
 }: LiveRoomProps) {
   const slotCount = room?.config.maxPlayers ?? 4
   const slots: (PlayerPublic | undefined)[] = Array.from(
@@ -883,7 +834,6 @@ function LiveRoom({
 
   const [pendingKick, setPendingKick] = useState<string | null>(null)
   const kickTimerRef = useRef<number | null>(null)
-  const [fileOpen, setFileOpen] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
 
   useEffect(() => {
@@ -900,12 +850,6 @@ function LiveRoom({
       kickTimerRef.current = null
     }, 3000)
   }
-
-  const base = me?.stats?.base_stats
-  const spent = base
-    ? SHEET_STATS.reduce((sum, { key }) => sum + base[key], 0) - STAT_FLOOR * SHEET_STATS.length
-    : 0
-  const remaining = Math.max(0, CREATE_BUDGET - spent)
 
   return (
     <div className="grounds">
@@ -1016,9 +960,6 @@ function LiveRoom({
               </button>
             </>
           )}
-          <button type="button" className="btn btn--ghost" onClick={() => setFileOpen(true)}>
-            Your file
-          </button>
           <button className="btn btn--ghost" disabled={busy} onClick={onLeave}>
             Sign out of this expedition
           </button>
@@ -1029,17 +970,6 @@ function LiveRoom({
 
         <Fleuron small className="grounds__fleuron" />
       </section>
-
-      {me && room?.status === 'lobby' && fileOpen && (
-        <CharacterModal
-          player={me}
-          busy={busy}
-          remaining={remaining}
-          onClose={() => setFileOpen(false)}
-          onSetRace={onSetRace}
-          onChangeStat={onChangeStat}
-        />
-      )}
 
       {isHost && room?.status === 'lobby' && manageOpen && (
         <ManageModal
@@ -1062,127 +992,5 @@ function LiveRoom({
         />
       )}
     </div>
-  )
-}
-
-interface CharacterModalProps {
-  player: PlayerPublic
-  busy: boolean
-  remaining: number
-  onClose: () => void
-  onSetRace: (race: Race) => void
-  onChangeStat: (stat: keyof Stats, amount: number) => void
-}
-
-function CharacterModal({
-  player,
-  busy,
-  remaining,
-  onClose,
-  onSetRace,
-  onChangeStat,
-}: CharacterModalProps) {
-  const base = player.stats.base_stats
-  const health = player.stats.health
-  const healthPct =
-    health.MaxHealth > 0
-      ? Math.round((health.CurrentHealth / health.MaxHealth) * 100)
-      : 0
-
-  return (
-    <FileCardModal
-      num="YOURS"
-      label="your file · on record with the officer"
-      closeLabel="file"
-      ariaLabel="Your file — on record with the officer"
-      onClose={onClose}
-    >
-      <header className="filecard__head">
-        <span className="filecard__kicker">on file with the officer</span>
-        <h2 className="filecard__name">{player.name}</h2>
-        <div className="filecard__tags">
-          <span className="board__tag board__tag--you">you</span>
-          <span className={`board__tag board__tag--${player.status}`}>
-            {statusLabel(player.status)}
-          </span>
-        </div>
-      </header>
-
-      <div className="filecard__health">
-        <span className="filecard__k filecard__health-k">Health</span>
-        <span className="filecard__health-bar">
-          <span className="filecard__health-fill" style={{ width: `${healthPct}%` }} />
-        </span>
-        <span className="filecard__health-num">
-          {health.CurrentHealth}
-          <span className="filecard__slash">/</span>
-          {health.MaxHealth}
-        </span>
-      </div>
-
-      <div className="filecard__sheet-field">
-        <div className="field">
-          <label className="field__label" htmlFor="sheet-race">
-            Race
-          </label>
-          <select
-            id="sheet-race"
-            className="select"
-            value={player.stats.race}
-            disabled={busy}
-            onChange={(e) => onSetRace(e.target.value as Race)}
-          >
-            {RACES.map((race) => (
-              <option key={race} value={race}>
-                {race}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="sheet__budget" aria-live="polite">
-          <span className="sheet__budget-k">Points</span>
-          <span className="sheet__budget-v">
-            {remaining} of {CREATE_BUDGET} unspent
-          </span>
-        </div>
-      </div>
-
-      <ul className="sheet__stats sheet__stats--file">
-        {SHEET_STATS.map(({ key, label }) => {
-          const value = base[key]
-          return (
-            <li className="sheet__row" key={key}>
-              <span className="sheet__row-k">{label}</span>
-              <span className="sheet__row-v">{value}</span>
-              <span className="sheet__row-steppers">
-                <button
-                  type="button"
-                  className="btn btn--ghost sheet__step"
-                  disabled={busy || value <= STAT_FLOOR}
-                  onClick={() => onChangeStat(key, -1)}
-                  aria-label={`lower ${label}`}
-                >
-                  −
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost sheet__step"
-                  disabled={busy || value >= STAT_CAP || remaining === 0}
-                  onClick={() => onChangeStat(key, 1)}
-                  aria-label={`raise ${label}`}
-                >
-                  +
-                </button>
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-
-      <p className="filecard__note">
-        Lv {player.stats.level} · {player.stats.race} · {player.stats.gold} gold ·{' '}
-        {player.stats.skill_points} point{player.stats.skill_points === 1 ? '' : 's'} unspent
-      </p>
-    </FileCardModal>
   )
 }
