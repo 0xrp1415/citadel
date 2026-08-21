@@ -1,4 +1,5 @@
 import { IStats } from "../../procedural-engine/domain.js";
+import { ERoomType } from "../../procedural-engine/room.js";
 import { ActionResponse, GameRoomState } from "./abstract.js";
 
 const PLAYER_PLAY = "player_play";
@@ -7,8 +8,6 @@ const CHANGE_PLAYER_STATS = "CHANGE_PLAYER_STATS";
 type TActions = typeof PLAYER_PLAY | typeof CHANGE_PLAYER_STATS;
 export class InRunState extends GameRoomState<TActions> {
     protected id: string = "in-run";
-
-    private isEncounterActive: boolean = false; 
 
     onEnterState(): void {
         this.gameRoom.setPlayersStatus("in-run");
@@ -38,8 +37,8 @@ export class InRunState extends GameRoomState<TActions> {
     }
 
     private handleChangePlayerStats(userId: string, stat: keyof IStats, amount: number): ActionResponse {
-        if (this.isEncounterActive) {
-            return { success: false, error: "Cannot change player stats while in an encounter." };
+        if (this.gameRoom.CurrentRoom.type !== ERoomType.GRACE) {
+            return { success: false, error: "Stat changes can only be made at a grace room." };
         }
         const success = this.gameRoom.changePlayerStatsBy(userId, stat, amount);
         if (!success) {

@@ -1,15 +1,11 @@
-import { IStats } from "../../procedural-engine/domain.js";
-import { PlayerRunEntityRace } from "../player.js";
 import { ActionResponse, GameRoomState } from "./abstract.js";
 import { InRunState } from "./run.js";
 
 const START_GAME = "start_game";
 const PLAYER_TOGGLE_READY = "player_toggle_ready";
 const CONFIRM_START = "confirm_start";
-const SET_PLAYER_RACE = "SET_PLAYER_RACE";
-const CHANGE_PLAYER_STATS = "CHANGE_PLAYER_STATS";
 
-type TActions = typeof START_GAME | typeof PLAYER_TOGGLE_READY | typeof CONFIRM_START | typeof SET_PLAYER_RACE | typeof CHANGE_PLAYER_STATS;
+type TActions = typeof START_GAME | typeof PLAYER_TOGGLE_READY | typeof CONFIRM_START;
 
 export class LobbyState extends GameRoomState<TActions> {
     protected id: string = "lobby";
@@ -39,11 +35,6 @@ export class LobbyState extends GameRoomState<TActions> {
                 return this.handleConfirmStart(userId);
             case PLAYER_TOGGLE_READY:
                 return this.handlePlayerToggleReady(userId);
-            case SET_PLAYER_RACE:
-                return this.handleSetPlayerRace(userId, payload as PlayerRunEntityRace);
-            case CHANGE_PLAYER_STATS:
-                const { stat, amount } = payload as { stat: keyof IStats, amount: number };
-                return this.handleChangePlayerStats(userId, stat, amount);
 
             default:
                 return { success: false, error: "Invalid action type for LobbyState: " + action };
@@ -136,29 +127,6 @@ export class LobbyState extends GameRoomState<TActions> {
 
         this.gameRoom.resetRun();
         this.gameRoom.setState(new InRunState(this.gameRoom));
-
-        return { success: true };
-    }
-
-    private handleSetPlayerRace(userId: string, payload?: PlayerRunEntityRace): ActionResponse {
-        if (!payload || !["elf", "dwarf", "human", "orc", "goblin", "troll"].includes(payload)) {
-            return { success: false, error: "Invalid payload for setting player race." };
-        }
-
-        const success = this.gameRoom.setPlayerRace(userId, payload);
-
-        if (!success) {
-            return { success: false, error: "Failed to set player race." };
-        }
-
-        return { success: true };
-    }
-
-    private handleChangePlayerStats(userId: string, stat: keyof IStats, amount: number): ActionResponse {
-        const success = this.gameRoom.changePlayerStatsBy(userId, stat, amount);
-        if (!success) {
-            return { success: false, error: "Failed to change player stats." };
-        }
 
         return { success: true };
     }

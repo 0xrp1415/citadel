@@ -1,10 +1,12 @@
 import { GameRoomPublicData, IGameRoomConfig, IMapPublicJSON, IRoomPublicJSON, Result } from "./types.js";
-import { Player, PlayerPublic, PlayerRunEntity, PlayerRunEntityRace } from "./player.js";
+import { Player, PlayerPublic, PlayerRunEntity } from "./player.js";
 import { GameRoomState, ActionResponse } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
 import { GameRoomEntityStatsDefaults } from "./defaults.js";
 import { IStats, MulberryRNG, GenerateMap, IMap, IMapConfig, Passage } from "../procedural-engine/domain.js";
+import { IRoomMetadata } from "../procedural-engine/map.js";
+import { ERoomType } from "../procedural-engine/room.js";
 
 
 export class GameRoom implements IGameRoomContext {
@@ -183,17 +185,6 @@ export class GameRoom implements IGameRoomContext {
     return this.playerRunEntities.get(userId);
   }
 
-  setPlayerRace(userId: string, race: PlayerRunEntityRace): boolean {
-    const playerRunEntity = this.playerRunEntities.get(userId);
-
-    if (!playerRunEntity) {
-      return false;
-    }
-
-    playerRunEntity.setRace(race);
-    return true;
-  }
-
   changePlayerStatsBy(userId: string, stat: keyof IStats, amount: number): boolean {
     const playerRunEntity = this.playerRunEntities.get(userId);
 
@@ -316,6 +307,10 @@ export class GameRoom implements IGameRoomContext {
 
   get Map(): IMap | null {
     return this._map;
+  }
+
+  get CurrentRoom(): IRoomMetadata {
+    return this._map?.rooms[this._currentRoomId] ?? { id: 0, type: ERoomType.GRACE, baseDifficulty: 0, distanceBonus: 0 };
   }
 
   get LastActivityTimestamp(): number {

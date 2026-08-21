@@ -67,14 +67,12 @@ export type PlayerRunEntityJSON = {
   experience: number;
   skill_points: number;
   gold: number;
-  race: PlayerRunEntityRace;
   consumables: Consumables;
   health: IEntityHealthStatGetters;
 };
 
 export const BASE_MAX_PLAYER_BASE_STAT = 40;
 export const BASE_PLAYER_HP = 100;
-export type PlayerRunEntityRace = "elf" | "dwarf" | "human" | "orc" | "goblin" | "troll";
 
 
 export class PlayerRunEntity {
@@ -91,16 +89,13 @@ export class PlayerRunEntity {
   private skill_points: number = 0;
   private gold: number = 200;
 
-  private race: PlayerRunEntityRace = "human"; // only cosmetics
-
-  constructor(initialStats: IStats, initialArmorStats: PlayerRunEntityArmors, initialWeaponStats: PlayerRunEntityWeapon, initialSkillPoints: number = 0, initialGold: number = 200, initialRace: PlayerRunEntityRace = "human") {
+  constructor(initialStats: IStats, initialArmorStats: PlayerRunEntityArmors, initialWeaponStats: PlayerRunEntityWeapon, initialSkillPoints: number = 0, initialGold: number = 200) {
     this.base_stats = new EntityStats(initialStats);
     this.armor_stat = initialArmorStats;
     this.weapon_stat = initialWeaponStats;
     this.health = new EntityHealthStatImpl(this.base_stats.Stats.hp, this.level, BASE_PLAYER_HP);
     this.skill_points = initialSkillPoints;
     this.gold = initialGold;
-    this.race = initialRace;
   }
 
   // Stat Management
@@ -134,11 +129,6 @@ export class PlayerRunEntity {
     let previousCurrentHealthPercent = this.health.CurrentHealth / this.health.MaxHealth;
     this.health.computeMaxHP(this.base_stats.Stats.hp, this.level);
     this.health.changeCurrentHealthBy((this.health.MaxHealth * previousCurrentHealthPercent) - this.health.CurrentHealth);
-  }
-
-  // Race Setter
-  public setRace(race: PlayerRunEntityRace) {
-    this.race = race;
   }
 
   // Gold Management
@@ -247,10 +237,6 @@ export class PlayerRunEntity {
     return Math.pow(this.level, 3);
   }
 
-  public get Race(): PlayerRunEntityRace {
-    return this.race;
-  }
-
   public get Gold(): number {
     return this.gold;
   }
@@ -283,7 +269,6 @@ export class PlayerRunEntity {
       experience: this.Experience,
       skill_points: this.SkillPoints,
       gold: this.gold,
-      race: this.race,
       consumables: this.Consumables,
       health: this.Health
     }
