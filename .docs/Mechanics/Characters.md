@@ -4,7 +4,6 @@ How a character is built at the staging grounds.
 
 ```
 ┌──────────────────────────────────────────────┐
-│  RACE      (cosmetic — no effect)            │
 │  STR  20  ── physical attack                 │
 │  DEX  20  ── physical defense                │
 │  INT  20  ── special attack                  │
@@ -40,7 +39,6 @@ How a character is built at the staging grounds.
 ## Building rules
 
 - **Base 20** in every stat — no stat starts below it
-- **Race** — a cosmetic choice with no mechanical effect (`elf`, `dwarf`, `human`, `orc`, `goblin`, `troll`)
 - **50 bonus points** — allocated freely to match playstyle
 - **Cap** — no stat may exceed **40 at creation**; the cap rises +1 per stat per level ([[Mechanics/Leveling]])
 - **Gear** — every character starts with a bat and three armor pieces (wooden helmet, chestplate, greaves) (see [[Mechanics/Equipment]])

@@ -1,5 +1,5 @@
 
-- **[[Mechanics/Characters]]** — stats, race, bonus points
+- **[[Mechanics/Characters]]** — stats, bonus points
 - **[[Mechanics/Leveling]]** — XP, levels, stat points
 - **[[Mechanics/Stasis]]** — the rest room and merchant
 - **[[Mechanics/Equipment]]** — weapon, armor slots, drops
