@@ -1,4 +1,4 @@
-import { PlayerRunEntity, PlayerRunEntityArmors, PlayerRunEntityWeapon } from "../game-room/player.js";
+import { PlayerRunEntityArmors, PlayerRunEntityWeapon } from "./player/types.js";
 import { EntityStats } from "../procedural-engine/domain.js";
 import { IGameRoomConfig } from "./types.js";
 
@@ -68,6 +68,9 @@ export const DEFAULT_WEAPON_GENERATOR = (): PlayerRunEntityWeapon => ({
     },
 });
 
+export const BASE_MAX_PLAYER_BASE_STAT = 40;
+export const BASE_PLAYER_HP = 100;
+
 export const NullStatsGenerator = (): EntityStats => (new EntityStats({
     hp: 0,
     strength: 0,
@@ -77,11 +80,4 @@ export const NullStatsGenerator = (): EntityStats => (new EntityStats({
     agility: 0
 }));
 export const DefaultSkillPoints = (): number => 50;
-export const GameRoomEntityStatsDefaults = (): PlayerRunEntity => (new PlayerRunEntity({
-    hp: 20,
-    strength: 20,
-    dexterity: 20,
-    intelligence: 20,
-    wisdom: 20,
-    agility: 20
-}, DEFAULT_ARMOUR_GENERATOR(), DEFAULT_WEAPON_GENERATOR(),  DefaultSkillPoints() )); 
+export const DefaultGold = (): number => 200; 

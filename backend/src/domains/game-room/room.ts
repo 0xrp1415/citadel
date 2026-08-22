@@ -1,9 +1,8 @@
 import { GameRoomPublicData, IGameRoomConfig, IMapPublicJSON, IRoomPublicJSON, Result } from "./types.js";
-import { Player, PlayerPublic, PlayerRunEntity } from "./player.js";
+import { Player, PlayerPublic } from "./player/index.js";
 import { GameRoomState, ActionResponse } from "./states/abstract.js";
 import { LobbyState } from "./states/start.js";
 import { IGameRoomContext } from "./states/interface.js";
-import { GameRoomEntityStatsDefaults } from "./defaults.js";
 import { IStats, MulberryRNG, GenerateMap, IMap, IMapConfig, Passage } from "../procedural-engine/domain.js";
 import { IRoomMetadata } from "../procedural-engine/map.js";
 import { ERoomType } from "../procedural-engine/room.js";
@@ -16,7 +15,6 @@ export class GameRoom implements IGameRoomContext {
   private readonly _inviteCode: string;
 
   private readonly players = new Map<string, Player>();
-  private readonly playerRunEntities = new Map<string, PlayerRunEntity>();
   private readonly disconnectTimers = new Map<string, NodeJS.Timeout>();
 
   private config: IGameRoomConfig;
@@ -53,18 +51,8 @@ export class GameRoom implements IGameRoomContext {
   addPlayer(userId: string, playerId: string, name: string): Player | null {
     if (this.currentState && !this.currentState.canJoinRoom()) return null;
 
-    const player: Player = {
-      userId,
-      playerId,
-      name,
-      socketId: null,
-      status: "joined",
-      joinedAt: Date.now(),
-      disconnectedAt: null,
-    };
+    const player = new Player(userId, playerId, name);
     this.players.set(userId, player);
-
-    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults());
 
     if (this.host === "") {
       this.host = userId;
@@ -85,11 +73,9 @@ export class GameRoom implements IGameRoomContext {
       return false;
     }
 
-    this.playerRunEntities.delete(userId);
-
     if (userId === this.host) {
       const next = Array.from(this.players.values())[0];
-      this.host = next ? next.userId : "";
+      this.host = next ? next.Identity.userId : "";
     }
 
     this.notify();
@@ -113,13 +99,13 @@ export class GameRoom implements IGameRoomContext {
       return { ok: false, status: 404, error: "Player not found in the game room." };
     }
 
-    if (target.userId === this.host) {
+    if (target.Identity.userId === this.host) {
       return { ok: false, status: 400, error: "The host cannot expel themselves." };
     }
 
-    this.removePlayer(target.userId);
+    this.removePlayer(target.Identity.userId);
 
-    return { ok: true, value: { socketId: target.socketId } };
+    return { ok: true, value: { socketId: target.Socket.SocketId } };
   }
 
   // Handle socket connections and disconnections
@@ -135,8 +121,7 @@ export class GameRoom implements IGameRoomContext {
       this.disconnectTimers.delete(userId);
     }
 
-    player.socketId = socketId;
-    player.disconnectedAt = null;
+    player.Socket.SocketId = socketId;
     if (player.status !== "ready" && player.status !== "in-run") {
       player.status = "connected";
     }
@@ -145,13 +130,12 @@ export class GameRoom implements IGameRoomContext {
 
   clearSocket(userId: string, socketId: string): void {
     const player = this.players.get(userId);
-    if (!player || player.socketId !== socketId) {
+    if (!player || player.Socket.SocketId !== socketId) {
       return;
     }
 
-    player.socketId = null;
+    player.Socket.SocketId = null;
     player.status = "disconnected";
-    player.disconnectedAt = Date.now();
 
     const timer = setTimeout(() => {
       this.disconnectTimers.delete(userId);
@@ -168,7 +152,7 @@ export class GameRoom implements IGameRoomContext {
   }
 
   getPlayerByPlayerId(playerId: string): Player | undefined {
-    return Array.from(this.players.values()).find((p) => p.playerId === playerId);
+    return Array.from(this.players.values()).find((p) => p.Identity.playerId === playerId);
   }
 
   hasPlayer(userId: string): boolean {
@@ -176,33 +160,14 @@ export class GameRoom implements IGameRoomContext {
   }
 
   // Player Run Entity Management
-  resetPlayerRunEntityStats(userId: string): boolean {
-    this.playerRunEntities.set(userId, GameRoomEntityStatsDefaults())
-    return true;
-  }
-
-  public getPlayerRunEntity(userId: string): PlayerRunEntity | undefined {
-    return this.playerRunEntities.get(userId);
-  }
-
   changePlayerStatsBy(userId: string, stat: keyof IStats, amount: number): boolean {
-    const playerRunEntity = this.playerRunEntities.get(userId);
+    const player = this.players.get(userId);
+    if (!player) return false;
 
-    if (!playerRunEntity) {
-      return false;
-    }
-
-
-    let result = playerRunEntity.modifySkill(stat, amount);
-
-    if (!result) {
-      return false;
-    }
-
-    if (stat === "hp") {
-      playerRunEntity.resetHealth();
-    }
-
+    if (!player.Progression.canAffordSkill(amount)) return false;
+    if (!player.Combat.increaseBaseStatBy(stat, amount, player.Progression.Level)) return false;
+    player.Progression.spendSkillPoints(amount);
+    if (stat === "hp") player.Combat.resetHealth(player.Progression.Level);
     return true;
   }
 
@@ -246,7 +211,7 @@ export class GameRoom implements IGameRoomContext {
       return { success: false, error: "Player not found" };
     }
 
-    const response = this.currentState.receivePlayerAction(player.userId, action, payload);
+    const response = this.currentState.receivePlayerAction(player.Identity.userId, action, payload);
     if (response.success) this.notify();
     return response;
   }
@@ -323,12 +288,12 @@ export class GameRoom implements IGameRoomContext {
 
   get PlayersPublic(): PlayerPublic[] {
     return Array.from(this.players.values()).map(player => ({
-      playerId: player.playerId,
-      name: player.name,
+      playerId: player.Identity.playerId,
+      name: player.Identity.name,
       status: player.status,
-      isHost: player.userId === this.host,
-      disconnectedAt: player.disconnectedAt,
-      stats: (this.playerRunEntities.get(player.userId) ?? GameRoomEntityStatsDefaults()).JSON
+      isHost: player.Identity.userId === this.host,
+      disconnectedAt: player.Socket.DisconnectedAt,
+      stats: player.JSON
     }));
   }
 

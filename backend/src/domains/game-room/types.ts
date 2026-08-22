@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Request } from "express";
-import { PlayerPublic } from "./player.js";
+import { PlayerPublic } from "./player/types.js";
 
 export const ZGameRoomConfigSchema = z.object({
   maxPlayers: z.number().int().min(3).max(8).default(4),

@@ -47,7 +47,7 @@ export class LobbyState extends GameRoomState<TActions> {
             return { success: false, error: "Player not found" };
         }
 
-        if (player.userId === this.gameRoom.Host) {
+        if (player.Identity.userId === this.gameRoom.Host) {
             return { success: false, error: "Host cannot toggle ready status" };
         }
 
@@ -55,7 +55,7 @@ export class LobbyState extends GameRoomState<TActions> {
             return { success: false, error: "Cannot change ready status while in run" };
         }
 
-        if (player.socketId === null) {
+        if (player.Socket.SocketId === null) {
             return { success: false, error: "Cannot change ready status while disconnected" };
         }
 
@@ -77,12 +77,12 @@ export class LobbyState extends GameRoomState<TActions> {
             return { success: false, error: "Only the host can start the game." };
 
         const hostPlayer = this.gameRoom.getPlayer(this.gameRoom.Host);
-        if (hostPlayer && hostPlayer.socketId === null) {
+        if (hostPlayer && hostPlayer.Socket.SocketId === null) {
             return { success: false, error: "Host is disconnected." };
         }
 
         const ghosts = this.gameRoom.Players.filter(
-            (player) => player.socketId === null && player.userId !== this.gameRoom.Host,
+            (player) => player.Socket.SocketId === null && player.Identity.userId !== this.gameRoom.Host,
         );
 
         if (ghosts.length === 0) {
@@ -90,7 +90,7 @@ export class LobbyState extends GameRoomState<TActions> {
         }
 
         for (const ghost of ghosts) {
-            this.gameRoom.removePlayer(ghost.userId);
+            this.gameRoom.removePlayer(ghost.Identity.userId);
         }
 
         return this.validateAndStart(userId);
@@ -102,12 +102,12 @@ export class LobbyState extends GameRoomState<TActions> {
         }
 
         const allReady = this.gameRoom.Players.every(
-            (player) => player.status === "ready" || player.userId === this.gameRoom.Host,
+            (player) => player.status === "ready" || player.Identity.userId === this.gameRoom.Host,
         );
 
         if (!allReady) {
             const disconnected = this.gameRoom.Players.filter(
-                (player) => player.socketId === null && player.userId !== this.gameRoom.Host,
+                (player) => player.Socket.SocketId === null && player.Identity.userId !== this.gameRoom.Host,
             ).length;
 
             return {
@@ -121,7 +121,7 @@ export class LobbyState extends GameRoomState<TActions> {
 
         const hostPlayer = this.gameRoom.getPlayer(this.gameRoom.Host);
 
-        if (hostPlayer && hostPlayer.socketId === null) {
+        if (hostPlayer && hostPlayer.Socket.SocketId === null) {
             return { success: false, error: "Host is disconnected." };
         }
 

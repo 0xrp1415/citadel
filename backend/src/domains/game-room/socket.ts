@@ -24,8 +24,8 @@ export function SetupGameRoomSocketHandlers(io: Server): void {
       return;
     }
 
-    if (player.socketId && player.socketId !== socket.id) {
-      io.sockets.sockets.get(player.socketId)?.disconnect(true);
+    if (player.Socket.SocketId && player.Socket.SocketId !== socket.id) {
+      io.sockets.sockets.get(player.Socket.SocketId)?.disconnect(true);
     }
 
     socket.join(`room-${gameRoom.ID}`);

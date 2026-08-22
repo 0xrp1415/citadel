@@ -1,6 +1,6 @@
 import { IStats, IMap } from "../../procedural-engine/domain.js";
 import { IRoomMetadata } from "../../procedural-engine/map.js";
-import { Player } from "../player.js";
+import { Player } from "../player/index.js";
 import { IGameRoomConfig } from "../types.js";
 import type { GameRoomState } from "./abstract.js";
 

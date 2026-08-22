@@ -81,7 +81,7 @@ export class GameRoomService {
 
     this.repository.addGameRoom(gameRoom);
 
-    const hash = createRoomToken(roomId, hostUserId, player.playerId, secret);
+    const hash = createRoomToken(roomId, hostUserId, player.Identity.playerId, secret);
 
     return {
       ok: true,
@@ -121,7 +121,7 @@ export class GameRoomService {
       return { ok: false, status: 403, error: "Game room is not joinable." };
     }
 
-    const hash = createRoomToken(gameRoom.ID, userId, player.playerId, secret);
+    const hash = createRoomToken(gameRoom.ID, userId, player.Identity.playerId, secret);
 
     return { ok: true, value: { hash, room: gameRoom.JSON } };
   }
@@ -140,7 +140,7 @@ export class GameRoomService {
       return { ok: false, status: 400, error: "Player is not in the game room." };
     }
 
-    const socketId = player.socketId;
+    const socketId = player.Socket.SocketId;
     gameRoom.removePlayer(userId);
 
     if (gameRoom.Players.length === 0) {
@@ -240,7 +240,7 @@ export class GameRoomService {
     if (!player) {
       return { ok: false, status: 404, error: "Player not found in the game room." };
     }
-    if (player.playerId !== payload.playerId) {
+    if (player.Identity.playerId !== payload.playerId) {
       return { ok: false, status: 400, error: "Player id mismatch." };
     }
 
