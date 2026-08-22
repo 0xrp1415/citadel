@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { UserRouter } from "./domains/user/index.js";
 import { config } from "dotenv";
 import { GameRoomRouter } from "./domains/game-room/controller.js";
+import { GameRoomService } from "./domains/game-room/service.js";
 import {SetupGameRoomSocketHandlers} from "./domains/game-room/socket.js"
 
 config();
@@ -26,6 +27,10 @@ const io = new Server(httpServer, {
   cors: { origin: "*" },
   pingInterval: 10_000,
   pingTimeout: 5_000,
+});
+
+GameRoomService.Instance.configureBroadcast((roomId, data) => {
+  io.to(`room-${roomId}`).emit("game-room-update", data);
 });
 
 SetupGameRoomSocketHandlers(io);

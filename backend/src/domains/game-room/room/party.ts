@@ -50,7 +50,10 @@ export class GameRoomParty implements IGameRoomPartyContext {
     }
 
     public get PlayerPublicData() {
-        return this.Players.map(player => player.PublicJSON);
+        return this.Players.map(player => ({
+            ...player.PublicJSON,
+            isHost: player.Identity.playerId === this.leader,
+        }));
     }
 
 }
