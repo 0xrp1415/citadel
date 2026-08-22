@@ -339,13 +339,13 @@ function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () =>
   const currentRoom = room.currentRoom
   const roomIndex = currentRoom.index
 
-  const adj = map?.rooms[roomIndex]?.adjacentRooms
-  const neighbors = adj
+  const exits = map?.rooms[roomIndex]?.exits
+  const neighbors = exits
     ? (['left', 'right', 'up', 'down'] as const)
-        .filter((d) => adj[d] !== null)
+        .filter((d) => exits[d] !== null)
         .map((d) => {
-          const neighborIdx = adj[d]!
-          const neighborRoom = map?.rooms[neighborIdx]
+          const exit = exits[d]!
+          const neighborRoom = map?.rooms[exit.targetRoomId]
           return { dir: d, type: neighborRoom?.type ?? 'unknown' }
         })
     : []
@@ -419,7 +419,8 @@ function computePositions(map: MapPublicJSON): Map<number, { x: number; y: numbe
     const room = map.rooms[idx]!
 
     for (const dir of dirs) {
-      const neighborIdx = room.adjacentRooms[dir]
+      const exit = room.exits[dir]
+      const neighborIdx = exit?.targetRoomId ?? null
       if (neighborIdx === null || visited.has(neighborIdx)) continue
       const off = offsets[dir]!
       positions.set(neighborIdx, { x: pos.x + off.dx, y: pos.y + off.dy })
@@ -490,23 +491,29 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
   const toCenterY = (gy: number) => paddingYPct + (gy - minGy) * cellPct + cellPct / 2
 
   const connectors: Connector[] = []
-  const gridPassages = map.passages.filter(
-    (p) => p.direction !== null && visibleIds.has(p.roomA) && visibleIds.has(p.roomB),
-  )
   const seenConnector = new Set<string>()
-  for (const p of gridPassages) {
-    const a = nodeByIndex.get(p.roomA)
-    const b = nodeByIndex.get(p.roomB)
-    if (!a || !b) continue
-    const key = a.index < b.index ? `${a.index}-${b.index}` : `${b.index}-${a.index}`
-    if (seenConnector.has(key)) continue
-    seenConnector.add(key)
+  for (let i = 0; i < map.rooms.length; i++) {
+    if (!visibleIds.has(i)) continue
+    const roomNode = nodeByIndex.get(i)
+    if (!roomNode) continue
+    const room = map.rooms[i]!
+    for (const dir of ['left', 'right', 'up', 'down'] as const) {
+      const exit = room.exits[dir]
+      if (!exit) continue
+      const targetIdx = exit.targetRoomId
+      if (!visibleIds.has(targetIdx)) continue
+      const targetNode = nodeByIndex.get(targetIdx)
+      if (!targetNode) continue
+      const key = i < targetIdx ? `${i}-${targetIdx}` : `${targetIdx}-${i}`
+      if (seenConnector.has(key)) continue
+      seenConnector.add(key)
 
-    const cx1 = toCenterX(a.gx)
-    const cy1 = toCenterY(a.gy)
-    const cx2 = toCenterX(b.gx)
-    const cy2 = toCenterY(b.gy)
-    connectors.push({ key, x1: cx1, y1: cy1, x2: cx2, y2: cy2 })
+      const cx1 = toCenterX(roomNode.gx)
+      const cy1 = toCenterY(roomNode.gy)
+      const cx2 = toCenterX(targetNode.gx)
+      const cy2 = toCenterY(targetNode.gy)
+      connectors.push({ key, x1: cx1, y1: cy1, x2: cx2, y2: cy2 })
+    }
   }
 
   const currentRoom = nodes.find((n) => n.isCurrentRoom)

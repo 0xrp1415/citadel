@@ -76,31 +76,27 @@ export function generateSeed(length = 6): string {
   return out.join('')
 }
 
+export interface ExitPublicJSON {
+  targetRoomId: number
+  event: { type: string; requiredStat: string; difficulty: number } | null
+  unlocked: boolean
+}
+
 export interface RoomPublicJSON {
   type: string
   baseDifficulty: number
   distanceBonus: number
   isCurrentRoom: boolean
-  adjacentRooms: {
-    left: number | null
-    right: number | null
-    up: number | null
-    down: number | null
+  exits: {
+    left: ExitPublicJSON | null
+    right: ExitPublicJSON | null
+    up: ExitPublicJSON | null
+    down: ExitPublicJSON | null
   }
-}
-
-export interface PassagePublicJSON {
-  id: number
-  roomA: number
-  roomB: number
-  direction: 'left' | 'right' | 'up' | 'down' | null
-  event: { type: string; requiredStat: string; difficulty: number } | null
-  unlocked: boolean
 }
 
 export interface MapPublicJSON {
   rooms: RoomPublicJSON[]
-  passages: PassagePublicJSON[]
   startRoomIndex: number
 }
 
@@ -185,7 +181,7 @@ export async function changePlayerStatsBy(
   stat: keyof Stats,
   amount: number,
 ): Promise<void> {
-  await sendAction(roomToken, 'CHANGE_PLAYER_STATS', { stat, amount })
+  await sendAction(roomToken, 'change_player_stats', { stat, amount })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {
