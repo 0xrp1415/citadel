@@ -50,7 +50,9 @@ export class GameRoom implements IGameRoomContext {
             config: this.Identity.Config,
             status: this.GameRoomStateMachine.CurrentState,
             floor: this.Map.Floor,
-            currentRoom: { type: "room", index: this.Map.CurrentRoomIndex },
+            currentRoom: this.Map.CurrentRoom
+                ? { type: this.Map.CurrentRoom.type, index: this.Map.CurrentRoomIndex }
+                : { type: "room", index: this.Map.CurrentRoomIndex },
             map: this.Map.Map ? this.Map.JSON : null,
         };
     }
