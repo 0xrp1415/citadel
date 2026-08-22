@@ -6,19 +6,15 @@ let activeIo: Server | null = null;
 export function SetupGameRoomSocketHandlers(io: Server): void {
   activeIo = io;
 
-  GameRoomService.Instance.configureBroadcast((roomId, data) => {
-    io.to(`room-${roomId}`).emit("game-room-update", data);
-  });
-
   io.use(verifyRoomSocket);
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     const gameRoom = GameRoomService.Instance.getRoomById(socket.data.roomId);
     if (!gameRoom) {
       socket.disconnect(true);
       return;
     }
 
-    const player = gameRoom.getPlayer(socket.data.userId);
+    const player = gameRoom.Party.Players.find((p) => p.Identity.userId === socket.data.userId);
     if (!player) {
       socket.disconnect(true);
       return;
@@ -28,11 +24,16 @@ export function SetupGameRoomSocketHandlers(io: Server): void {
       io.sockets.sockets.get(player.Socket.SocketId)?.disconnect(true);
     }
 
-    socket.join(`room-${gameRoom.ID}`);
-    gameRoom.setSocket(socket.data.userId, socket.id);
+    socket.join(`room-${gameRoom.Identity.id}`);
 
-    socket.on("disconnect", () => {
-      gameRoom.clearSocket(socket.data.userId, socket.id);
+    await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+      player.Identity.playerId, "player_connect", { socketId: socket.id },
+    );
+
+    socket.on("disconnect", async () => {
+      await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+        player.Identity.playerId, "player_disconnect", { socketId: socket.id },
+      );
     });
   });
 }
@@ -61,7 +62,7 @@ function verifyRoomSocket(socket: Socket, next: (err?: ExtendedError) => void): 
     return;
   }
 
-  socket.data.roomId = result.value.room.ID;
+  socket.data.roomId = result.value.room.Identity.id;
   socket.data.userId = result.value.userId;
   socket.data.playerId = result.value.playerId;
   next();

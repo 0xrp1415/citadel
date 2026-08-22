@@ -1,4 +1,4 @@
-import { GameRoom } from "./room.js";
+import { GameRoom } from "./room/index.js";
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const INACTIVITY_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 export class GameRoomRepository {
@@ -16,8 +16,8 @@ export class GameRoomRepository {
   }
 
   public addGameRoom(gameRoom: GameRoom): void {
-    this._gameRooms.set(gameRoom.ID, gameRoom);
-    this._inviteCodeToIdMap.set(gameRoom.InviteCode, gameRoom.ID);
+    this._gameRooms.set(gameRoom.Identity.id, gameRoom);
+    this._inviteCodeToIdMap.set(gameRoom.Identity.inviteCode, gameRoom.Identity.id);
   }
 
   public getGameRoomById(id: string): GameRoom | undefined {
@@ -35,7 +35,7 @@ export class GameRoomRepository {
   public removeGameRoomById(id: string): void {
     const gameRoom = this._gameRooms.get(id);
     if (gameRoom) {
-      this._inviteCodeToIdMap.delete(gameRoom.InviteCode);
+      this._inviteCodeToIdMap.delete(gameRoom.Identity.inviteCode);
       this._gameRooms.delete(id);
     }
   }
@@ -44,8 +44,7 @@ export class GameRoomRepository {
     return setInterval(() => {
       const now = Date.now();
       for (const [id, gameRoom] of this._gameRooms.entries()) {
-        if (now - gameRoom.LastActivityTimestamp > INACTIVITY_THRESHOLD_MS || gameRoom.Players.length === 0) {
-          // 30 minutes
+        if (now - gameRoom.LastUpdateTime() > INACTIVITY_THRESHOLD_MS || gameRoom.Party.PlayerCount === 0) {
           this.removeGameRoomById(id);
         }
       }

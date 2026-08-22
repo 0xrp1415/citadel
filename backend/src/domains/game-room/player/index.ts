@@ -1,4 +1,4 @@
-import { DEFAULT_ARMOUR_GENERATOR, DEFAULT_WEAPON_GENERATOR, DefaultGold, DefaultSkillPoints } from "../defaults.js";
+import { DefaultArmourGenerator, DefaultWeaponGenerator, DefaultGold, DefaultSkillPoints } from "./defaults.js";
 import { PlayerCombat } from "./combat.js";
 import { PlayerIdentity } from "./identity.js";
 import { PlayerInventory } from "./inventory.js";
@@ -24,8 +24,8 @@ export class Player {
         this.progression = new PlayerProgression(DefaultSkillPoints());
         this.combat = new PlayerCombat(
             { hp: 20, strength: 20, dexterity: 20, intelligence: 20, wisdom: 20, agility: 20 },
-            DEFAULT_ARMOUR_GENERATOR(),
-            DEFAULT_WEAPON_GENERATOR(),
+            DefaultArmourGenerator(),
+            DefaultWeaponGenerator(),
             this.progression.Level
         );
         this.inventory = new PlayerInventory(DefaultGold());

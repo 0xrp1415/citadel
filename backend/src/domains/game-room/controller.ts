@@ -6,8 +6,8 @@ import { IGameRoomRequest } from "./types.js";
 
 const GameRoomRouter: Router = Router();
 
-GameRoomRouter.post("/create", CheckUserExists, (req, res) => {
-  const result = GameRoomService.Instance.createRoom(
+GameRoomRouter.post("/create", CheckUserExists, async (req, res) => {
+  const result = await GameRoomService.Instance.createRoom(
     req.userID ?? "",
     req.body.config,
     req.body.name,
@@ -19,8 +19,8 @@ GameRoomRouter.post("/create", CheckUserExists, (req, res) => {
   res.status(201).json(result.value);
 });
 
-GameRoomRouter.post("/join/:inviteCode", CheckUserExists, (req, res) => {
-  const result = GameRoomService.Instance.joinRoom(
+GameRoomRouter.post("/join/:inviteCode", CheckUserExists, async (req, res) => {
+  const result = await GameRoomService.Instance.joinRoom(
     req.userID ?? "",
     req.params.inviteCode ?? "",
     req.body.name,
@@ -32,9 +32,9 @@ GameRoomRouter.post("/join/:inviteCode", CheckUserExists, (req, res) => {
   res.status(200).json(result.value);
 });
 
-GameRoomRouter.post("/leave", requireRoomToken, (req, res) => {
+GameRoomRouter.post("/leave", requireRoomToken, async (req, res) => {
   const roomRequest = req as IGameRoomRequest;
-  const result = GameRoomService.Instance.leaveRoom(
+  const result = await GameRoomService.Instance.leaveRoom(
     roomRequest.userId,
     roomRequest.roomId,
   );
@@ -52,14 +52,26 @@ GameRoomRouter.post("/leave", requireRoomToken, (req, res) => {
   });
 });
 
-GameRoomRouter.post("/kick", requireRoomToken, (req, res) => {
+GameRoomRouter.post("/kick", requireRoomToken, async (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const targetPlayerId = req.body.playerId ?? "";
 
-  const result = GameRoomService.Instance.kickPlayer(
-    roomRequest.userId,
-    roomRequest.roomId,
-    targetPlayerId,
+  if (!targetPlayerId) {
+    res.status(400).json({ error: "No player was named for expulsion." });
+    return;
+  }
+
+  const gameRoom = GameRoomService.Instance.getRoomById(roomRequest.roomId);
+  if (!gameRoom) {
+    res.status(404).json({ error: "Game room not found." });
+    return;
+  }
+
+  const target = gameRoom.Party.getPlayer(targetPlayerId);
+  const socketId = target?.Socket.SocketId ?? null;
+
+  const result = await GameRoomService.Instance.executePlayerAction(
+    roomRequest.userId, roomRequest.roomId, "kick_player", { targetPlayerId },
   );
 
   if (!result.ok) {
@@ -67,19 +79,19 @@ GameRoomRouter.post("/kick", requireRoomToken, (req, res) => {
     return;
   }
 
-  if (result.value.socketId) {
-    disconnectSocket(result.value.socketId, { event: "game-room-kicked", data: {} });
+  if (socketId) {
+    disconnectSocket(socketId, { event: "game-room-kicked", data: {} });
   }
 
   res.status(200).json({ success: true });
 });
 
-GameRoomRouter.post("/action", requireRoomToken, (req, res) => {
+GameRoomRouter.post("/action", requireRoomToken, async (req, res) => {
   const roomRequest = req as IGameRoomRequest;
   const action = req.body.action ?? "";
   const payload = req.body.payload ?? undefined;
 
-  const result = GameRoomService.Instance.executePlayerAction(
+  const result = await GameRoomService.Instance.executePlayerAction(
     roomRequest.userId,
     roomRequest.roomId,
     action,
@@ -94,11 +106,11 @@ GameRoomRouter.post("/action", requireRoomToken, (req, res) => {
   res.status(200).json({ success: true });
 });
 
-GameRoomRouter.put("/room", requireRoomToken, (req, res) => {
+GameRoomRouter.put("/room", requireRoomToken, async (req, res) => {
   let roomRequest = req as IGameRoomRequest;
   let config = req.body.config ?? {};
 
-  const result = GameRoomService.Instance.updateRoomConfig(
+  const result = await GameRoomService.Instance.updateRoomConfig(
     roomRequest.userId,
     roomRequest.roomId,
     config,
@@ -126,7 +138,7 @@ function requireRoomToken(req: Request, res: Response, next: NextFunction): void
   }
 
   const roomRequest = req as IGameRoomRequest;
-  roomRequest.roomId = result.value.room.ID;
+  roomRequest.roomId = result.value.room.Identity.id;
   roomRequest.userId = result.value.userId;
   roomRequest.playerId = result.value.playerId;
   next();

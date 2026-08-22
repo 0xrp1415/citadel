@@ -1,15 +1,7 @@
-import { PlayerRunEntityArmors, PlayerRunEntityWeapon } from "./player/types.js";
-import { EntityStats } from "../procedural-engine/domain.js";
-import { IGameRoomConfig } from "./types.js";
+import { PlayerRunEntityArmors, PlayerRunEntityWeapon } from "./types.js";
+import { EntityStats } from "../../procedural-engine/domain.js";
 
-export const DEFAULT_GAME_ROOM_CONFIG_GENERATOR = (): IGameRoomConfig => ({
-    maxPlayers: 4,
-    seed: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
-    difficulty: "medium",
-    mapSize: "medium",
-});
-
-export const DEFAULT_ARMOUR_GENERATOR = (): PlayerRunEntityArmors => ({
+export const DefaultArmourGenerator = (): PlayerRunEntityArmors => ({
     head: {
         armorId: "wooden_helmet",
         armorName: "Wooden Helmet",
@@ -54,7 +46,7 @@ export const DEFAULT_ARMOUR_GENERATOR = (): PlayerRunEntityArmors => ({
     }
 });
 
-export const DEFAULT_WEAPON_GENERATOR = (): PlayerRunEntityWeapon => ({
+export const DefaultWeaponGenerator = (): PlayerRunEntityWeapon => ({
     weaponId: "weapon_default_bat",
     weaponName: "Bat",
     description: "A simple wooden bat.",

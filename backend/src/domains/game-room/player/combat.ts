@@ -1,5 +1,5 @@
 import { EntityHealthStatImpl, EntityStats, IEntityHealthStatGetters, IStats } from "../../procedural-engine/domain.js";
-import { BASE_MAX_PLAYER_BASE_STAT, BASE_PLAYER_HP, NullStatsGenerator } from "../defaults.js";
+import { BASE_MAX_PLAYER_BASE_STAT, BASE_PLAYER_HP, NullStatsGenerator } from "./defaults.js";
 import { PlayerRunEntityArmors, PlayerRunEntityArmor, PlayerRunEntityWeapon } from "./types.js";
 
 export class PlayerCombat {
