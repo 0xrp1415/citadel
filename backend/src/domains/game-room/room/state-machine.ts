@@ -6,6 +6,9 @@ export class GameRoomStateMachine implements IGameRoomStateMachineContext {
 
     constructor(initialState: GameRoomState) {
         this.state = initialState;
+    }
+    
+    public StartStaeMachine(): void {
         this.state.onEnterState();
     }
     

@@ -31,6 +31,7 @@ export class GameRoom implements IGameRoomContext {
         this.broadcastFunction = broadcastFunction;
         this.GameRoomStateMachine = new GameRoomStateMachine(new LobbyState(this));
         this.lastUpdateTime = Date.now();
+        this.GameRoomStateMachine.StartStaeMachine();
     }
     public Broadcast(): void {
         this.broadcastFunction(this.JSON);
