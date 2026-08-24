@@ -1,4 +1,4 @@
-import { IStats } from "../../../../procedural-engine/domain.js";
+import { IStats } from "../../../../procedural-engine/index.js";
 import { ERoomType } from "../../../../procedural-engine/room.js";
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { ActionHandler } from "../../utils/types.js";

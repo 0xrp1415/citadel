@@ -1,4 +1,5 @@
-import { GenerateMap, IMap, IMapConfig, IRoomMetadata, MulberryRNG } from "../../procedural-engine/domain.js";
+import { generateMap, IMap, IMapConfig, IRoomMetadata, MulberryRNG } from "../../procedural-engine/index.js";
+import { OPPOSITE } from "../../procedural-engine/generation/grid.js";
 import { Passage } from "../../procedural-engine/passage.js";
 import { IMapPublicJSON, IRoomPublicJSON } from "./types.js";
 import { IGameRoomMapContext } from "./utils/interface/index.js";
@@ -20,7 +21,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         if (!this.rng)
             this.rng = MulberryRNG.fromSeed(config.seed);
 
-        this.map = GenerateMap(this.rng, this.RoomConfigToMapConfig(config));
+        this.map = generateMap(this.rng, this.RoomConfigToMapConfig(config));
         this.currentRoomIndex = this.map.startRoomIndex;
     }
 
@@ -95,31 +96,22 @@ function deriveExits(roomId: number, passages: Passage[]): IRoomPublicJSON["exit
     for (const passage of passages) {
         if (passage.Direction === null) continue;
 
-        if (passage.roomA === roomId) {
+        if (passage.RoomA === roomId) {
             exits[passage.Direction] = {
-                targetRoomId: passage.roomB,
+                targetRoomId: passage.RoomB,
                 event: passage.Event,
                 unlocked: passage.Unlocked,
             };
-        } else if (passage.roomB === roomId) {
+        } else if (passage.RoomB === roomId) {
             const reverse = OPPOSITE[passage.Direction];
-            if (reverse) {
-                exits[reverse as keyof IRoomPublicJSON["exits"]] = {
-                    targetRoomId: passage.roomA,
-                    event: passage.Event,
-                    unlocked: passage.Unlocked,
-                };
-            }
+            exits[reverse] = {
+                targetRoomId: passage.RoomA,
+                event: passage.Event,
+                unlocked: passage.Unlocked,
+            };
         }
     }
 
     return exits;
 }
-
-const OPPOSITE: Record<string, string> = {
-    up: "down",
-    down: "up",
-    left: "right",
-    right: "left",
-};
 

@@ -1,13 +1,11 @@
-import { EntityHealthStatImpl, EntityStats, IEntityHealthStatGetters, IStats } from "../../procedural-engine/domain.js";
-import { BASE_MAX_PLAYER_BASE_STAT, BASE_PLAYER_HP, NullStatsGenerator } from "./defaults.js";
+import { EntityCombat, IStats, sumStats } from "../../procedural-engine/index.js";
+import { BASE_MAX_PLAYER_BASE_STAT, BASE_PLAYER_HP } from "./defaults.js";
 import { PlayerRunEntityArmors, PlayerRunEntityArmor, PlayerRunEntityWeapon } from "./types.js";
 
-export class PlayerCombat {
-    private base_stats: EntityStats;
-    private stat_modifiers: EntityStats;
-    private health: EntityHealthStatImpl;
-    private armor_stat: PlayerRunEntityArmors;
-    private weapon_stat: PlayerRunEntityWeapon;
+export class PlayerCombat extends EntityCombat {
+    private armors: PlayerRunEntityArmors;
+    private weapon: PlayerRunEntityWeapon;
+    private level: number;
 
     constructor(
         initialStats: IStats,
@@ -15,76 +13,39 @@ export class PlayerCombat {
         initialWeaponStats: PlayerRunEntityWeapon,
         level: number
     ) {
-        this.base_stats = new EntityStats(initialStats);
-        this.stat_modifiers = NullStatsGenerator();
-        this.armor_stat = initialArmorStats;
-        this.weapon_stat = initialWeaponStats;
-        this.health = new EntityHealthStatImpl(this.base_stats.Stats.hp, level, BASE_PLAYER_HP);
+        super(initialStats, BASE_PLAYER_HP, level);
+        this.armors = initialArmorStats;
+        this.weapon = initialWeaponStats;
+        this.level = level;
     }
 
-    public increaseBaseStatBy(stat: keyof IStats, amount: number, level: number): boolean {
-        if (this.BaseStats[stat] + amount < 0 || this.BaseStats[stat] + amount > this.getMaxBaseStat(level)) {
-            return false;
-        }
-        return this.base_stats.increaseStatBy(stat, amount);
+    public increaseBaseStatBy(stat: keyof IStats, amount: number, level: number = this.level): boolean {
+        return super.increaseBaseStatBy(stat, amount, this.getMaxBaseStat(level));
     }
 
-    public SetArmorStatFor(gear: keyof PlayerRunEntityArmors, armorStat: PlayerRunEntityArmor) {
-        this.armor_stat[gear] = armorStat;
+    public setLevel(level: number): void {
+        this.level = level;
+        this.setStatMultiplier(level);
     }
 
-    public SetWeaponStat(weaponStat: PlayerRunEntityWeapon) {
-        this.weapon_stat = weaponStat;
+    public setArmorStatFor(gear: keyof PlayerRunEntityArmors, armorStat: PlayerRunEntityArmor): void {
+        this.armors[gear] = armorStat;
     }
 
-    public increaseStatModifierBy(stat: keyof IStats, amount: number): boolean {
-        return this.stat_modifiers.increaseStatBy(stat, amount);
-    }
-
-    public changeHealthBy(amount: number): void {
-        this.health.changeCurrentHealthBy(amount);
-    }
-
-    public resetHealth(level: number): void {
-        const previousCurrentHealthPercent = this.health.CurrentHealth / this.health.MaxHealth;
-        this.health.computeMaxHP(this.base_stats.Stats.hp, level);
-        this.health.changeCurrentHealthBy((this.health.MaxHealth * previousCurrentHealthPercent) - this.health.CurrentHealth);
+    public setWeaponStat(weaponStat: PlayerRunEntityWeapon): void {
+        this.weapon = weaponStat;
     }
 
     public get ArmorStats(): PlayerRunEntityArmors {
-        return this.armor_stat;
-    }
-
-    public get StatChangeByArmor(): IStats {
-        const totalArmorStats: IStats = { hp: 0, strength: 0, dexterity: 0, intelligence: 0, wisdom: 0, agility: 0 };
-        for (const armor of Object.values(this.armor_stat)) {
-            totalArmorStats.hp += armor.stats.hp;
-            totalArmorStats.strength += armor.stats.strength;
-            totalArmorStats.dexterity += armor.stats.dexterity;
-            totalArmorStats.intelligence += armor.stats.intelligence;
-            totalArmorStats.wisdom += armor.stats.wisdom;
-            totalArmorStats.agility += armor.stats.agility;
-        }
-        return totalArmorStats;
+        return this.armors;
     }
 
     public get WeaponStats(): PlayerRunEntityWeapon {
-        return this.weapon_stat;
+        return this.weapon;
     }
 
-    public get Health(): IEntityHealthStatGetters {
-        return {
-            MaxHealth: this.health.MaxHealth,
-            CurrentHealth: this.health.CurrentHealth
-        };
-    }
-
-    public get StatModifiers(): IStats {
-        return this.stat_modifiers.Stats;
-    }
-
-    public get BaseStats(): IStats {
-        return this.base_stats.Stats;
+    public get StatChangeByArmor(): IStats {
+        return sumStats(Object.values(this.armors).map((armor) => armor.stats));
     }
 
     public getMaxBaseStat(level: number): number {

@@ -1,6 +1,5 @@
-export * from "./stats.js"
 export * from "./rng.js"
-export * from "./health.js"
+export * from "./entity/index.js"
 export * from "./room.js"
 export * from "./passage.js"
 export * from "./map.js"

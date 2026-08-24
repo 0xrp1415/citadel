@@ -1,5 +1,4 @@
 import { PlayerRunEntityArmors, PlayerRunEntityWeapon } from "./types.js";
-import { EntityStats } from "../../procedural-engine/domain.js";
 
 export const DefaultArmourGenerator = (): PlayerRunEntityArmors => ({
     head: {
@@ -63,13 +62,5 @@ export const DefaultWeaponGenerator = (): PlayerRunEntityWeapon => ({
 export const BASE_MAX_PLAYER_BASE_STAT = 40;
 export const BASE_PLAYER_HP = 100;
 
-export const NullStatsGenerator = (): EntityStats => (new EntityStats({
-    hp: 0,
-    strength: 0,
-    dexterity: 0,
-    intelligence: 0,
-    wisdom: 0,
-    agility: 0
-}));
 export const DefaultSkillPoints = (): number => 50;
-export const DefaultGold = (): number => 200; 
+export const DefaultGold = (): number => 200;

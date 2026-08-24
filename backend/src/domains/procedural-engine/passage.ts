@@ -1,9 +1,11 @@
-import { IStats } from "./stats.js";
+import { IStats } from "./entity/stats.js";
 
 export type Direction = "up" | "down" | "left" | "right";
 
+export type PassageEventType = "combat" | "puzzle" | "challenge";
+
 export interface IPassageEvent {
-    type: string;
+    type: PassageEventType;
     requiredStat: keyof IStats;
     difficulty: number;
 }
@@ -18,12 +20,12 @@ export interface IPassagePublic {
 }
 
 export class Passage implements IPassagePublic {
-    id: number;
-    roomA: number;
-    roomB: number;
-    direction: Direction | null;
-    event: IPassageEvent | null = null;
-    unlocked: boolean = false;
+    private id: number;
+    private roomA: number;
+    private roomB: number;
+    private direction: Direction | null;
+    private event: IPassageEvent | null = null;
+    private unlocked: boolean = false;
 
     constructor(id: number, roomA: number, roomB: number, direction?: Direction) {
         this.id = id;

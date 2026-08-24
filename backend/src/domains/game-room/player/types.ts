@@ -1,4 +1,4 @@
-import { IEntityHealthStatGetters, IStats } from "../../procedural-engine/domain.js";
+import { IEntityHealthStatGetters, IStats } from "../../procedural-engine/index.js";
 
 export type PlayerStatus =
     | "joined"

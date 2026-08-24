@@ -1,4 +1,4 @@
-import { IMap, IRoomMetadata } from "../../../../procedural-engine/domain.js";
+import { IMap, IRoomMetadata } from "../../../../procedural-engine/index.js";
 import { IMapPublicJSON } from "../../types.js";
 import { IGameRoomConfig } from "../types.js";
 
