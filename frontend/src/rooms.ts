@@ -100,6 +100,11 @@ export interface MapPublicJSON {
   startRoomIndex: number
 }
 
+export interface RoomMessage {
+  from: string
+  message: string
+}
+
 export interface RoomData {
   inviteCode: string
   totalPlayers: number
@@ -109,6 +114,8 @@ export interface RoomData {
   floor: number
   currentRoom: { type: string; index: number }
   map: MapPublicJSON | null
+  message: RoomMessage[]
+  dungeonMasterState: 'idle' | 'active'
 }
 
 export interface CreateRoomResult {

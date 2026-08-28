@@ -2344,6 +2344,66 @@
   color: var(--color-mist);
 }
 
+.record__row--pending {
+  color: var(--color-mist);
+  font-style: italic;
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1.5px solid var(--color-tan);
+}
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.75rem;
+  max-height: 10rem;
+  overflow-y: auto;
+  resize: none;
+  align-self: center;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-tan);
+  padding: 0.55rem 0.8rem;
+  caret-color: var(--color-rust);
+  transition: border-color 160ms ease;
+}
+
+.composer__input::placeholder {
+  color: var(--color-mist);
+  opacity: 0.8;
+}
+
+.composer__input:focus {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+  border-color: var(--color-teal);
+}
+
+.composer__input:disabled {
+  opacity: 0.55;
+}
+
+.composer__send {
+  white-space: nowrap;
+  padding: 0.6rem 1rem;
+}
+
+.composer__error {
+  margin-top: 0.7rem;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  color: var(--color-rust);
+}
+
 @keyframes row-in {
   from {
     opacity: 0;

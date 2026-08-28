@@ -3,8 +3,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
-import type { ConsumableType, MapPublicJSON, PlayerPublic, PlayerRunEntity, RoomData, Stats } from '../rooms'
-import { changePlayerStatsBy } from '../rooms'
+import type { ConsumableType, MapPublicJSON, PlayerPublic, PlayerRunEntity, RoomData, RoomMessage, Stats } from '../rooms'
+import { changePlayerStatsBy, sendAction } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
@@ -20,18 +20,27 @@ interface RecordLine {
   indent?: boolean
 }
 
-const TRANSCRIPT: RecordLine[] = [
-  { id: 'r1', speaker: 'officer', text: 'Descent begins. The record is continuous. It will not pause.' },
-  { id: 'r2', speaker: 'player', text: 'I advance, blade low, toward the warden' },
-  { id: 'r3', speaker: 'ruling', text: '→ RULING: ADMISSIBLE' },
-  { id: 'r4', speaker: 'data', text: 'roll 12 + 26 vs 18 → hit' },
-  { id: 'r5', speaker: 'data', text: '14 damage to the warden', indent: true },
-  { id: 'r6', speaker: 'officer', text: 'The hall narrows. Walls close. Your party presses deeper.' },
-  { id: 'r7', speaker: 'player', text: 'I hold the line, shield raised, calling the others behind me' },
-  { id: 'r8', speaker: 'ruling', text: '→ RULING: ADMISSIBLE — RESOLVED' },
-  { id: 'r9', speaker: 'data', text: 'roll 9 + 22 vs 15 → miss' },
-  { id: 'r10', speaker: 'data', text: "the warden's blade finds your flank", indent: true },
-]
+const OPENING_LINE: RecordLine = {
+  id: 'opening',
+  speaker: 'officer',
+  text: 'Descent begins. The record is continuous. It will not pause.',
+}
+
+function linesFromMessages(messages: RoomMessage[]): RecordLine[] {
+  return messages.map((msg, i) => {
+    if (msg.from.startsWith('player:')) {
+      return { id: `${i}-player`, speaker: 'player' as const, text: msg.message }
+    }
+    if (msg.from === 'dungeon_master') {
+      return { id: `${i}-dm`, speaker: 'officer' as const, text: msg.message }
+    }
+    return { id: `${i}-data`, speaker: 'data' as const, text: msg.message }
+  })
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
 
 const SHEET_STATS: { key: keyof Stats; label: string }[] = [
   { key: 'hp', label: 'Vitality' },
@@ -71,7 +80,12 @@ function Run() {
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
   const [mapOpen, setMapOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [draft, setDraft] = useState('')
+  const [composerBusy, setComposerBusy] = useState(false)
+  const [playError, setPlayError] = useState<string | null>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLTextAreaElement>(null)
 
   const handleChangeStat = useCallback(async (stat: keyof Stats, amount: number) => {
     if (!roomToken) return
@@ -84,6 +98,34 @@ function Run() {
       setBusy(false)
     }
   }, [roomToken])
+
+  const autoGrowComposer = useCallback(() => {
+    const el = composerRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [])
+
+  const resetComposer = useCallback(() => {
+    const el = composerRef.current
+    if (el) el.style.height = ''
+  }, [])
+
+  const handlePlay = useCallback(async () => {
+    const text = draft.trim()
+    if (!text || !roomToken) return
+    setComposerBusy(true)
+    setPlayError(null)
+    try {
+      await sendAction(roomToken, 'player_play', text)
+      setDraft('')
+      resetComposer()
+    } catch (err) {
+      setPlayError(errorMessage(err))
+    } finally {
+      setComposerBusy(false)
+    }
+  }, [draft, roomToken, resetComposer])
 
   useEffect(() => {
     if (!roomToken) {
@@ -109,6 +151,12 @@ function Run() {
       current && room.players.some((p) => p.playerId === current) ? current : null,
     )
   }, [room])
+
+  const messageCount = room?.message.length ?? 0
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messageCount])
 
   useEffect(() => {
     if (openPlayerId) return
@@ -143,13 +191,19 @@ function Run() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [room, selfPlayerId, openPlayerId, mapOpen])
 
+  const dmActive = composerBusy || room?.dungeonMasterState === 'active'
+
   const officer = socketError
     ? socketError
     : room?.status === 'in-run'
       ? connected
-        ? 'The descent is live. The record is continuous.'
+        ? dmActive
+          ? 'The officer deliberates. The record is continuous.'
+          : 'The descent is live. The record is continuous.'
         : 'The line is down — retrying the connection…'
       : "The register opens. Await the officer\u2019s word."
+
+  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [])]
 
   const openPlayer = room?.players.find((p) => p.playerId === openPlayerId) ?? null
 
@@ -183,22 +237,58 @@ function Run() {
             <span className="panel__title">Field log</span>
             <span className="panel__sub">live · every word judged</span>
           </div>
-          <div className="record-scroll">
+          <div className="record-scroll" ref={scrollRef}>
             <div className="record">
-              {TRANSCRIPT.map((line) => (
+              {lines.map((line) => (
                 <span
                   key={line.id}
                   className={`record__row record__row--${line.speaker}${
                     line.indent ? ' record__indent' : ''
                   }`}
-                  style={{ animationDelay: `${TRANSCRIPT.indexOf(line) * 90}ms` }}
                 >
                   {line.speaker === 'player' && <span className="record__mark">&gt; </span>}
                   {line.text}
                 </span>
               ))}
+              {dmActive && (
+                <span className="record__row record__row--pending">the officer deliberates…</span>
+              )}
               <span className="caret" aria-hidden="true" />
             </div>
+          </div>
+          {playError && (
+            <p className="composer__error" role="alert">
+              {playError}
+            </p>
+          )}
+          <div className="composer">
+            <textarea
+              ref={composerRef}
+              className="composer__input"
+              rows={1}
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value)
+                autoGrowComposer()
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault()
+                  void handlePlay()
+                }
+              }}
+              placeholder="Say what you do…"
+              disabled={dmActive}
+              aria-label="Your next action"
+            />
+            <button
+              type="button"
+              className="btn btn--primary composer__send"
+              onClick={() => void handlePlay()}
+              disabled={dmActive || !draft.trim()}
+            >
+              {dmActive ? 'judging…' : 'speak'}
+            </button>
           </div>
         </section>
       </LedgerFrame>
