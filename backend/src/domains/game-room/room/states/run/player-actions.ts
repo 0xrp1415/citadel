@@ -47,6 +47,7 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
 
         let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.name}`, payload)
         let narration = await ctx.DMAdapter.Narrate(`player:${player.Identity.name}`, "to be implemented...");
+        ctx.Broadcast();
         return { ok: true, value: narration };
     }
 }
