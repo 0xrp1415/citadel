@@ -3,7 +3,7 @@ import { DmVerdict, TTranscriptEntry } from "../types.js";
 import { DmRoomView, ZDmVerdict } from "../schema/index.js";
 import { SystemMessage, AIMessage, HumanMessage, type BaseMessage } from "langchain";
 
-export function convertToRoomView(view: DmRoomView): string {
+function convertToRoomView(view: DmRoomView): string {
     const lines: string[] = [];
 
     lines.push(`ROOM #${view.roomId} (${view.roomType})`);
@@ -31,12 +31,12 @@ export function convertToRoomView(view: DmRoomView): string {
     return lines.join("\n");
 }
 
-export function createSystemMessage(system_prompt: string, room_snapshot: DmRoomView): SystemMessage {
+function createSystemMessage(system_prompt: string, room_snapshot: DmRoomView): SystemMessage {
     const room_snapshot_str = convertToRoomView(room_snapshot);
     return new SystemMessage({ content: system_prompt + "\n\n" + room_snapshot_str });
 }
 
-export function buildResolveMessages(
+function buildResolveMessages(
     system_prompt: string,
     room: DmRoomView,
     transcript: TTranscriptEntry[],
