@@ -37,12 +37,13 @@ The game itself. One instance per expedition, authoritative over everything that
 
 The AI agent — the game's voice, scribe, and judge.
 
-- **Owns:** **action structuring** — turning a player's free text into a structured Action Tool (`intent` / `target` / `detail` / `resource`), scene-sense validation verdicts (`valid` / `ambiguous` / `needs_more_detail`), narration (scene/outcome prose, streamed), the tool set that grounds it in session state, caching of generated content, per-session budget, and generation audit log.
-- **Exposed as a port:** GameRoom depends on an interface (`structureAction`, `validateAction`, `narrateScene`, `narrateOutcome`), never on the concrete agent. Swappable provider, testable with a mock.
+- **Surface:** `CreateDungeonMaster(roomViewGenerator)` → `DungeonMaster` with `Resolve(text)` and `Narrate(eventText)`.
+- **Owns:** resolving a player's free text into a structured verdict — `execute` (carries up to 6 structured actions: `intent` / `target_type` / `target_id` / `direction` / `detail` / `resource`), `not_allowed` (reason), or `ambiguous` (question + guesses) — narrating decided outcomes as single-shot prose, and the run's recent-exchanges transcript.
 - **Key rules:**
-  - Called on **action intake** (structure + validate) and **after resolution** (narrate). It never decides outcomes — validated actions go to procedural-engine, which resolves them.
-  - Never owns game state; its tools read state, it can't mutate it.
-  - If it's down or returns garbage, the session falls back to schema-only handling. A session never blocks on the AI.
+  - Called on **action intake** (`Resolve`) and **after resolution** (`Narrate`). It never decides outcomes — `execute` actions go to procedural-engine, which resolves them.
+  - Never owns game state; it reads through `roomViewGenerator`, it can't mutate anything.
+  - If the model output fails to parse, `Resolve` falls back to `not_allowed`; a session never blocks on the AI.
+- **Notes:** the model is currently bound to Groq (`openai/gpt-oss-120b`, structured-output `jsonMode`) inside `CreateDungeonMaster`; the swappable-provider port is not implemented yet.
 
 ## Procedural Engine
 

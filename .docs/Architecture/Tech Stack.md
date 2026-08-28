@@ -2,7 +2,7 @@ The confirmed stack for the Citadel MVP.
 
 - **Client** — React (Vite) + socket.io-client; static SPA, no install
 - **Server** — Node.js + Socket.io (Express/Fastify for REST); single process for MVP
-- **AI** — LangChain.js, in-process; one Citadel Agent (structuring, validation, narration); provider-agnostic, model decided later
+- **AI** — LangChain.js, in-process; DungeonMaster bound to Groq (`openai/gpt-oss-120b`): `Resolve` (free text → structured verdict) + `Narrate` (event → prose); a swappable-provider port is planned but not implemented
 - **Database** — PostgreSQL; free, self-hosted; JSONB for run snapshots; live session state stays in-memory
 - **Transport** — REST for entry/routing, Socket.io for live game events (see [[Request Flow]])
 

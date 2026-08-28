@@ -20,11 +20,11 @@ Every in-room event is a socket message. The canonical loop:
 ```
 Client → GameRoom (action intake)
               ↓
-       dungeon-master (structure + validate) ← free text → Action Tool
-              ↓  valid
+       dungeon-master (resolve) ← free text → structured verdict
+              ↓  execute
        procedural-engine (resolve) → deterministic outcome
               ↓
-       dungeon-master (narrate) → streamed prose
+       dungeon-master (narrate) → prose
               ↓
        GameRoom → all clients (scene update, result)
 ```
@@ -32,10 +32,10 @@ Client → GameRoom (action intake)
 ## The action pipeline (per round)
 
 1. A player submits **free text** (e.g. "I slash the goblin's flank with my axe")
-2. **dungeon-master** structures it into an Action Tool and judges scene-sense ([[Mechanics/Action Validation]])
-   - `valid` → on to resolution
-   - `ambiguous` / `needs_more_detail` → denied, returned to the player
-   - AI down → schema-only fallback
+2. **dungeon-master** resolves it in one call — structured verdict + judgment against the room facts ([[Mechanics/Action Validation]])
+   - `execute` → carries the structured actions, on to resolution
+   - `not_allowed` / `ambiguous` → returned to the player (reason, or question + guesses)
+   - parsing failure → treated as `not_allowed`
 3. **procedural-engine** rolls `d20 + stat + modifiers` vs DC and returns the deterministic result
 4. **dungeon-master** narrates the decided outcome; GameRoom broadcasts it
 

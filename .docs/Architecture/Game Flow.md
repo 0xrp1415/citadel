@@ -55,10 +55,10 @@ AI narrates the scene
 Turn begins — the party shares 3 moves per round:
     players allocate them freely; AGI breaks ties
     ↓
-AI validates each action:
-    valid             → accept to move on
-    ambiguous         → deny action (reason shown)
-    needs more detail → return for clarification
+AI resolves each action:
+    execute           → accept the structured actions, move on
+    not_allowed       → deny action (reason shown)
+    ambiguous         → return for clarification (question + guesses)
     ↓
 Roll die → process party (AGI breaks ties) → monsters respond
     ↓

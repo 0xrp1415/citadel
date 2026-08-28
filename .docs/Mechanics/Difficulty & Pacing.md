@@ -9,9 +9,9 @@ How the run climbs and how sessions stay moving.
 ## Pacing
 
 - A typical run lands around **20–30 minutes** before the wipe, but length is set by survival, not a fixed count
-- **Turn-based** with a per-turn action **timeout** — stalls are auto-passed
-- The **host can force-advance** a stalled player
-- Narration is **streamed** so scenes appear as the AI writes them
+- **Turn-based** — the party advances when every connected player (live socket) votes yes
+- No host force-advance and no per-turn timer — disconnects are handled by socket-level auto-removal, not round timeouts
+- Narration follows each event as it resolves (single-shot, not streamed)
 - Every dungeon starts at a stasis rest point, with extra graces in between ([[Mechanics/Stasis]])
 
 ## Design intent

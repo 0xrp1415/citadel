@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, and character system are implemented. Gameplay loop (combat, encounters, AI DM, stasis) is not yet built.
+> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, and character system are implemented. The AI DM (resolve + narration) is implemented but not yet wired into the run loop; gameplay loop (combat, encounters, stasis) is not yet built.
 
 
 ## Overview
@@ -23,7 +23,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 
 ## Features
 
-- **Free-text play** — actions are typed as plain text and structured into Action Tools (`intent` / `target` / `detail` / `resource`); the AI judges each one with a ruling: `ADMISSIBLE`, `DENIED`, or a request for more detail
+- **Free-text play** — actions are typed as plain text and structured into a verdict (`execute` / `not_allowed` / `ambiguous`); an `execute` verdict carries up to 6 structured actions (`intent` / `target_type` / `target_id` / `direction` / `resource`)
 - **Shared action economy** — the party gets **3 moves per round**, split however they choose; AGI breaks ties, unspent moves are lost, then monsters respond
 - **Deterministic resolution** — every roll is `d20 + stat + modifiers` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**
 - **Characters** — STR / DEX / INT / WIS / AGI / HP; every stat starts at base 20, plus **50 bonus points** (max 40 per stat at creation), with race as a cosmetic choice
@@ -33,7 +33,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - **Abilities from scrolls** — 1 active + 2 passive slots; actives cost **mana, but only in battle** — outside combat they're free
 - **Fainting & revives** — a player at 0 HP is downed for the encounter; an ally can spend a revive action, and a full party wipe is the only way a run ends
 - **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; a typical run lands around **20–30 minutes**
-- **Pacing that doesn't stall** — per-turn timeouts, a host that can force-advance, and streamed AI narration
+- **Pacing that doesn't stall** — the run advances only when every connected (socket-alive) player votes yes; narration lands as each event resolves
 
 ## Roadmap
 
@@ -53,7 +53,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Broadcast scene updates / results to all clients
 - [ ] Run/encounter game loop (InRunState is a stub — accepts actions but processes nothing)
 - [ ] Round/turn system (shared action economy: 3 moves per round)
-- [ ] Per-turn timeouts and host force-advance
+- [ ] Advance gate: every connected (socket-alive) player must vote yes to advance
 
 ### Characters
 - [x] Stat system (STR / DEX / INT / WIS / AGI / HP)
@@ -90,10 +90,10 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [ ] Gear dismantling for XP
 
 ### AI Dungeon Master
-- [ ] Structure free text into Action Tools (intent / target / detail / resource)
-- [ ] Judge actions (ADMISSIBLE / DENIED / request for detail)
-- [ ] Narrate outcomes (streamed prose)
-- [ ] Provider-agnostic agent interface (port pattern, swappable)
+- [x] Structure free text into structured verdicts (intent / target / direction / resource)
+- [x] Judge actions (execute / not_allowed / ambiguous, parse-failure fallback)
+- [x] Narrate outcomes (in-world prose)
+- [ ] Wire DungeonMaster into GameRoom (room snapshot → resolve → execute → narrate)
 
 ### Frontend
 - [x] Login / identity page
@@ -156,14 +156,14 @@ roll 12 + 26 vs 18 → hit
 |---|---|
 | **Client** | React (Vite) + socket.io-client — static SPA, no install |
 | **Server** | Node.js + Socket.io (Express/Fastify for REST) — single process for MVP |
-| **AI** | LangChain.js, in-process — one Citadel Agent (structuring, validation, narration); provider-agnostic, model decided later |
+| **AI** | LangChain.js (Groq, `openai/gpt-oss-120b`), in-process — DungeonMaster: `Resolve` (free text → structured verdict) + `Narrate` (event → prose) |
 | **Database** | PostgreSQL — free, self-hosted; JSONB for run snapshots; live session state stays in-memory |
 | **Transport** | REST for entry/routing, Socket.io for live game events |
 
 **Architecture rules:**
 
 - **Single process** — one Node server holds sockets, game state, and the in-process agent for the MVP
-- **Provider-agnostic AI** — the agent interface is a port, so the model/provider can be swapped without touching game logic
+- **AI is bound to Groq for now** — `CreateDungeonMaster` uses ChatGroq (`openai/gpt-oss-120b`); a swappable-provider port is planned but not implemented
 - **State split** — live session state is in-memory; PostgreSQL persists identity and run snapshots
 - **No-install client** — the browser is the only client
 
@@ -180,7 +180,7 @@ The backend splits into four domains, each owning a narrow slice of a session:
 
 - **User** issues a `user_id` once and reuses it across every expedition; it hands off to GameRoom after auth.
 - **GameRoom** is authoritative: one instance per expedition, owning player mapping, character sheets, room lifecycle, and the run/encounter loop. It never rolls, generates, or resolves — it *asks* the AI to structure/judge/narrate and *hands* validated actions to the engine.
-- **DungeonMaster** turns free text into Action Tools, rules on scene-sense, and narrates streamed prose. It's exposed as a port (mockable, swappable). It never decides outcomes and never owns state; if it's down, sessions fall back to schema-only handling.
+- **DungeonMaster** turns free text into a structured verdict (`execute` / `not_allowed` / `ambiguous`) and narrates decided outcomes as single-shot prose. It's currently bound to Groq (`openai/gpt-oss-120b`) via `CreateDungeonMaster`; a swappable-provider port is planned but not implemented. It never decides outcomes and never owns state — parse failures fall back to `not_allowed`.
 - **ProceduralEngine** is the single source of randomness — seeded RNG, dungeon generation, DCs, dice rolls — and resolves validated actions into deterministic outcomes. Pure, no I/O, trivially testable.
 
 ### Request flow
@@ -194,11 +194,11 @@ REST handles entry and routing only. Once a player is in a room, everything live
 ```
 Client → GameRoom (action intake)
               ↓
-       DungeonMaster (structure + validate) ← free text → Action Tool
-              ↓  valid
+       DungeonMaster (resolve) ← free text → structured verdict
+              ↓  execute
        ProceduralEngine (resolve) → deterministic outcome
               ↓
-       DungeonMaster (narrate) → streamed prose
+       DungeonMaster (narrate) → prose
               ↓
        GameRoom → all clients (scene update, result)
 ```

@@ -4,14 +4,13 @@ The Citadel judges every action before it resolves.
 
 | Verdict | Meaning | Result |
 |---|---|---|
-| **Valid** | Actionable in the current scene | Accepted → resolution |
-| **Ambiguous** | Unclear intent or target | Denied → player resubmits |
-| **Needs more detail** | Understandable but underspecified | Returned for clarification |
+| **Execute** | Actionable in the current scene | Accepted → resolution; carries up to 6 structured actions |
+| **Not allowed** | References something absent from the room facts or plainly impossible | Denied → player resubmits (reason given) |
+| **Ambiguous** | Unclear intent or target | Returned for clarification (optional question + guesses) |
 
-## Two-stage check
+## Single structured-output check
 
-1. **Schema check** — machine-validates the Action Tool structure (intent, target, resource)
-2. **Scene-sense check** — the AI (dungeon-master) judges whether the action makes sense in the current scene
+The dungeon-master resolves once: it reads the room facts, produces a structured verdict, and the verdict schema (`execute` / `not_allowed` / `ambiguous`) machine-validates the action shapes (intent, target, direction, resource). If the model's output fails to parse, the verdict falls back to `not_allowed`.
 
 ## Fallback rule
 
