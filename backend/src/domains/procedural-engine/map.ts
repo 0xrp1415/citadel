@@ -13,16 +13,23 @@ export interface IMapConfig {
     secretCount: number;
 }
 
+export interface IRoomExits {
+    left: Passage | null;
+    right: Passage | null;
+    up: Passage | null;
+    down: Passage | null;
+}
+
 export interface IRoomMetadata {
     id: number;
     type: ERoomType;
     baseDifficulty: number;
     distanceBonus: number;
+    exits: IRoomExits;
 }
 
 export interface IMap {
     rooms: Record<number, IRoomMetadata>;
-    passages: Passage[];
     startRoomIndex: number;
 }
 
@@ -41,7 +48,8 @@ export function generateMap(rng: MulberryRNG, mapConfig: IMapConfig): IMap {
             type: room.Type,
             baseDifficulty: room.BaseDifficulty,
             distanceBonus: room.DistanceBonus,
+            exits: room.AdjacentPassages,
         };
     }
-    return { rooms: roomMetadata, passages, startRoomIndex };
+    return { rooms: roomMetadata, startRoomIndex };
 }

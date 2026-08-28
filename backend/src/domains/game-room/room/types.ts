@@ -1,9 +1,10 @@
 import { PlayerPublic } from "../player/types.js";
 import { IGameRoomConfig } from "./utils/types.js";
+import { IPassageEvent } from "../../procedural-engine/index.js";
 
 export interface IExitPublicJSON {
     targetRoomId: number;
-    event: { type: string; requiredStat: string; difficulty: number } | null;
+    event: IPassageEvent | null;
     unlocked: boolean;
 }
 

@@ -1,9 +1,8 @@
 import { generateMap, IMap, IMapConfig, IRoomMetadata, MulberryRNG } from "../../procedural-engine/index.js";
-import { OPPOSITE } from "../../procedural-engine/generation/grid.js";
-import { Passage } from "../../procedural-engine/passage.js";
-import { IMapPublicJSON, IRoomPublicJSON } from "./types.js";
+import { IMapPublicJSON } from "./types.js";
 import { IGameRoomMapContext } from "./utils/interface/index.js";
 import { IGameRoomConfig } from "./utils/types.js";
+import { serializeMap } from "./utils/helpers/map/serialize.js";
 
 const ROOM_COUNT_PRESET = {
     small: { min: 10, max: 15, secrets: 1 },
@@ -72,46 +71,3 @@ export class GameRoomMap implements IGameRoomMapContext {
         return this.map ? serializeMap(this.map, this.currentRoomIndex) : null;
     }
 }
-
-function serializeMap(map: IMap, currentRoomIndex: number): IMapPublicJSON {
-    const sortedIds = Object.keys(map.rooms).map(Number).sort((a, b) => a - b);
-
-    const rooms: IRoomPublicJSON[] = sortedIds.map((roomId) => {
-        const meta = map.rooms[roomId]!;
-        return {
-            type: meta.type,
-            baseDifficulty: meta.baseDifficulty,
-            distanceBonus: meta.distanceBonus,
-            isCurrentRoom: roomId === currentRoomIndex,
-            exits: deriveExits(roomId, map.passages),
-        };
-    });
-
-    return { rooms, startRoomIndex: map.startRoomIndex };
-}
-
-function deriveExits(roomId: number, passages: Passage[]): IRoomPublicJSON["exits"] {
-    const exits: IRoomPublicJSON["exits"] = { left: null, right: null, up: null, down: null };
-
-    for (const passage of passages) {
-        if (passage.Direction === null) continue;
-
-        if (passage.RoomA === roomId) {
-            exits[passage.Direction] = {
-                targetRoomId: passage.RoomB,
-                event: passage.Event,
-                unlocked: passage.Unlocked,
-            };
-        } else if (passage.RoomB === roomId) {
-            const reverse = OPPOSITE[passage.Direction];
-            exits[reverse] = {
-                targetRoomId: passage.RoomA,
-                event: passage.Event,
-                unlocked: passage.Unlocked,
-            };
-        }
-    }
-
-    return exits;
-}
-
