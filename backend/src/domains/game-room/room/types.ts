@@ -36,4 +36,5 @@ export interface GameRoomPublicData {
     readonly currentRoom: { type: string; index: number };
     readonly map: IMapPublicJSON | null;
     readonly message: { from: string, message: string }[];
+    readonly dungeonMasterState: "idle" | "active";
 }

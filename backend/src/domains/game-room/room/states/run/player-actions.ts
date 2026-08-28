@@ -33,6 +33,11 @@ export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
 
 export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
     return async (playerId, payload) => {
+
+        if (ctx.DMAdapter.DMState !== "idle") {
+            return { ok: false, status: 403, error: "Dungeon Master is not idle" };
+        }
+
         const currentRoom = ctx.Map.CurrentRoom;
         if (!currentRoom) {
             return { ok: false, status: 409, error: "No current room" };
@@ -46,7 +51,10 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 400, error: "Invalid payload" };
 
         let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.name}`, payload)
-        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, "to be implemented...");
+        ctx.Broadcast();
+        // FAKE NARRATION FOR TESTING PURPOSES
+        console.log(`DM VERDICT: ${_result.status}`);
+        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, _result.status);
         ctx.Broadcast();
         return { ok: true, value: narration };
     }

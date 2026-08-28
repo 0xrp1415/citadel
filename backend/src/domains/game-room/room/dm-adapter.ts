@@ -44,13 +44,18 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
     }
 
     public async Resolve(from: string, text: string): Promise<DmVerdict> {
-        this.DungeonMasterMessages.push({ from: from, message: text });
-        return this.dungeonMaster.Resolve(text);
+        let result = await this.dungeonMaster.Resolve(text);
+        if (result.status === "execute") {
+            this.DungeonMasterMessages.push({ from: from, message: text });
+        }
+        return result;
+
     }
 
     public async Narrate(from: string, eventText: string): Promise<string> {
-        this.DungeonMasterMessages.push({ from: from, message: eventText });
-        return this.dungeonMaster.Narrate(eventText);
+        let narration = await this.dungeonMaster.Narrate(eventText);
+        this.DungeonMasterMessages.push({ from: from, message: narration });
+        return narration;
     }
 
     public get DMState() {

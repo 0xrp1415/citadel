@@ -57,7 +57,8 @@ export class GameRoom implements IGameRoomContext {
                 ? { type: this.Map.CurrentRoom.type, index: this.Map.CurrentRoomIndex }
                 : { type: "room", index: this.Map.CurrentRoomIndex },
             map: this.Map.Map ? this.Map.JSON : null,
-            message: this.DMAdapter.DungeonMasterMessages
+            message: this.DMAdapter.DungeonMasterMessages,
+            dungeonMasterState: this.DMAdapter.DMState,
         };
     }
 

@@ -15,7 +15,7 @@ export abstract class GameRoomState {
 
     public async receivePlayerAction(playerId: string, action: string, payload?: unknown): Promise<TResult<unknown>> {
         const handler = this.actions[action];
-        if (handler) return handler(playerId, payload);
+        if (handler) return await handler(playerId, payload);
         return { ok: false, status: 400, error: `Invalid action: ${action}` };
     }
 
