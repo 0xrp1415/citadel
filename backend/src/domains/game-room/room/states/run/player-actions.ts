@@ -46,7 +46,7 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 400, error: "Invalid payload" };
 
         let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.name}`, payload)
-        let narration = await ctx.DMAdapter.Narrate(`player:${player.Identity.name}`, "to be implemented...");
+        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, "to be implemented...");
         ctx.Broadcast();
         return { ok: true, value: narration };
     }
