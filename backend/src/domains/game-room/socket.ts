@@ -26,12 +26,12 @@ export function SetupGameRoomSocketHandlers(io: Server): void {
 
     socket.join(`room-${gameRoom.Identity.id}`);
 
-    await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+    await gameRoom.StateMachine.DispatchPlayerAction(
       player.Identity.playerId, "player_connect", { socketId: socket.id },
     );
 
     socket.on("disconnect", async () => {
-      await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+      await gameRoom.StateMachine.DispatchPlayerAction(
         player.Identity.playerId, "player_disconnect", { socketId: socket.id },
       );
     });

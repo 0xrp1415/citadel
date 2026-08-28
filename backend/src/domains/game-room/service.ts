@@ -71,7 +71,7 @@ export class GameRoomService {
 
     const playerId = crypto.randomUUID();
     const player = new Player(hostUserId, playerId, name?.trim() || "Prisoner");
-    const result = await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+    const result = await gameRoom.StateMachine.DispatchPlayerAction(
       playerId, "player_join", { player },
     );
 
@@ -103,7 +103,7 @@ export class GameRoomService {
 
     const playerId = crypto.randomUUID();
     const player = new Player(userId, playerId, name?.trim() || "Prisoner");
-    const result = await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+    const result = await gameRoom.StateMachine.DispatchPlayerAction(
       playerId, "player_join", { player },
     );
 
@@ -132,7 +132,7 @@ export class GameRoomService {
     const socketId = player.Socket.SocketId;
     const playerId = player.Identity.playerId;
 
-    let result = await gameRoom.GameRoomStateMachine.DispatchPlayerAction(playerId, "player_leave");
+    let result = await gameRoom.StateMachine.DispatchPlayerAction(playerId, "player_leave");
 
     if (!result.ok) {
       return { ok: false, status: result.status, error: result.error };
@@ -160,7 +160,7 @@ export class GameRoomService {
       return { ok: false, status: 404, error: "Player not found." };
     }
 
-    const result = await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+    const result = await gameRoom.StateMachine.DispatchPlayerAction(
       player.Identity.playerId, "update_config", { config },
     );
 
@@ -186,7 +186,7 @@ export class GameRoomService {
       return { ok: false, status: 404, error: "Player not found in the game room." };
     }
 
-    const result = await gameRoom.GameRoomStateMachine.DispatchPlayerAction(
+    const result = await gameRoom.StateMachine.DispatchPlayerAction(
       player.Identity.playerId, action, payload,
     );
 

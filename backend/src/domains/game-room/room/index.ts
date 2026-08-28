@@ -4,9 +4,10 @@ import { GameRoomMap } from "./map.js";
 import { GameRoomParty } from "./party.js";
 import { GameRoomSocket } from "./socket.js";
 import { GameRoomStateMachine } from "./state-machine.js";
-import { IGameRoomContext } from "./utils/interface/index.js";
+import { IGameRoomContext, IGameRoomDungeonMasterAdapter } from "./utils/interface/index.js";
 import { IGameRoomIdentity } from "./utils/types.js";
 import { LobbyState } from "./states/lobby/index.js";
+import { GameRoomDMAdapter } from "./dm-adapter.js";
 
 
 
@@ -15,7 +16,8 @@ export class GameRoom implements IGameRoomContext {
     public readonly Party: GameRoomParty;
     public readonly Socket: GameRoomSocket;
     public readonly Map: GameRoomMap;
-    public readonly GameRoomStateMachine: GameRoomStateMachine;
+    public readonly StateMachine: GameRoomStateMachine;
+    public readonly DMAdapter: IGameRoomDungeonMasterAdapter;
 
     private broadcastFunction: (data: GameRoomPublicData) => void;
     private lastUpdateTime: number = Date.now();
@@ -29,9 +31,10 @@ export class GameRoom implements IGameRoomContext {
         });
         this.Map = new GameRoomMap();
         this.broadcastFunction = broadcastFunction;
-        this.GameRoomStateMachine = new GameRoomStateMachine(new LobbyState(this));
+        this.StateMachine = new GameRoomStateMachine(new LobbyState(this));
         this.lastUpdateTime = Date.now();
-        this.GameRoomStateMachine.StartStateMachine();
+        this.DMAdapter = new GameRoomDMAdapter(this);
+        this.StateMachine.StartStateMachine();
     }
     public Broadcast(): void {
         this.broadcastFunction(this.JSON);
@@ -48,12 +51,13 @@ export class GameRoom implements IGameRoomContext {
             totalPlayers: this.Party.PlayerCount,
             inviteCode: this.Identity.inviteCode,
             config: this.Identity.Config,
-            status: this.GameRoomStateMachine.CurrentState,
+            status: this.StateMachine.CurrentState,
             floor: this.Map.Floor,
             currentRoom: this.Map.CurrentRoom
                 ? { type: this.Map.CurrentRoom.type, index: this.Map.CurrentRoomIndex }
                 : { type: "room", index: this.Map.CurrentRoomIndex },
             map: this.Map.Map ? this.Map.JSON : null,
+            message: this.DMAdapter.DungeonMasterMessages
         };
     }
 

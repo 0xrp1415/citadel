@@ -27,12 +27,13 @@ export interface IMapPublicJSON {
 }
 
 export interface GameRoomPublicData {
-  readonly players: PlayerPublic[];
-  readonly totalPlayers: number;
-  readonly inviteCode: string;
-  readonly config: IGameRoomConfig;
-  readonly status: string;
-  readonly floor: number;
-  readonly currentRoom: { type: string; index: number };
-  readonly map: IMapPublicJSON | null;
+    readonly players: PlayerPublic[];
+    readonly totalPlayers: number;
+    readonly inviteCode: string;
+    readonly config: IGameRoomConfig;
+    readonly status: string;
+    readonly floor: number;
+    readonly currentRoom: { type: string; index: number };
+    readonly map: IMapPublicJSON | null;
+    readonly message: { from: string, message: string }[];
 }

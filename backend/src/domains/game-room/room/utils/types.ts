@@ -19,4 +19,4 @@ export type TResult<T> =
   | { ok: true; value: T }
   | { ok: false; status: number; error: string };
 
-export type ActionHandler = (playerId: string, payload?: unknown) => TResult<unknown>;
+export type ActionHandler = (playerId: string, payload?: unknown) => Promise<TResult<unknown>> | TResult<unknown>;

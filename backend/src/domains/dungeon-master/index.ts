@@ -6,8 +6,15 @@ import { Resolve } from "./methods/resolve.js";
 import { Narrate } from "./methods/narrate.js";
 
 
+export type { TRoomViewGenerator }
 
-class DungeonMaster {
+export interface IDungeonMaster {
+    Resolve(text: string): Promise<DmVerdict>;
+    Narrate(eventText: string): Promise<string>;
+    State: "idle" | "active";
+}
+
+class DungeonMaster implements IDungeonMaster {
     private state: "idle" | "active" = "idle";
     private readonly roomViewGenerator: TRoomViewGenerator;
 
@@ -58,7 +65,7 @@ class DungeonMaster {
     }
 }
 
-export function CreateDungeonMaster({ roomViewGenerator }: { roomViewGenerator: TRoomViewGenerator }): DungeonMaster {
+export function CreateDungeonMaster({ roomViewGenerator }: { roomViewGenerator: TRoomViewGenerator }): IDungeonMaster {
     config();
     const model = new ChatGroq({
         model: "openai/gpt-oss-120b",

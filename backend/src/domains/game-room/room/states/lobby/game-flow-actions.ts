@@ -99,6 +99,6 @@ function validateAndStart(ctx: IGameRoomContext): TResult<unknown> {
         }
     }
 
-    ctx.GameRoomStateMachine.TransitionTo(new InRunState(ctx));
+    ctx.StateMachine.TransitionTo(new InRunState(ctx));
     return { ok: true, value: null };
 }
