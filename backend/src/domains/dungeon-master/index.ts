@@ -12,6 +12,7 @@ export interface IDungeonMaster {
     Resolve(text: string, speaker: string): Promise<DmVerdict>;
     Narrate(eventText: string): Promise<string>;
     State: "idle" | "active";
+    onStateChange?: (state: "idle" | "active") => void;
 }
 
 class DungeonMaster implements IDungeonMaster {
@@ -20,9 +21,16 @@ class DungeonMaster implements IDungeonMaster {
 
     private messages: TTranscriptEntry[] = [];
     private model: ChatGroq;
+    public onStateChange?: (state: "idle" | "active") => void;
+
     constructor(roomViewGenerator: TRoomViewGenerator, model: ChatGroq) {
         this.roomViewGenerator = roomViewGenerator
         this.model = model
+    }
+
+    private setState(state: "idle" | "active"): void {
+        this.state = state;
+        this.onStateChange?.(state);
     }
 
     public async Resolve(text: string, speaker: string): Promise<DmVerdict> {
@@ -30,7 +38,7 @@ class DungeonMaster implements IDungeonMaster {
             return { status: "not_allowed", reason: "a command is already being resolved" };
         }
 
-        this.state = "active";
+        this.setState("active");
         try {
             const roomView = await this.roomViewGenerator();
             const entry: TTranscriptEntry = { role: "player", text: text.toLowerCase().trim(), speaker };
@@ -43,7 +51,7 @@ class DungeonMaster implements IDungeonMaster {
             }
             return verdict;
         } finally {
-            this.state = "idle";
+            this.setState("idle");
         }
     }
 
@@ -51,11 +59,11 @@ class DungeonMaster implements IDungeonMaster {
         if (this.state === "active") {
             throw new Error("DungeonMaster is busy resolving another command");
         }
-        this.state = "active";
+        this.setState("active");
         try {
             return await Narrate(this.model, eventText);
         } finally {
-            this.state = "idle";
+            this.setState("idle");
         }
     }
 
@@ -65,7 +73,7 @@ class DungeonMaster implements IDungeonMaster {
     }
 }
 
-export function CreateDungeonMaster({ roomViewGenerator }: { roomViewGenerator: TRoomViewGenerator }): IDungeonMaster {
+export function CreateDungeonMaster({ roomViewGenerator, onStateChange }: { roomViewGenerator: TRoomViewGenerator; onStateChange?: (state: "idle" | "active") => void }): IDungeonMaster {
     config();
     const model = new ChatGroq({
         model: "openai/gpt-oss-120b",
@@ -73,5 +81,7 @@ export function CreateDungeonMaster({ roomViewGenerator }: { roomViewGenerator: 
         temperature: 0.2,
     });
 
-    return new DungeonMaster(roomViewGenerator, model);
+    const dm = new DungeonMaster(roomViewGenerator, model);
+    dm.onStateChange = onStateChange;
+    return dm;
 }
