@@ -17,6 +17,7 @@ interface RecordLine {
   id: string
   speaker: 'player' | 'officer' | 'ruling' | 'data'
   text: string
+  name?: string
   indent?: boolean
 }
 
@@ -26,10 +27,12 @@ const OPENING_LINE: RecordLine = {
   text: 'Descent begins. The record is continuous. It will not pause.',
 }
 
-function linesFromMessages(messages: RoomMessage[]): RecordLine[] {
+function linesFromMessages(messages: RoomMessage[], playerNames: Map<string, string>): RecordLine[] {
   return messages.map((msg, i) => {
     if (msg.from.startsWith('player:')) {
-      return { id: `${i}-player`, speaker: 'player' as const, text: msg.message }
+      const id = msg.from.slice('player:'.length).trim()
+      const name = playerNames.get(id) ?? id
+      return { id: `${i}-player`, speaker: 'player' as const, text: msg.message, name }
     }
     if (msg.from === 'dungeon_master') {
       return { id: `${i}-dm`, speaker: 'officer' as const, text: msg.message }
@@ -203,7 +206,10 @@ function Run() {
         : 'The line is down — retrying the connection…'
       : "The register opens. Await the officer\u2019s word."
 
-  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [])]
+  const playerNameById = new Map<string, string>(
+    (room?.players ?? []).map((p) => [p.playerId, p.name]),
+  )
+  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [], playerNameById)]
 
   const openPlayer = room?.players.find((p) => p.playerId === openPlayerId) ?? null
 
@@ -246,7 +252,11 @@ function Run() {
                     line.indent ? ' record__indent' : ''
                   }`}
                 >
-                  {line.speaker === 'player' && <span className="record__mark">&gt; </span>}
+                  {line.speaker === 'player' && (
+                    <span className="record__mark">
+                      {line.name ? `${line.name} > ` : '> '}
+                    </span>
+                  )}
                   {line.text}
                 </span>
               ))}
