@@ -6,6 +6,7 @@ export function playerConnect(ctx: IGameRoomContext): ActionHandler {
         const { socketId } = payload as { socketId: string };
         ctx.Socket.handlePlayerConnect(playerId, socketId);
         ctx.Broadcaster.RoomUpdate();
+        ctx.Broadcaster.MessageUpdate();
         return { ok: true, value: null };
     };
 }
