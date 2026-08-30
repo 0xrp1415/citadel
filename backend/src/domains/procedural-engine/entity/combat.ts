@@ -35,7 +35,11 @@ export class EntityCombat {
         if (nextValue < 0 || (maxCap !== undefined && nextValue > maxCap)) {
             return false;
         }
-        return this.baseStats.increaseStatBy(stat, amount);
+        const applied = this.baseStats.increaseStatBy(stat, amount);
+        if (applied) {
+            this.refreshHealth();
+        }
+        return applied;
     }
 
     public increaseStatModifierBy(stat: keyof IStats, amount: number): boolean {
