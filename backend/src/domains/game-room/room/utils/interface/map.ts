@@ -7,6 +7,8 @@ export interface IGameRoomMapContext {
     NextFloor(config: IGameRoomConfig): void;
     ResetMap(): void;
     Travel(direction: "left" | "right" | "up" | "down"): number | null;
+    EnterRoom(targetRoomIndex: number): void;
+    UnlockEventless(): void;
     readonly Floor: number;
     readonly CurrentRoomIndex: number;
     readonly CurrentRoom: IRoomMetadata | null;

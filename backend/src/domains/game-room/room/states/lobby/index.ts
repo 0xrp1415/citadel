@@ -20,7 +20,7 @@ export class LobbyState extends GameRoomState {
         confirm_start:      confirmStart(this.context),
     };
 
-    public onEnterState(): void {
+    public async onEnterState(): Promise<void> {
         for (const player of this.context.Party.Players) {
             player.status = "connected";
         }
@@ -28,5 +28,5 @@ export class LobbyState extends GameRoomState {
         this.context.Broadcaster.RoomUpdate();
     }
 
-    public onExitState(): void {}
+    public async onExitState(): Promise<void> {}
 }

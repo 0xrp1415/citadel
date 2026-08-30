@@ -1,7 +1,8 @@
 import { GameRoomState } from "../base/index.js";
-import { ActionHandler, TResult } from "../../utils/types.js";
+import { ActionHandler } from "../../utils/types.js";
 import { playerConnect, playerDisconnect } from "../base/shared-actions.js";
 import { changePlayerStats, resolvePlayerAction } from "./player-actions.js";
+import { enterRoom } from "./enter-room.js";
 
 export class InRunState extends GameRoomState {
     protected readonly _id: string = "in-run";
@@ -13,15 +14,15 @@ export class InRunState extends GameRoomState {
         player_play:       resolvePlayerAction(this.context),
     };
 
-    public onEnterState(): void {
+    public async onEnterState(): Promise<void> {
         for (const player of this.context.Party.Players) {
             player.status = "in-run";
         }
         if (this.context.Map.Map === null) {
             this.context.Map.GenerateMap(this.context.Identity.Config);
         }
-        this.context.Broadcaster.RoomUpdate();
+        await enterRoom(this.context, this.context.Map.CurrentRoomIndex);
     }
 
-    public onExitState(): void {}
+    public async onExitState(): Promise<void> {}
 }

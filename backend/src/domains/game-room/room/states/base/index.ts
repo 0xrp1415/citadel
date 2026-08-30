@@ -10,8 +10,8 @@ export abstract class GameRoomState {
         this.context = context;
     }
 
-    public abstract onEnterState(): void;
-    public abstract onExitState(): void;
+    public abstract onEnterState(): Promise<void>;
+    public abstract onExitState(): Promise<void>;
 
     public async receivePlayerAction(playerId: string, action: string, payload?: unknown): Promise<TResult<unknown>> {
         const handler = this.actions[action];

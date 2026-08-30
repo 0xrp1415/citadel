@@ -2,6 +2,7 @@ import { IStats } from "../../../../procedural-engine/index.js";
 import { ERoomType } from "../../../../procedural-engine/room.js";
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { ActionHandler } from "../../utils/types.js";
+import { enterRoom } from "./enter-room.js";
 
 export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
     return (playerId, payload) => {
@@ -53,10 +54,23 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerPublicId}`, payload)
         ctx.Broadcaster.MessageUpdate();
 
-        let outcome: string;
         if (_result.status === "execute") {
-            outcome = ctx.Resolver.Execute(_result.actions, playerId);
-        } else if (_result.status === "ambiguous") {
+            const beforeRoom = ctx.Map.CurrentRoomIndex;
+            const outcome = ctx.Resolver.Execute(_result.actions, playerId);
+            const narration = await ctx.DMAdapter.Narrate(`dungeon_master`, outcome);
+
+            if (ctx.Map.Map && ctx.Map.CurrentRoomIndex !== beforeRoom) {
+                await enterRoom(ctx, ctx.Map.CurrentRoomIndex);
+            } else {
+                ctx.Broadcaster.RoomUpdate();
+                ctx.Broadcaster.MessageUpdate();
+            }
+
+            return { ok: true, value: narration };
+        }
+
+        let outcome: string;
+        if (_result.status === "ambiguous") {
             outcome = ctx.Resolver.Ambiguous(_result);
         } else {
             outcome = ctx.Resolver.NotAllowed(_result.reason);

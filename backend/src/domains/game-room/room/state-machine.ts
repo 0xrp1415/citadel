@@ -8,18 +8,18 @@ export class GameRoomStateMachine implements IGameRoomStateMachineContext {
         this.state = initialState;
     }
     
-    public StartStateMachine(): void {
-        this.state.onEnterState();
+    public async StartStateMachine(): Promise<void> {
+        await this.state.onEnterState();
     }
     
-    public TransitionTo(newState: GameRoomState): void {
+    public async TransitionTo(newState: GameRoomState): Promise<void> {
         if (this.state.ID === newState.ID) {
             throw new Error(`Cannot transition to the same state: ${newState.ID}`);
         }
 
-        this.state.onExitState();
+        await this.state.onExitState();
         this.state = newState;
-        this.state.onEnterState();
+        await this.state.onEnterState();
     }
 
     public async DispatchPlayerAction(playerId: string, action: string, payload?: unknown) {

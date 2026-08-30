@@ -64,7 +64,7 @@ export function confirmStart(ctx: IGameRoomContext): ActionHandler {
     };
 }
 
-function validateAndStart(ctx: IGameRoomContext): TResult<unknown> {
+async function validateAndStart(ctx: IGameRoomContext): Promise<TResult<unknown>> {
     const config = ctx.Identity.Config;
     const players = ctx.Party.Players;
     const leaderId = ctx.Party.Leader;
@@ -99,6 +99,6 @@ function validateAndStart(ctx: IGameRoomContext): TResult<unknown> {
         }
     }
 
-    ctx.StateMachine.TransitionTo(new InRunState(ctx));
+    await ctx.StateMachine.TransitionTo(new InRunState(ctx));
     return { ok: true, value: null };
 }

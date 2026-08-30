@@ -46,8 +46,25 @@ export class GameRoomMap implements IGameRoomMapContext {
         const targetRoomId = passage.getOtherRoom(currentRoom.id);
         if (targetRoomId === null) return null;
 
-        this.currentRoomIndex = targetRoomId;
+        this.EnterRoom(targetRoomId);
         return targetRoomId;
+    }
+
+    public EnterRoom(targetRoomIndex: number): void {
+        this.currentRoomIndex = targetRoomIndex;
+        this.UnlockEventless();
+    }
+
+    public UnlockEventless(): void {
+        const room = this.CurrentRoom;
+        if (!room) return;
+
+        for (const dir of ["left", "right", "up", "down"] as const) {
+            const passage = room.exits[dir];
+            if (passage && !passage.Unlocked && passage.Event === null) {
+                passage.unlock();
+            }
+        }
     }
 
     private RoomConfigToMapConfig(config: IGameRoomConfig): IMapConfig {
