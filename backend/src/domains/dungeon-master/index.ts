@@ -9,7 +9,7 @@ import { Narrate } from "./methods/narrate.js";
 export type { TRoomViewGenerator }
 
 export interface IDungeonMaster {
-    Resolve(text: string): Promise<DmVerdict>;
+    Resolve(text: string, speaker: string): Promise<DmVerdict>;
     Narrate(eventText: string): Promise<string>;
     State: "idle" | "active";
 }
@@ -25,7 +25,7 @@ class DungeonMaster implements IDungeonMaster {
         this.model = model
     }
 
-    public async Resolve(text: string): Promise<DmVerdict> {
+    public async Resolve(text: string, speaker: string): Promise<DmVerdict> {
         if (this.state === "active") {
             return { status: "not_allowed", reason: "a command is already being resolved" };
         }
@@ -33,7 +33,7 @@ class DungeonMaster implements IDungeonMaster {
         this.state = "active";
         try {
             const roomView = await this.roomViewGenerator();
-            const entry: TTranscriptEntry = { role: "player", text: text.toLowerCase().trim() };
+            const entry: TTranscriptEntry = { role: "player", text: text.toLowerCase().trim(), speaker };
 
             const verdict = await Resolve(this.model, roomView, this.messages, entry, RESOLVE_PROMPT);
             this.messages.push(entry);

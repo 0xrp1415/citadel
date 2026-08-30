@@ -17,10 +17,8 @@ export const ZAction = z
         message: "move requires a direction",
     })
     .refine(
-        (a) =>
-            !(a.intent === "use_item" || a.intent === "use_ability") ||
-            !!a.resource?.id,
-        { message: "item/ability actions must carry resource.id" },
+        (a) => a.intent !== "use_item" || !!a.resource?.id,
+        { message: "use_item requires a resource id" },
     );
 
 export type DmAction = z.infer<typeof ZAction>;

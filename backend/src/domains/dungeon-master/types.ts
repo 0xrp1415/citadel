@@ -5,7 +5,6 @@ export type { DmVerdict };
 
 export type TRoomViewGenerator = () => Promise<DmRoomView>;
 
-export type TTranscriptEntry = {
-    role: "player" | "dm";
-    text: string;
-};
+export type TTranscriptEntry =
+    | { role: "player"; text: string; speaker: string }
+    | { role: "dm"; text: string };

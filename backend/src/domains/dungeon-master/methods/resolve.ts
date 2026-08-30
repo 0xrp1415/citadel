@@ -40,24 +40,24 @@ function buildResolveMessages(
     system_prompt: string,
     room: DmRoomView,
     transcript: TTranscriptEntry[],
-    incoming: TTranscriptEntry,
+    incoming: Extract<TTranscriptEntry, { role: "player" }>,
 ): BaseMessage[] {
     const messages: BaseMessage[] = [createSystemMessage(system_prompt, room)];
 
     for (const entry of transcript.slice(-5)) {
         if (entry.role === "player") {
-            messages.push(new HumanMessage({ content: entry.text }));
+            messages.push(new HumanMessage({ content: `${entry.speaker}: ${entry.text}` }));
         } else {
             messages.push(new AIMessage({ content: entry.text }));
         }
     }
 
-    messages.push(new HumanMessage({ content: incoming.text }));
+    messages.push(new HumanMessage({ content: `${incoming.speaker}: ${incoming.text}` }));
 
     return messages;
 }
 
-export async function Resolve(model: ChatGroq, room: DmRoomView, transcript: TTranscriptEntry[], incoming: TTranscriptEntry, system_prompt: string): Promise<DmVerdict> {
+export async function Resolve(model: ChatGroq, room: DmRoomView, transcript: TTranscriptEntry[], incoming: Extract<TTranscriptEntry, { role: "player" }>, system_prompt: string): Promise<DmVerdict> {
     try {
         return await model.withStructuredOutput(ZDmVerdict, { method: "jsonMode" }).invoke(buildResolveMessages(system_prompt, room, transcript, incoming));
     } catch (error) {
