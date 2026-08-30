@@ -16,7 +16,7 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
         this.context = context;
         this.dungeonMaster = CreateDungeonMaster({
             roomViewGenerator: () => this.GenerateRoomView(),
-            onStateChange: () => this.context.Broadcast(),
+            onStateChange: () => this.context.Broadcaster.MessageUpdate(),
         });
         this.dungeonMasterMessages = [];
     }

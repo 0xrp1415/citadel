@@ -6,8 +6,9 @@ import { ZGameRoomConfigSchema } from "./room/utils/types.js";
 import { Result } from "./types.js";
 import { Player } from "./player/index.js";
 import { createRoomToken, verifyRoomToken } from "./tokens.js";
+import { RoomEventType } from "./room/utils/interface/index.js";
 
-type RoomBroadcaster = (roomId: string, data: GameRoomPublicData) => void;
+type RoomBroadcaster = (roomId: string, type: RoomEventType, data: unknown) => void;
 
 interface CreateRoomResult {
   inviteCode: string;
@@ -64,7 +65,7 @@ export class GameRoomService {
     const inviteCode = this.generateInviteCode().toUpperCase();
     const gameRoom = new GameRoom(
       { id: roomId, inviteCode, defaultConfig: parsed.data },
-      (data) => this.broadcaster(roomId, data),
+      (type, data) => this.broadcaster(roomId, type, data),
     );
 
     this.repository.addGameRoom(gameRoom);

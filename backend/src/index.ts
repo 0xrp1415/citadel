@@ -29,8 +29,8 @@ const io = new Server(httpServer, {
   pingTimeout: 5_000,
 });
 
-GameRoomService.Instance.configureBroadcast((roomId, data) => {
-  io.to(`room-${roomId}`).emit("game-room-update", data);
+GameRoomService.Instance.configureBroadcast((roomId, type, data) => {
+  io.to(`room-${roomId}`).emit(type, data);
 });
 
 SetupGameRoomSocketHandlers(io);

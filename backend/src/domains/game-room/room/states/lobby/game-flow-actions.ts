@@ -22,7 +22,7 @@ export function toggleReady(ctx: IGameRoomContext): ActionHandler {
         }
 
         player.status = player.status === "ready" ? "connected" : "ready";
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }
@@ -59,7 +59,7 @@ export function confirmStart(ctx: IGameRoomContext): ActionHandler {
             ctx.Party.removePlayer(ghost.Identity.playerId);
         }
 
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return validateAndStart(ctx);
     };
 }

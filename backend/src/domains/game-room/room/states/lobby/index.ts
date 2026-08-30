@@ -25,7 +25,7 @@ export class LobbyState extends GameRoomState {
             player.status = "connected";
         }
         this.context.Map.ResetMap();
-        this.context.Broadcast();
+        this.context.Broadcaster.RoomUpdate();
     }
 
     public onExitState(): void {}

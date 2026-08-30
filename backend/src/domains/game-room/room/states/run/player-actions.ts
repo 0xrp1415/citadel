@@ -26,7 +26,7 @@ export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 400, error: "Failed to change player stats" };
         }
 
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }
@@ -51,7 +51,7 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 400, error: "Invalid payload" };
 
         let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerPublicId}`, payload)
-        ctx.Broadcast();
+        ctx.Broadcaster.MessageUpdate();
 
         let outcome: string;
         if (_result.status === "execute") {
@@ -63,7 +63,8 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         }
 
         let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, outcome);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
+        ctx.Broadcaster.MessageUpdate();
         return { ok: true, value: narration };
     }
 }

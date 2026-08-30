@@ -14,7 +14,7 @@ export function updateConfig(ctx: IGameRoomContext): ActionHandler {
         }
 
         ctx.Identity.SetConfig(parsed.data);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }

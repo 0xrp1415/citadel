@@ -5,7 +5,7 @@ export function playerConnect(ctx: IGameRoomContext): ActionHandler {
     return (playerId, payload) => {
         const { socketId } = payload as { socketId: string };
         ctx.Socket.handlePlayerConnect(playerId, socketId);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }
@@ -13,7 +13,7 @@ export function playerConnect(ctx: IGameRoomContext): ActionHandler {
 export function playerDisconnect(ctx: IGameRoomContext): ActionHandler {
     return (playerId) => {
         ctx.Socket.handlePlayerDisconnect(playerId);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }

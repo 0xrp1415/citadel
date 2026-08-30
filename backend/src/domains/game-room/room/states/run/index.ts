@@ -20,7 +20,7 @@ export class InRunState extends GameRoomState {
         if (this.context.Map.Map === null) {
             this.context.Map.GenerateMap(this.context.Identity.Config);
         }
-        this.context.Broadcast();
+        this.context.Broadcaster.RoomUpdate();
     }
 
     public onExitState(): void {}

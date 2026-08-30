@@ -17,7 +17,7 @@ export function joinPlayer(ctx: IGameRoomContext): ActionHandler {
         }
         const { player } = payload as { player: Player };
         ctx.Party.addPlayer(player);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }
@@ -30,7 +30,7 @@ export function leavePlayer(ctx: IGameRoomContext): ActionHandler {
         }
 
         ctx.Party.removePlayer(playerId);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }
@@ -53,7 +53,7 @@ export function kickPlayer(ctx: IGameRoomContext): ActionHandler {
         }
 
         ctx.Party.removePlayer(targetPlayerId);
-        ctx.Broadcast();
+        ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };
 }

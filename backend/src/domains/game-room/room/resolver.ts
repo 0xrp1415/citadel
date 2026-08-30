@@ -19,7 +19,7 @@ export class GameRoomResolver implements IGameRoomResolver {
             summaries.push(resolveAction(action, actor, this.context));
         }
 
-        this.context.Broadcast();
+        this.context.Broadcaster.RoomUpdate();
         return summaries.filter(Boolean).join(" ");
     }
 
