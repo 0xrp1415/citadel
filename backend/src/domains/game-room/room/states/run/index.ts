@@ -17,7 +17,9 @@ export class InRunState extends GameRoomState {
         for (const player of this.context.Party.Players) {
             player.status = "in-run";
         }
-        this.context.Map.GenerateMap(this.context.Identity.Config);
+        if (this.context.Map.Map === null) {
+            this.context.Map.GenerateMap(this.context.Identity.Config);
+        }
         this.context.Broadcast();
     }
 

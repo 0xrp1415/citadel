@@ -17,6 +17,12 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
         this.dungeonMasterMessages = [];
     }
 
+    private speakerName(from: string): string {
+        const idx = from.indexOf(":");
+        const id = (idx === -1 ? from : from.slice(idx + 1)).trim();
+        return this.context.Party.getPlayer(id)?.Identity.name ?? id;
+    }
+
     private async GenerateRoomView(): ReturnType<TRoomViewGenerator> {
         const currentRoom = this.context.Map.CurrentRoom;
         const exits = deriveRoomExits(currentRoom?.id ?? 0, currentRoom?.exits ?? { left: null, right: null, up: null, down: null })
@@ -44,7 +50,7 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
     }
 
     public async Resolve(from: string, text: string): Promise<DmVerdict> {
-        let result = await this.dungeonMaster.Resolve(text);
+        let result = await this.dungeonMaster.Resolve(text, this.speakerName(from));
         if (result.status === "execute") {
             this.DungeonMasterMessages.push({ from: from, message: text });
         }

@@ -50,11 +50,19 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         if (typeof payload !== "string")
             return { ok: false, status: 400, error: "Invalid payload" };
 
-        let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.name}`, payload)
+        let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerId}`, payload)
         ctx.Broadcast();
-        // FAKE NARRATION FOR TESTING PURPOSES
-        console.log(`DM VERDICT: ${_result.status}`);
-        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, _result.status);
+
+        let outcome: string;
+        if (_result.status === "execute") {
+            outcome = ctx.Resolver.Execute(_result.actions, playerId);
+        } else if (_result.status === "ambiguous") {
+            outcome = ctx.Resolver.Ambiguous(_result);
+        } else {
+            outcome = ctx.Resolver.NotAllowed(_result.reason);
+        }
+
+        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, outcome);
         ctx.Broadcast();
         return { ok: true, value: narration };
     }

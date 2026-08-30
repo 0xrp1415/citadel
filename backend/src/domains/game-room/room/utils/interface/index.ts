@@ -4,6 +4,7 @@ import { IGameRoomMapContext } from "./map.js";
 import { IGameRoomPartyContext } from "./party.js";
 import { IGameRoomSocketContext } from "./socket.js";
 import { IGameRoomStateMachineContext } from "./state-machine.js";
+import { IGameRoomResolver } from "./resolver.js";
 
 export type { IGameRoomIdentityContext } from "./identity.js";
 export type { IGameRoomPartyContext } from "./party.js";
@@ -19,6 +20,7 @@ export interface IGameRoomContext {
     readonly Map: IGameRoomMapContext;
     readonly StateMachine: IGameRoomStateMachineContext; 
     readonly DMAdapter: IGameRoomDungeonMasterAdapter;
+    readonly Resolver: IGameRoomResolver;
 
     Broadcast(): void;
 }

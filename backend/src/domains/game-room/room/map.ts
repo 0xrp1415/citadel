@@ -36,6 +36,20 @@ export class GameRoomMap implements IGameRoomMapContext {
         this.GenerateMap(config);
     }
 
+    public Travel(direction: "left" | "right" | "up" | "down"): number | null {
+        const currentRoom = this.CurrentRoom;
+        if (!currentRoom) return null;
+
+        const passage = currentRoom.exits[direction];
+        if (!passage || !passage.Unlocked) return null;
+
+        const targetRoomId = passage.getOtherRoom(currentRoom.id);
+        if (targetRoomId === null) return null;
+
+        this.currentRoomIndex = targetRoomId;
+        return targetRoomId;
+    }
+
     private RoomConfigToMapConfig(config: IGameRoomConfig): IMapConfig {
         let room_count = ROOM_COUNT_PRESET[config.mapSize];
         return {
