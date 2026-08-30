@@ -10,6 +10,11 @@ export function resolveMove(action: DmAction, actor: Player | undefined, context
     const passage = currentRoom.exits[action.direction];
     if (!passage) return `There is no exit to the ${action.direction}.`;
     if (!passage.Unlocked) {
+        const event = passage.Event;
+        if (event) {
+            console.log(`resolveMove: passage to ${action.direction} is locked by event`, event);
+            return `The passage to the ${action.direction} is locked. It is barred by a ${event.type} trial demanding ${event.requiredStat}.`;
+        }
         return `The passage to the ${action.direction} is locked.`;
     }
 
