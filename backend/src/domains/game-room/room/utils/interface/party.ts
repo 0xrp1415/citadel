@@ -6,8 +6,10 @@ export interface IGameRoomPartyContext {
     removePlayer(playerId: string): boolean;
     setLeader(playerId: string): boolean;
     getPlayer(playerId: string): Player | undefined;
+    getPlayerByPublicId(playerPublicId: string): Player | undefined;
     readonly Players: Player[];
     readonly PlayerCount: number;
     readonly Leader: string | null;
+    readonly LeaderPublicId: string | null;
     readonly PlayerPublicData: PlayerPublic[];
 }

@@ -16,8 +16,8 @@ export class Player {
     private progression: PlayerProgression;
     private inventory: PlayerInventory;
 
-    constructor(userId: string, playerId: string, name: string) {
-        this.identity = new PlayerIdentity(userId, playerId, name);
+    constructor(userId: string, playerId: string, playerPublicId: string, name: string) {
+        this.identity = new PlayerIdentity(userId, playerId, playerPublicId, name);
         this.status = "joined";
 
         this.socket = new PlayerSocket();
@@ -66,9 +66,9 @@ export class Player {
     public get PublicJSON(): PlayerPublic {
         return {
             playerId: this.identity.playerId,
+            playerPublicId: this.identity.playerPublicId,
             name: this.identity.name,
             status: this.status,
-            isHost: false,
             disconnectedAt: this.socket.DisconnectedAt,
             stats: this.JSON,
         };

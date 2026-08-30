@@ -62,6 +62,7 @@ export class GameRoom implements IGameRoomContext {
             map: this.Map.Map ? this.Map.JSON : null,
             message: this.DMAdapter.DungeonMasterMessages,
             dungeonMasterState: this.DMAdapter.DMState,
+            hostPublicId: this.Party.LeaderPublicId,
         };
     }
 

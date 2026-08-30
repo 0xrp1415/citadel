@@ -70,7 +70,8 @@ export class GameRoomService {
     this.repository.addGameRoom(gameRoom);
 
     const playerId = crypto.randomUUID();
-    const player = new Player(hostUserId, playerId, name?.trim() || "Prisoner");
+    const playerPublicId = crypto.randomUUID();
+    const player = new Player(hostUserId, playerId, playerPublicId, name?.trim() || "Prisoner");
     const result = await gameRoom.StateMachine.DispatchPlayerAction(
       playerId, "player_join", { player },
     );
@@ -102,7 +103,8 @@ export class GameRoomService {
     }
 
     const playerId = crypto.randomUUID();
-    const player = new Player(userId, playerId, name?.trim() || "Prisoner");
+    const playerPublicId = crypto.randomUUID();
+    const player = new Player(userId, playerId, playerPublicId, name?.trim() || "Prisoner");
     const result = await gameRoom.StateMachine.DispatchPlayerAction(
       playerId, "player_join", { player },
     );

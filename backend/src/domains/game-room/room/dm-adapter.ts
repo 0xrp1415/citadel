@@ -1,6 +1,7 @@
 import { CreateDungeonMaster, IDungeonMaster, TRoomViewGenerator } from "../../dungeon-master/index.js";
 import { DmVerdict } from "../../dungeon-master/types.js";
 import { deriveRoomExits } from "./utils/helpers/map/exits.js";
+import { resolveMentions } from "./utils/helpers/mentions.js";
 import { IGameRoomDungeonMasterAdapter } from "./utils/interface/dm-adapter.js";
 import { IGameRoomContext } from "./utils/interface/index.js";
 
@@ -13,14 +14,17 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
 
     constructor(context: IGameRoomContext) {
         this.context = context;
-        this.dungeonMaster = CreateDungeonMaster({ roomViewGenerator: () => this.GenerateRoomView() });
+        this.dungeonMaster = CreateDungeonMaster({
+            roomViewGenerator: () => this.GenerateRoomView(),
+            onStateChange: () => this.context.Broadcast(),
+        });
         this.dungeonMasterMessages = [];
     }
 
     private speakerName(from: string): string {
         const idx = from.indexOf(":");
         const id = (idx === -1 ? from : from.slice(idx + 1)).trim();
-        return this.context.Party.getPlayer(id)?.Identity.name ?? id;
+        return this.context.Party.getPlayerByPublicId(id)?.Identity.name ?? id;
     }
 
     private async GenerateRoomView(): ReturnType<TRoomViewGenerator> {
@@ -50,9 +54,12 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
     }
 
     public async Resolve(from: string, text: string): Promise<DmVerdict> {
-        let result = await this.dungeonMaster.Resolve(text, this.speakerName(from));
+        const { stored, forDm } = resolveMentions(text, (id) =>
+            this.context.Party.getPlayerByPublicId(id)?.Identity.name
+        );
+        let result = await this.dungeonMaster.Resolve(forDm, this.speakerName(from));
         if (result.status === "execute") {
-            this.DungeonMasterMessages.push({ from: from, message: text });
+            this.DungeonMasterMessages.push({ from: from, message: stored });
         }
         return result;
 

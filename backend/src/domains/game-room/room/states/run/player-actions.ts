@@ -50,7 +50,7 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         if (typeof payload !== "string")
             return { ok: false, status: 400, error: "Invalid payload" };
 
-        let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerId}`, payload)
+        let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerPublicId}`, payload)
         ctx.Broadcast();
 
         let outcome: string;

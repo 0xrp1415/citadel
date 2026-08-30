@@ -37,6 +37,10 @@ export class GameRoomParty implements IGameRoomPartyContext {
         return this.players.get(playerId);
     }
 
+    public getPlayerByPublicId(playerPublicId: string): Player | undefined {
+        return this.Players.find((p) => p.Identity.playerPublicId === playerPublicId);
+    }
+
     public get Players(): Player[] {
         return Array.from(this.players.values());
     }
@@ -49,10 +53,14 @@ export class GameRoomParty implements IGameRoomPartyContext {
         return this.leader;
     }
 
+    public get LeaderPublicId(): string | null {
+        const leader = this.leader ? this.players.get(this.leader) : undefined;
+        return leader?.Identity.playerPublicId ?? null;
+    }
+
     public get PlayerPublicData() {
         return this.Players.map(player => ({
             ...player.PublicJSON,
-            isHost: player.Identity.playerId === this.leader,
         }));
     }
 

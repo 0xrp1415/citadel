@@ -53,9 +53,9 @@ export type PlayerRunEntityJSON = {
 
 export interface PlayerPublic {
     playerId: string;
+    playerPublicId: string;
     name: string;
     status: PlayerStatus;
-    isHost: boolean;
     disconnectedAt: number | null;
     stats: PlayerRunEntityJSON;
 }
