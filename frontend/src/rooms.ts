@@ -50,9 +50,9 @@ export interface PlayerRunEntity {
 
 export interface PlayerPublic {
   playerId: string
+  playerPublicId: string
   name: string
   status: PlayerStatus
-  isHost: boolean
   disconnectedAt: number | null
   stats: PlayerRunEntity
 }
@@ -116,6 +116,7 @@ export interface RoomData {
   map: MapPublicJSON | null
   message: RoomMessage[]
   dungeonMasterState: 'idle' | 'active'
+  hostPublicId: string | null
 }
 
 export interface CreateRoomResult {

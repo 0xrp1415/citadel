@@ -18,6 +18,7 @@ interface RecordLine {
   speaker: 'player' | 'officer' | 'ruling' | 'data'
   text: string
   name?: string
+  isSelf?: boolean
   indent?: boolean
 }
 
@@ -27,12 +28,22 @@ const OPENING_LINE: RecordLine = {
   text: 'Descent begins. The record is continuous. It will not pause.',
 }
 
-function linesFromMessages(messages: RoomMessage[], playerNames: Map<string, string>): RecordLine[] {
+function linesFromMessages(
+  messages: RoomMessage[],
+  playerNames: Map<string, string>,
+  selfPublicId: string | null,
+): RecordLine[] {
   return messages.map((msg, i) => {
     if (msg.from.startsWith('player:')) {
       const id = msg.from.slice('player:'.length).trim()
       const name = playerNames.get(id) ?? id
-      return { id: `${i}-player`, speaker: 'player' as const, text: msg.message, name }
+      return {
+        id: `${i}-player`,
+        speaker: 'player' as const,
+        text: msg.message,
+        name,
+        isSelf: selfPublicId !== null && id === selfPublicId,
+      }
     }
     if (msg.from === 'dungeon_master') {
       return { id: `${i}-dm`, speaker: 'officer' as const, text: msg.message }
@@ -41,8 +52,53 @@ function linesFromMessages(messages: RoomMessage[], playerNames: Map<string, str
   })
 }
 
+const WHITESPACE = /\s/
+
+function findPendingMention(text: string, caret: number): { start: number; query: string } | null {
+  if (caret <= 0) return null
+  let i = caret
+  while (i > 0) {
+    const ch = text[i - 1]
+    if (WHITESPACE.test(ch)) return null
+    if (ch === '@') {
+      const before = text[i - 2]
+      const atBoundary = before === undefined || WHITESPACE.test(before)
+      return atBoundary ? { start: i - 1, query: text.slice(i, caret) } : null
+    }
+    i--
+  }
+  return null
+}
+
+function MentionText({ text, names }: { text: string; names: Map<string, string> }) {
+  return (
+    <>
+      {text.split(/(<@[A-Za-z0-9_-]+>)/).map((part, i) => {
+        const m = /^<@([A-Za-z0-9_-]+)>$/.exec(part)
+        if (m) {
+          const name = names.get(m[1])
+          return name ? (
+            <span key={i} className="record__mention">
+              @{name}
+            </span>
+          ) : (
+            <span key={i} className="record__mention record__mention--ghost">
+              {part}
+            </span>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
+  )
+}
+
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 const SHEET_STATS: { key: keyof Stats; label: string }[] = [
@@ -89,6 +145,8 @@ function Run() {
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
+  const caretRef = useRef(0)
+  const [mentionIndex, setMentionIndex] = useState(0)
 
   const handleChangeStat = useCallback(async (stat: keyof Stats, amount: number) => {
     if (!roomToken) return
@@ -115,11 +173,18 @@ function Run() {
   }, [])
 
   const handlePlay = useCallback(async () => {
-    const text = draft.trim()
-    if (!text || !roomToken) return
+    const raw = draft.trim()
+    if (!raw || !roomToken) return
+    const idByName = new Map<string, string>((room?.players ?? []).map((p) => [p.name, p.playerPublicId]))
+    let text = raw
+    for (const [name, id] of idByName) {
+      const re = new RegExp(`@${escapeRegExp(name)}(?=\\s|$)`, 'g')
+      text = text.replace(re, `<@${id}>`)
+    }
     setComposerBusy(true)
     setPlayError(null)
     try {
+      console.log('sending player_play:', JSON.stringify(text))
       await sendAction(roomToken, 'player_play', text)
       setDraft('')
       resetComposer()
@@ -128,7 +193,7 @@ function Run() {
     } finally {
       setComposerBusy(false)
     }
-  }, [draft, roomToken, resetComposer])
+  }, [draft, room, roomToken, resetComposer])
 
   useEffect(() => {
     if (!roomToken) {
@@ -206,10 +271,38 @@ function Run() {
         : 'The line is down — retrying the connection…'
       : "The register opens. Await the officer\u2019s word."
 
+  const selfPlayer = room?.players.find((p) => p.playerId === selfPlayerId) ?? null
+  const selfPublicId = selfPlayer?.playerPublicId ?? null
   const playerNameById = new Map<string, string>(
-    (room?.players ?? []).map((p) => [p.playerId, p.name]),
+    (room?.players ?? []).map((p) => [p.playerPublicId, p.name]),
   )
-  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [], playerNameById)]
+  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [], playerNameById, selfPublicId)]
+
+  const pendingMention = findPendingMention(draft, caretRef.current)
+  const mentionQuery = (pendingMention?.query ?? '').toLowerCase()
+  const mentionMembers =
+    pendingMention === null
+      ? []
+      : (room?.players ?? []).filter(
+          (p) => p.playerPublicId !== selfPublicId && p.name.toLowerCase().includes(mentionQuery),
+        )
+
+  const acceptMention = (playerPublicId: string) => {
+    const el = composerRef.current
+    const m = findPendingMention(draft, caretRef.current)
+    if (!m || !el) return
+    const name = playerNameById.get(playerPublicId) ?? playerPublicId
+    const token = `@${name} `
+    const next = draft.slice(0, m.start) + token + draft.slice(caretRef.current)
+    setDraft(next)
+    const newCaret = m.start + token.length
+    caretRef.current = newCaret
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(newCaret, newCaret)
+      autoGrowComposer()
+    })
+  }
 
   const openPlayer = room?.players.find((p) => p.playerId === openPlayerId) ?? null
 
@@ -250,14 +343,25 @@ function Run() {
                   key={line.id}
                   className={`record__row record__row--${line.speaker}${
                     line.indent ? ' record__indent' : ''
-                  }`}
+                  }${line.isSelf ? ' record__row--self' : ''}`}
                 >
-                  {line.speaker === 'player' && (
-                    <span className="record__mark">
-                      {line.name ? `${line.name} > ` : '> '}
-                    </span>
-                  )}
-                  {line.text}
+                  <span className="record__rune" aria-hidden="true">
+                    {line.speaker === 'player'
+                      ? line.isSelf
+                        ? '‹'
+                        : '›'
+                      : line.speaker === 'officer'
+                        ? '✦'
+                        : line.speaker === 'ruling'
+                          ? '§'
+                          : '·'}
+                  </span>
+                  <span className="record__text">
+                    {line.speaker === 'player' && line.name && !line.isSelf && (
+                      <span className="record__who">{line.name} › </span>
+                    )}
+                    <MentionText text={line.text} names={playerNameById} />
+                  </span>
                 </span>
               ))}
               {dmActive && (
@@ -272,25 +376,83 @@ function Run() {
             </p>
           )}
           <div className="composer">
-            <textarea
-              ref={composerRef}
-              className="composer__input"
-              rows={1}
-              value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value)
-                autoGrowComposer()
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault()
-                  void handlePlay()
-                }
-              }}
-              placeholder="Say what you do…"
-              disabled={dmActive}
-              aria-label="Your next action"
-            />
+            <div className="composer__field">
+              {mentionMembers.length > 0 && (
+                <ul className="composer__pick" role="listbox" aria-label="Mention a member">
+                  {mentionMembers.map((p, i) => (
+                    <li
+                      key={p.playerPublicId}
+                      role="option"
+                      aria-selected={i === mentionIndex}
+                      className={`composer__pick-item${
+                        i === mentionIndex ? ' composer__pick-item--active' : ''
+                      }`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                        acceptMention(p.playerPublicId)
+                      }}
+                      onMouseEnter={() => setMentionIndex(i)}
+                    >
+                      @{p.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <textarea
+                ref={composerRef}
+                className="composer__input"
+                rows={1}
+                value={draft}
+                onChange={(event) => {
+                  caretRef.current = event.target.selectionStart
+                  setMentionIndex(0)
+                  setDraft(event.target.value)
+                  autoGrowComposer()
+                }}
+                onKeyDown={(event) => {
+                  if (mentionMembers.length > 0) {
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault()
+                      setMentionIndex((i) => (i + 1) % mentionMembers.length)
+                      return
+                    }
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault()
+                      setMentionIndex((i) => (i - 1 + mentionMembers.length) % mentionMembers.length)
+                      return
+                    }
+                    if (event.key === 'Enter' && mentionMembers[mentionIndex]) {
+                      event.preventDefault()
+                      acceptMention(mentionMembers[mentionIndex].playerPublicId)
+                      return
+                    }
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      const m = findPendingMention(draft, caretRef.current)
+                      if (m) {
+                        const next = draft.slice(0, m.start)
+                        setDraft(next)
+                        caretRef.current = m.start
+                        const el = composerRef.current
+                        if (el) {
+                          el.focus()
+                          el.setSelectionRange(m.start, m.start)
+                          autoGrowComposer()
+                        }
+                      }
+                      return
+                    }
+                  }
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault()
+                    void handlePlay()
+                  }
+                }}
+                placeholder="Say what you do…"
+                disabled={dmActive}
+                aria-label="Your next action"
+              />
+            </div>
             <button
               type="button"
               className="btn btn--primary composer__send"
@@ -312,6 +474,7 @@ function Run() {
           player={openPlayer}
           players={room?.players ?? []}
           selfPlayerId={selfPlayerId}
+          hostPublicId={room?.hostPublicId ?? null}
           currentRoomType={room?.currentRoom.type ?? 'grace'}
           busy={busy}
           onChangeStat={handleChangeStat}
@@ -384,7 +547,7 @@ function PartyManifest({
                     <span className="board__name">{player.name}</span>
                   </button>
                   <div className="board__tags">
-                    {player.isHost && <span className="board__tag board__tag--host">lead</span>}
+                    {player.playerPublicId === room.hostPublicId && <span className="board__tag board__tag--host">lead</span>}
                     {isSelf && <span className="board__tag board__tag--you">you</span>}
                   </div>
                 </div>
@@ -845,6 +1008,7 @@ interface DossierCardProps {
   player: PlayerPublic
   players: PlayerPublic[]
   selfPlayerId: string | null
+  hostPublicId: string | null
   currentRoomType: string
   busy: boolean
   onChangeStat: (stat: keyof Stats, amount: number) => void
@@ -852,7 +1016,7 @@ interface DossierCardProps {
   onSwitch: (playerId: string) => void
 }
 
-function DossierCard({ player, players, selfPlayerId, currentRoomType, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
+function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomType, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
   const index = players.findIndex((p) => p.playerId === player.playerId)
   const previous = index > 0 ? players[index - 1] : players[players.length - 1]
   const next = index < players.length - 1 ? players[index + 1] : players[0]
@@ -963,7 +1127,9 @@ function DossierCard({ player, players, selfPlayerId, currentRoomType, busy, onC
               <span className="filecard__gold">{stats.gold} gold</span>
             </div>
             <div className="filecard__tags">
-              {player.isHost && <span className="board__tag board__tag--host">lead</span>}
+              {player.playerPublicId === hostPublicId && (
+                <span className="board__tag board__tag--host">lead</span>
+              )}
               {player.playerId === selfPlayerId && (
                 <span className="board__tag board__tag--you">you</span>
               )}

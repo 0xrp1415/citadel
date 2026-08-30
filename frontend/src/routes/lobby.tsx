@@ -110,7 +110,7 @@ function Lobby() {
 
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const me = room?.players.find((p) => p.playerId === selfPlayerId)
-  const isHost = me?.isHost ?? false
+  const isHost = (me?.playerPublicId ?? null) === (room?.hostPublicId ?? null)
   const hasGhosts = room?.players.some((p) => isGhost(p.status)) ?? false
 
   async function handleCreate(e: FormEvent) {
@@ -563,6 +563,7 @@ function CreateGameModal({
 
 interface ManageModalProps {
   players: PlayerPublic[]
+  hostPublicId: string | null
   pendingKick: string | null
   partySize: number
   mapSize: 'small' | 'medium' | 'large'
@@ -582,6 +583,7 @@ interface ManageModalProps {
 
 function ManageModal({
   players,
+  hostPublicId,
   pendingKick,
   partySize,
   mapSize,
@@ -644,8 +646,10 @@ function ManageModal({
             {players.map((player) => (
               <li key={player.playerId} className="filecard__roster-row">
                 <span className="filecard__roster-name">{player.name}</span>
-                {player.isHost && <span className="board__tag board__tag--host">lead</span>}
-                {!player.isHost && (
+                {player.playerPublicId === hostPublicId && (
+                  <span className="board__tag board__tag--host">lead</span>
+                )}
+                {player.playerPublicId !== hostPublicId && (
                   <>
                     <span className={`board__tag board__tag--${player.status}`}>
                       {statusLabel(player.status)}
@@ -869,8 +873,10 @@ function LiveRoom({
               >
                 <span className="board__no">{String(i + 1).padStart(2, '0')}</span>
                 <span className="board__name">{player.name}</span>
-                {player.isHost && <span className="board__tag board__tag--host">lead</span>}
-                {player && !player.isHost && (
+                {player.playerPublicId === room?.hostPublicId && (
+                  <span className="board__tag board__tag--host">lead</span>
+                )}
+                {player && player.playerPublicId !== room?.hostPublicId && (
                   <span className={`board__tag board__tag--${player.status}`}>
                     {statusLabel(player.status)}
                   </span>
@@ -974,6 +980,7 @@ function LiveRoom({
       {isHost && room?.status === 'lobby' && manageOpen && (
         <ManageModal
           players={room?.players ?? []}
+          hostPublicId={room?.hostPublicId ?? null}
           pendingKick={pendingKick}
           partySize={partySize}
           mapSize={mapSize}
