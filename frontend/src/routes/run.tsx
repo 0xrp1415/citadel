@@ -220,7 +220,7 @@ function Run() {
     )
   }, [room])
 
-  const messageCount = room?.message.length ?? 0
+  const messageCount = room?.message?.length ?? 0
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight

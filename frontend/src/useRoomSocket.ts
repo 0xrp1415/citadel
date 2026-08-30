@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import type { Socket } from 'socket.io-client'
-import type { RoomData } from './rooms'
+import type { MessageUpdatePayload, RoomData, RoomMessage } from './rooms'
 
 export interface RoomSocketState {
   room: RoomData | null
@@ -29,11 +29,16 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
   const [state, setState] = useState<RoomSocketState>({ room: null, connected: false, error: null })
   const socketRef = useRef<Socket | null>(null)
   const kickedRef = useRef(false)
+  const transcriptRef = useRef<{ messages: RoomMessage[]; resolverBusy: boolean }>({
+    messages: [],
+    resolverBusy: false,
+  })
 
   useEffect(() => {
     if (!roomToken) return
 
     kickedRef.current = false
+    transcriptRef.current = { messages: [], resolverBusy: false }
     const socket = io({ auth: { token: `Bearer ${roomToken}` } })
     socketRef.current = socket
 
@@ -53,7 +58,37 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
     })
 
     socket.on('game-room-update', (room: RoomData) => {
-      setState((s) => ({ ...s, room }))
+      setState((s) => ({
+        ...s,
+        room: {
+          ...room,
+          message: transcriptRef.current.messages,
+          dungeonMasterState: transcriptRef.current.resolverBusy ? 'active' : 'idle',
+        },
+      }))
+    })
+
+    socket.on('message-update', (payload: MessageUpdatePayload) => {
+      transcriptRef.current = {
+        messages: payload.messages,
+        resolverBusy: payload.resolverBusy,
+      }
+      setState((s) =>
+        s.room
+          ? {
+              ...s,
+              room: {
+                ...s.room,
+                message: payload.messages,
+                dungeonMasterState: payload.resolverBusy ? 'active' : 'idle',
+              },
+            }
+          : s,
+      )
+    })
+
+    socket.on('confirm', () => {
+      // confirmation-update is reserved; no confirmation mechanic exists yet
     })
 
     socket.on('connect_error', (err) => {

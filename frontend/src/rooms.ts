@@ -105,6 +105,11 @@ export interface RoomMessage {
   message: string
 }
 
+export interface MessageUpdatePayload {
+  resolverBusy: boolean
+  messages: RoomMessage[]
+}
+
 export interface RoomData {
   inviteCode: string
   totalPlayers: number
@@ -114,8 +119,8 @@ export interface RoomData {
   floor: number
   currentRoom: { type: string; index: number }
   map: MapPublicJSON | null
-  message: RoomMessage[]
-  dungeonMasterState: 'idle' | 'active'
+  message?: RoomMessage[]
+  dungeonMasterState?: 'idle' | 'active'
   hostPublicId: string | null
 }
 
