@@ -46,6 +46,7 @@ export interface PlayerRunEntity {
   gold: number
   consumables: Consumables
   health: { MaxHealth: number; CurrentHealth: number }
+  abilities: string[]
 }
 
 export interface PlayerPublic {

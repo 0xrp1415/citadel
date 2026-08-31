@@ -1471,6 +1471,20 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                 )}
               </ul>
             </div>
+            <div className="filecard__col">
+              <span className="filecard__col-k">Abilities</span>
+              <ul className="filecard__list">
+                {stats.abilities.length > 0 ? (
+                  stats.abilities.map((ability) => (
+                    <li className="filecard__item" key={ability}>
+                      {ability}
+                    </li>
+                  ))
+                ) : (
+                  <li className="filecard__item">none mastered</li>
+                )}
+              </ul>
+            </div>
           </div>
 
           <footer className="filecard__foot">
