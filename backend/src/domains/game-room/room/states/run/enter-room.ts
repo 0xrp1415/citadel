@@ -1,35 +1,66 @@
-import { IRoomMetadata } from "../../../../procedural-engine/index.js";
+import { IMap, IRoomMetadata } from "../../../../procedural-engine/index.js";
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { deriveRoomExits } from "../../utils/helpers/map/exits.js";
 
-function buildRoomDescription(currentRoom: IRoomMetadata | null): string {
+const DIRS = ["left", "right", "up", "down"] as const;
+
+function buildFactContext(
+    map: IMap | null,
+    currentRoom: IRoomMetadata | null,
+    visitedRooms: Set<number>,
+    transition?: string,
+): string {
     if (!currentRoom) return "The party stands in a bare, featureless space. There is nothing here yet.";
 
+    const lines: string[] = [];
+    if (transition) lines.push(`transition: ${transition}`);
+
+    const visited = visitedRooms.has(currentRoom.id);
+    lines.push(
+        `room: a "${currentRoom.type}" chamber${visited ? " that the party has seen before (visited: true)" : ""}.`
+    );
+
     const exits = deriveRoomExits(currentRoom.id, currentRoom.exits);
-    const dirs = ["left", "right", "up", "down"] as const;
     const exitLines: string[] = [];
-    for (const d of dirs) {
+    for (const d of DIRS) {
         const exit = exits[d];
-        if (!exit) { exitLines.push(`- ${d}: none`); continue; }
-        const eve = exit.event
-            ? ` (${exit.event.type} trial demanding ${exit.event.requiredStat})`
+        if (!exit) continue;
+        const destType = map?.rooms[exit.targetRoomId]?.type ?? "unknown";
+        const trial = exit.event
+            ? ` a ${exit.event.type} trial demanding ${exit.event.requiredStat}`
             : "";
-        exitLines.push(`- ${d}: a passage to room #${exit.targetRoomId}${eve}, ${exit.unlocked ? "open" : "locked"}`);
+        const state = exit.unlocked
+            ? "open"
+            : `locked; the gate-keeper bars it${trial ? `, demanding${trial}` : "."}`;
+        exitLines.push(`- exit ${d}: to a ${destType} chamber, ${state}`);
+    }
+    if (exitLines.length === 0) {
+        lines.push("exits: none");
+    } else {
+        lines.push("exits:");
+        lines.push(...exitLines);
     }
 
-    return [
-        `The party has entered room #${currentRoom.id}, which is a "${currentRoom.type}" chamber.`,
-        "Its exits:",
-        ...exitLines,
-    ].join("\n");
+    return lines.join("\n");
 }
 
-export async function enterRoom(ctx: IGameRoomContext, targetRoomIndex: number): Promise<string> {
+export async function enterRoom(
+    ctx: IGameRoomContext,
+    targetRoomIndex: number,
+    narrate?: (description: string) => Promise<void>,
+    transition?: string,
+): Promise<string> {
     ctx.Map.EnterRoom(targetRoomIndex);
     ctx.Broadcaster.RoomUpdate();
 
-    const description = buildRoomDescription(ctx.Map.CurrentRoom);
-    const narration = await ctx.DMAdapter.Narrate("dungeon_master", description);
+    const description = buildFactContext(ctx.Map.Map, ctx.Map.CurrentRoom, ctx.Map.VisitedRooms, transition);
+
+    if (narrate) {
+        await narrate(description);
+        return description;
+    }
+
+    const narration = await ctx.DMAdapter.Narrate(description);
     ctx.Broadcaster.MessageUpdate();
     return narration;
 }

@@ -15,6 +15,7 @@ export class GameRoomMap implements IGameRoomMapContext {
     private map: IMap | null = null;
     private floor: number = 1;
     private currentRoomIndex: number = 0;
+    private visitedRooms: Set<number> = new Set();
 
     public GenerateMap(config: IGameRoomConfig): void {
         if (!this.rng)
@@ -29,6 +30,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         this.rng = null;
         this.floor = 1;
         this.currentRoomIndex = 0;
+        this.visitedRooms = new Set();
     }
 
     public NextFloor(config: IGameRoomConfig): void {
@@ -52,6 +54,7 @@ export class GameRoomMap implements IGameRoomMapContext {
 
     public EnterRoom(targetRoomIndex: number): void {
         this.currentRoomIndex = targetRoomIndex;
+        this.visitedRooms.add(targetRoomIndex);
         this.UnlockEventless();
     }
 
@@ -89,6 +92,10 @@ export class GameRoomMap implements IGameRoomMapContext {
         return this.floor;
     }
 
+    public get VisitedRooms(): Set<number> {
+        return this.visitedRooms;
+    }
+
     public get CurrentRoomIndex(): number {
         return this.currentRoomIndex;
     }
@@ -99,6 +106,6 @@ export class GameRoomMap implements IGameRoomMapContext {
     }
 
     public get JSON(): IMapPublicJSON | null {
-        return this.map ? serializeMap(this.map, this.currentRoomIndex) : null;
+        return this.map ? serializeMap(this.map, this.currentRoomIndex, this.visitedRooms) : null;
     }
 }

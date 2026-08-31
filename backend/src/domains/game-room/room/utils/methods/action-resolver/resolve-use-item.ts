@@ -4,29 +4,36 @@ import { IGameRoomContext } from "../../interface/index.js";
 
 const POTION_HEAL = 20;
 
-export function resolveUseItem(action: DmAction, actor: Player | undefined, context: IGameRoomContext): string {
-    if (!actor) return "";
+export async function resolveUseItem(action: DmAction, actor: Player | undefined, context: IGameRoomContext, narrate: (message: string) => Promise<void>): Promise<void> {
+    if (!actor) return;
     const name = actor.Identity.name;
     const id = action.resource?.id;
-    if (!id) return "No item was specified.";
+    if (!id) {
+        await narrate("No item was specified.");
+        return;
+    }
 
     switch (id) {
         case "health_potion": {
             if (actor.Inventory.Consumables.health_potion <= 0) {
-                return `${name} reaches for a health potion, but none are left.`;
+                await narrate(`${name} reaches for a health potion, but none are left.`);
+                return;
             }
             actor.Inventory.ChangeConsumable("health_potion", -1);
             actor.Combat.changeHealthBy(POTION_HEAL);
-            return `${name} drinks a health potion, restoring ${POTION_HEAL} HP.`;
+            await narrate(`${name} drinks a health potion, restoring ${POTION_HEAL} HP.`);
+            return;
         }
         case "gold_key":
         case "lockpick": {
             if (actor.Inventory.Consumables[id] <= 0) {
-                return `${name} has no ${id.replace("_", " ")} left.`;
+                await narrate(`${name} has no ${id.replace("_", " ")} left.`);
+                return;
             }
-            return `${name} holds up a ${id.replace("_", " ")}.`;
+            await narrate(`${name} holds up a ${id.replace("_", " ")}.`);
+            return;
         }
         default:
-            return `${name} uses ${id}.`;
+            await narrate(`${name} uses ${id}.`);
     }
 }

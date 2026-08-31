@@ -5,8 +5,13 @@ export interface MessageUpdatePayload {
     readonly messages: { from: string; message: string }[];
 }
 
+export type ConfirmationType = "unanimous" | "majority";
+
 export interface ConfirmationUpdatePayload {
-    readonly confirmation: unknown | null;
+    readonly type: ConfirmationType;
+    readonly votes: Record<string, boolean>;
+    readonly deadlineAt: number;
+    readonly durationMs: number;
 }
 
 export interface IGameRoomBroadcaster {

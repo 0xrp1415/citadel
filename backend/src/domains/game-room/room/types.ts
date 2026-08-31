@@ -13,6 +13,7 @@ export interface IRoomPublicJSON {
     baseDifficulty: number;
     distanceBonus: number;
     isCurrentRoom: boolean;
+    isVisited: boolean;
     exits: {
         left: IExitPublicJSON | null;
         right: IExitPublicJSON | null;

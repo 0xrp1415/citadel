@@ -1,7 +1,8 @@
 import { DmAction, DmVerdict } from "../../../../dungeon-master/schema/index.js";
 
 export interface IGameRoomResolver {
-    Execute(actions: DmAction[], actorId: string): string;
-    Ambiguous(verdict: Extract<DmVerdict, { status: "ambiguous" }>): string;
-    NotAllowed(reason?: string): string;
+    HandlePlayerAction(action: string, actorId: string): Promise<void>;
+    NarrateRoom(description: string): Promise<void>;
+    get DungeonMasterMessages(): { from: string, message: string }[];
+    get IsBusy(): boolean;
 }

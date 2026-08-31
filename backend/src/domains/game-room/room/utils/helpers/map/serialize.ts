@@ -2,7 +2,7 @@ import { IMap } from "../../../../../procedural-engine/index.js";
 import { IMapPublicJSON, IRoomPublicJSON } from "../../../types.js";
 import { deriveRoomExits } from "./exits.js";
 
-export function serializeMap(map: IMap, currentRoomIndex: number): IMapPublicJSON {
+export function serializeMap(map: IMap, currentRoomIndex: number, visitedRooms: Set<number>): IMapPublicJSON {
     const sortedIds = Object.keys(map.rooms).map(Number).sort((a, b) => a - b);
 
     const rooms: IRoomPublicJSON[] = sortedIds.map((roomId) => {
@@ -12,6 +12,7 @@ export function serializeMap(map: IMap, currentRoomIndex: number): IMapPublicJSO
             baseDifficulty: meta.baseDifficulty,
             distanceBonus: meta.distanceBonus,
             isCurrentRoom: roomId === currentRoomIndex,
+            isVisited: visitedRooms.has(roomId),
             exits: deriveRoomExits(roomId, meta.exits),
         };
     });

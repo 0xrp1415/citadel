@@ -14,6 +14,10 @@ export function playerConnect(ctx: IGameRoomContext): ActionHandler {
 export function playerDisconnect(ctx: IGameRoomContext): ActionHandler {
     return (playerId) => {
         ctx.Socket.handlePlayerDisconnect(playerId);
+        const player = ctx.Party.getPlayer(playerId);
+        if (player) {
+            ctx.Confirmation.OnPlayerDisconnect(player.Identity.playerPublicId);
+        }
         ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
     };

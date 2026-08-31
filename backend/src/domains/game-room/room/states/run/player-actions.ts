@@ -32,13 +32,32 @@ export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
     };
 }
 
+export function confirmPlayerAction(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        if (!ctx.Confirmation.HasActive) {
+            return { ok: false, status: 409, error: "No vote is pending" };
+        }
+
+        const { accept } = (payload ?? {}) as { accept?: boolean };
+        if (typeof accept !== "boolean") {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        ctx.Confirmation.Vote(player.Identity.playerPublicId, accept);
+        return { ok: true, value: null };
+    };
+}
+
 export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
     return async (playerId, payload) => {
 
-        if (ctx.DMAdapter.DMState !== "idle") {
+        if (ctx.Resolver.IsBusy) {
             return { ok: false, status: 403, error: "Dungeon Master is not idle" };
         }
-
         const currentRoom = ctx.Map.CurrentRoom;
         if (!currentRoom) {
             return { ok: false, status: 409, error: "No current room" };
@@ -50,35 +69,8 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         }
         if (typeof payload !== "string")
             return { ok: false, status: 400, error: "Invalid payload" };
-
-        let _result = await ctx.DMAdapter.Resolve(`player:${player.Identity.playerPublicId}`, payload)
-        ctx.Broadcaster.MessageUpdate();
-
-        if (_result.status === "execute") {
-            const beforeRoom = ctx.Map.CurrentRoomIndex;
-            const outcome = ctx.Resolver.Execute(_result.actions, playerId);
-            const narration = await ctx.DMAdapter.Narrate(`dungeon_master`, outcome);
-
-            if (ctx.Map.Map && ctx.Map.CurrentRoomIndex !== beforeRoom) {
-                await enterRoom(ctx, ctx.Map.CurrentRoomIndex);
-            } else {
-                ctx.Broadcaster.RoomUpdate();
-                ctx.Broadcaster.MessageUpdate();
-            }
-
-            return { ok: true, value: narration };
-        }
-
-        let outcome: string;
-        if (_result.status === "ambiguous") {
-            outcome = ctx.Resolver.Ambiguous(_result);
-        } else {
-            outcome = ctx.Resolver.NotAllowed(_result.reason);
-        }
-
-        let narration = await ctx.DMAdapter.Narrate(`dungeon_master`, outcome);
-        ctx.Broadcaster.RoomUpdate();
-        ctx.Broadcaster.MessageUpdate();
-        return { ok: true, value: narration };
+        
+        await ctx.Resolver.HandlePlayerAction(payload, `player:${player.Identity.playerPublicId}`);
+        return { ok: true, value: null };
     }
 }

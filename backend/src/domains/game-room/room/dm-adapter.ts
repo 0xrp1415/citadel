@@ -10,7 +10,6 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
 
     private readonly dungeonMaster: IDungeonMaster;
 
-    private dungeonMasterMessages: { from: string, message: string }[];
 
     constructor(context: IGameRoomContext) {
         this.context = context;
@@ -18,7 +17,6 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
             roomViewGenerator: () => this.GenerateRoomView(),
             onStateChange: () => this.context.Broadcaster.MessageUpdate(),
         });
-        this.dungeonMasterMessages = [];
     }
 
     private speakerName(from: string): string {
@@ -58,26 +56,12 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
             this.context.Party.getPlayerByPublicId(id)?.Identity.name
         );
         let result = await this.dungeonMaster.Resolve(forDm, this.speakerName(from));
-        if (result.status === "execute") {
-            this.DungeonMasterMessages.push({ from: from, message: stored });
-        }
         return result;
 
     }
 
-    public async Narrate(from: string, eventText: string): Promise<string> {
+    public async Narrate(eventText: string): Promise<string> {
         let narration = await this.dungeonMaster.Narrate(eventText);
-        this.DungeonMasterMessages.push({ from: from, message: narration });
         return narration;
     }
-
-    public get DMState() {
-        return this.dungeonMaster.State;
-    }
-
-    public get DungeonMasterMessages(): { from: string, message: string }[] {
-        return this.dungeonMasterMessages;
-    }
-
-
 }

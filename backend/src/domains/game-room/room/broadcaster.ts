@@ -20,14 +20,23 @@ export class GameRoomBroadcaster implements IGameRoomBroadcaster {
     public MessageUpdate(): void {
         this.touch();
         this.emit("message-update", {
-            resolverBusy: this.context.DMAdapter.DMState === "active",
-            messages: this.context.DMAdapter.DungeonMasterMessages,
+            resolverBusy: this.context.Resolver.IsBusy,
+            messages: this.context.Resolver.DungeonMasterMessages,
         });
     }
 
     public ConfirmationUpdate(): void {
         this.touch();
-        this.emit("confirmation-update", { confirmation: null });
+        if (!this.context.Confirmation.HasActive || !this.context.Confirmation.Type) {
+            this.emit("confirmation-update", null);
+            return;
+        }
+        this.emit("confirmation-update", {
+            type: this.context.Confirmation.Type,
+            votes: this.context.Confirmation.Votes,
+            deadlineAt: this.context.Confirmation.DeadlineAt ?? Date.now(),
+            durationMs: this.context.Confirmation.DurationMs ?? 0,
+        });
     }
 
     public LastUpdateTime(): number {

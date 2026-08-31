@@ -5,11 +5,11 @@ import { resolveMove } from "./resolve-move.js";
 import { resolveRest } from "./resolve-rest.js";
 import { resolveUseItem } from "./resolve-use-item.js";
 
-export function resolveAction(action: DmAction, actor: Player | undefined, context: IGameRoomContext): string {
+export async function resolveAction(action: DmAction, actor: Player | undefined, context: IGameRoomContext, narrate: (message: string) => Promise<void>): Promise<void> {
     switch (action.intent) {
-        case "move": return resolveMove(action, actor, context);
-        case "rest": return resolveRest(action, actor, context);
-        case "use_item": return resolveUseItem(action, actor, context);
-        default: return "";
+        case "move": await resolveMove(action, actor, context, narrate); break;
+        case "rest": await resolveRest(action, actor, context, narrate); break;
+        case "use_item": await resolveUseItem(action, actor, context, narrate); break;
+        default: break;
     }
 }

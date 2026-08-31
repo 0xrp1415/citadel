@@ -1,7 +1,7 @@
 import { GameRoomState } from "../base/index.js";
 import { ActionHandler } from "../../utils/types.js";
 import { playerConnect, playerDisconnect } from "../base/shared-actions.js";
-import { changePlayerStats, resolvePlayerAction } from "./player-actions.js";
+import { changePlayerStats, confirmPlayerAction, resolvePlayerAction } from "./player-actions.js";
 import { enterRoom } from "./enter-room.js";
 
 export class InRunState extends GameRoomState {
@@ -12,6 +12,7 @@ export class InRunState extends GameRoomState {
         player_disconnect: playerDisconnect(this.context),
         change_player_stats: changePlayerStats(this.context),
         player_play:       resolvePlayerAction(this.context),
+        player_confirm:    confirmPlayerAction(this.context),
     };
 
     public async onEnterState(): Promise<void> {
@@ -21,7 +22,7 @@ export class InRunState extends GameRoomState {
         if (this.context.Map.Map === null) {
             this.context.Map.GenerateMap(this.context.Identity.Config);
         }
-        await enterRoom(this.context, this.context.Map.CurrentRoomIndex);
+        await enterRoom(this.context, this.context.Map.CurrentRoomIndex, (d) => this.context.Resolver.NarrateRoom(d));
     }
 
     public async onExitState(): Promise<void> {}

@@ -12,6 +12,7 @@ export interface IGameRoomMapContext {
     readonly Floor: number;
     readonly CurrentRoomIndex: number;
     readonly CurrentRoom: IRoomMetadata | null;
+    readonly VisitedRooms: Set<number>;
     readonly Map: IMap | null;
     readonly JSON: IMapPublicJSON | null;
 }
