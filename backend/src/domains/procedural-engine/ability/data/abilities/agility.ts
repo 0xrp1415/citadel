@@ -5,15 +5,7 @@ import {
     BuffAgility,
     RevealSecret,
     UnlockGate,
-} from "../ability/components/index.js";
-import {
-    Speed1,
-    Speed2,
-    Speed3,
-    Speed4,
-    ReflexMix,
-    FeatherMix,
-    UntouchableMix,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const AGILITY_ABILITIES: IAbility[] = [
@@ -24,7 +16,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { agility: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed1],
+        components: [statBonus({ agility: 3 })],
     },
     {
         name: "Blink",
@@ -33,7 +25,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { agility: 22 },
         targeting: { kind: "self", scope: "self" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Wind Dancer",
@@ -42,7 +34,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { agility: 32 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed3],
+        components: [statBonus({ agility: 12 })],
     },
     {
         name: "Cat's Grace",
@@ -51,7 +43,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { agility: 18 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed2],
+        components: [statBonus({ agility: 7 })],
     },
     {
         name: "Phantom Rush",
@@ -60,7 +52,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { agility: 40 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(13)],
     },
     {
         name: "Dodge",
@@ -69,7 +61,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { agility: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Featherlight",
@@ -78,7 +70,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { agility: 26, dexterity: 22 },
         targeting: { kind: "self", scope: "self" },
-        components: [FeatherMix],
+        components: [statBonus({ agility: 6, dexterity: 4 })],
     },
     {
         name: "Shadow Walk",
@@ -87,7 +79,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { agility: 34 },
         targeting: { kind: "any", scope: "self" },
-        components: [RevealSecret],
+        components: [RevealSecret()],
     },
     {
         name: "Blur",
@@ -96,7 +88,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { agility: 24 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed2],
+        components: [statBonus({ agility: 7 })],
     },
     {
         name: "Zephyr's Edge",
@@ -105,7 +97,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 10,
         minimumStats: { agility: 50 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(14)],
     },
     {
         name: "Sprint",
@@ -114,7 +106,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { agility: 16 },
         targeting: { kind: "self", scope: "self" },
-        components: [BuffAgility],
+        components: [BuffAgility(10)],
     },
     {
         name: "Gale Leap",
@@ -123,7 +115,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { agility: 26 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed2],
+        components: [statBonus({ agility: 7 })],
     },
     {
         name: "Momentary Ghost",
@@ -132,7 +124,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 9,
         minimumStats: { agility: 44 },
         targeting: { kind: "any", scope: "self" },
-        components: [UnlockGate],
+        components: [UnlockGate()],
     },
     {
         name: "Fleet Foot",
@@ -141,7 +133,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { agility: 14 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed1],
+        components: [statBonus({ agility: 3 })],
     },
     {
         name: "Tumble",
@@ -150,7 +142,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { agility: 24 },
         targeting: { kind: "self", scope: "self" },
-        components: [Speed2],
+        components: [statBonus({ agility: 7 })],
     },
     {
         name: "Storm Reflex",
@@ -159,7 +151,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { agility: 34, dexterity: 28 },
         targeting: { kind: "self", scope: "self" },
-        components: [ReflexMix],
+        components: [statBonus({ agility: 10, dexterity: 6 })],
     },
     {
         name: "Untouchable",
@@ -168,6 +160,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { agility: 55, hp: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [UntouchableMix],
+        components: [statBonus({ agility: 20, hp: 10 })],
     },
 ];

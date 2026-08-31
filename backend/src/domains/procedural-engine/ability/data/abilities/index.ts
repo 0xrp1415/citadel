@@ -4,3 +4,4 @@ export * from "./intelligence.js";
 export * from "./wisdom.js";
 export * from "./agility.js";
 export * from "./hp.js";
+export * from "./registry.js";

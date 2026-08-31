@@ -4,16 +4,8 @@ import {
     Ward,
     DrainLife,
     Revive,
-    BuffDexterity,
     Cleanse,
-} from "../ability/components/index.js";
-import {
-    Bulk1,
-    Bulk2,
-    Bulk3,
-    Bulk4,
-    AegisMix,
-    Stone2,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const HP_ABILITIES: IAbility[] = [
@@ -24,7 +16,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { hp: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk1],
+        components: [statBonus({ hp: 20 })],
     },
     {
         name: "Mend Wounds",
@@ -33,7 +25,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { hp: 20 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Heal],
+        components: [Heal(12)],
     },
     {
         name: "Second Wind",
@@ -42,7 +34,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { hp: 25 },
         targeting: { kind: "self", scope: "self" },
-        components: [Heal],
+        components: [Heal(12)],
     },
     {
         name: "Heart of Oak",
@@ -51,7 +43,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { hp: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk2],
+        components: [statBonus({ hp: 40 })],
     },
     {
         name: "Regeneration",
@@ -60,7 +52,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { hp: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk2],
+        components: [statBonus({ hp: 40 })],
     },
     {
         name: "Burst Heal",
@@ -69,7 +61,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { hp: 25 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Heal],
+        components: [Heal(14)],
     },
     {
         name: "Fortifying Aura",
@@ -78,7 +70,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { hp: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk3],
+        components: [statBonus({ hp: 75 })],
     },
     {
         name: "Drain Life",
@@ -87,7 +79,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { hp: 30 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [DrainLife],
+        components: [DrainLife(10)],
     },
     {
         name: "Lay on Hands",
@@ -96,7 +88,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { hp: 22 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Heal],
+        components: [Heal(12)],
     },
     {
         name: "Rejuvenate",
@@ -105,7 +97,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { hp: 35 },
         targeting: { kind: "ally", scope: "all" },
-        components: [Heal],
+        components: [Heal(11)],
     },
     {
         name: "Lifeblood",
@@ -114,7 +106,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { hp: 60 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk4],
+        components: [statBonus({ hp: 120 })],
     },
     {
         name: "Warding Light",
@@ -123,7 +115,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 9,
         minimumStats: { hp: 55 },
         targeting: { kind: "ally", scope: "all" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Titan Vitality",
@@ -132,7 +124,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { hp: 80 },
         targeting: { kind: "self", scope: "self" },
-        components: [Bulk4],
+        components: [statBonus({ hp: 120 })],
     },
     {
         name: "Divine Aegis",
@@ -141,7 +133,7 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 12,
         minimumStats: { hp: 90, dexterity: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [AegisMix],
+        components: [statBonus({ hp: 80, dexterity: 10 })],
     },
     {
         name: "Phoenix Renewal",
@@ -150,6 +142,6 @@ export const HP_ABILITIES: IAbility[] = [
         minimumLevel: 12,
         minimumStats: { hp: 100 },
         targeting: { kind: "ally", scope: "all" },
-        components: [Heal, Revive, Cleanse],
+        components: [Heal(14), Revive(), Cleanse()],
     },
 ];

@@ -6,15 +6,7 @@ import {
     BuffWisdom,
     RevealSecret,
     ArcaneDamage,
-} from "../ability/components/index.js";
-import {
-    Insight1,
-    Insight2,
-    Insight3,
-    Insight4,
-    KeenSensesMix,
-    SereneMix,
-    ReflexMix,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const WISDOM_ABILITIES: IAbility[] = [
@@ -25,7 +17,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { wisdom: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Heightened Senses",
@@ -34,7 +26,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { wisdom: 22, agility: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [KeenSensesMix],
+        components: [statBonus({ wisdom: 6, agility: 4 })],
     },
     {
         name: "Nullify",
@@ -43,7 +35,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { wisdom: 30 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Cleanse],
+        components: [Cleanse()],
     },
     {
         name: "Insightful Eye",
@@ -52,7 +44,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { wisdom: 18 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight1],
+        components: [statBonus({ wisdom: 3 })],
     },
     {
         name: "Aegis Ward",
@@ -61,7 +53,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight3],
+        components: [statBonus({ wisdom: 14 })],
     },
     {
         name: "Sanctify",
@@ -70,7 +62,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { wisdom: 24 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Cleanse],
+        components: [Cleanse()],
     },
     {
         name: "Mystic Resilience",
@@ -79,7 +71,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 4,
         minimumStats: { wisdom: 28 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight2],
+        components: [statBonus({ wisdom: 8 })],
     },
     {
         name: "Blind Sight",
@@ -88,7 +80,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { wisdom: 24, agility: 22 },
         targeting: { kind: "self", scope: "self" },
-        components: [KeenSensesMix],
+        components: [statBonus({ wisdom: 6, agility: 4 })],
     },
     {
         name: "True Vision",
@@ -97,7 +89,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
         targeting: { kind: "any", scope: "self" },
-        components: [RevealSecret],
+        components: [RevealSecret()],
     },
     {
         name: "Avatar's Grace",
@@ -106,7 +98,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 12,
         minimumStats: { wisdom: 55, intelligence: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight4],
+        components: [statBonus({ wisdom: 20, intelligence: 10 })],
     },
     {
         name: "Runic Shield",
@@ -115,7 +107,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { wisdom: 22 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Clarity",
@@ -124,7 +116,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { wisdom: 16 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight1],
+        components: [statBonus({ wisdom: 3 })],
     },
     {
         name: "Counter-Ward",
@@ -133,7 +125,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Cleanse],
+        components: [Cleanse()],
     },
     {
         name: "Mental Fortress",
@@ -142,7 +134,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Insight3],
+        components: [statBonus({ wisdom: 14 })],
     },
     {
         name: "Banish",
@@ -151,7 +143,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 9,
         minimumStats: { wisdom: 44 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(12)],
     },
     {
         name: "Serene Focus",
@@ -160,7 +152,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { wisdom: 30, dexterity: 24 },
         targeting: { kind: "self", scope: "self" },
-        components: [SereneMix],
+        components: [statBonus({ wisdom: 8, dexterity: 6 })],
     },
     {
         name: "Prescience",
@@ -169,6 +161,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { wisdom: 50 },
         targeting: { kind: "any", scope: "self" },
-        components: [BuffWisdom],
+        components: [BuffWisdom(10)],
     },
 ];

@@ -3,16 +3,8 @@ import {
     Heal,
     Ward,
     Stagger,
-    BuffDexterity,
-    Revive,
     Damage,
-} from "../ability/components/index.js";
-import {
-    Stone1,
-    Stone2,
-    Stone3,
-    Stone4,
-    BulwarkMix,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const DEXTERITY_ABILITIES: IAbility[] = [
@@ -23,7 +15,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone1],
+        components: [statBonus({ dexterity: 4, hp: 8 })],
     },
     {
         name: "Taunt & Hold",
@@ -32,7 +24,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [Stagger, Ward],
+        components: [Stagger(), Ward()],
     },
     {
         name: "Fortress Stance",
@@ -41,7 +33,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { dexterity: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone3],
+        components: [statBonus({ dexterity: 14 })],
     },
     {
         name: "Deflect",
@@ -50,7 +42,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Bulwark",
@@ -59,7 +51,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone4],
+        components: [statBonus({ dexterity: 16 })],
     },
     {
         name: "Enduring Body",
@@ -68,7 +60,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { dexterity: 24, hp: 20 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone2],
+        components: [statBonus({ dexterity: 6, hp: 15 })],
     },
     {
         name: "Iron Wall",
@@ -77,7 +69,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 4,
         minimumStats: { dexterity: 28 },
         targeting: { kind: "self", scope: "self" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Vanguard",
@@ -86,7 +78,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Sentinel's Fortitude",
@@ -95,7 +87,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { dexterity: 50, hp: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [BulwarkMix],
+        components: [statBonus({ hp: 80, dexterity: 10 })],
     },
     {
         name: "Counterstrike",
@@ -104,7 +96,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(12)],
     },
     {
         name: "Aegis",
@@ -113,7 +105,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone3],
+        components: [statBonus({ dexterity: 14 })],
     },
     {
         name: "Thick Skin",
@@ -122,7 +114,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { dexterity: 18 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone1],
+        components: [statBonus({ dexterity: 4, hp: 8 })],
     },
     {
         name: "Hold the Line",
@@ -131,7 +123,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 9,
         minimumStats: { dexterity: 44 },
         targeting: { kind: "ally", scope: "all" },
-        components: [Ward],
+        components: [Ward()],
     },
     {
         name: "Immovable",
@@ -140,7 +132,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone4],
+        components: [statBonus({ dexterity: 16 })],
     },
     {
         name: "Iron Flesh",
@@ -149,7 +141,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { dexterity: 30, hp: 15 },
         targeting: { kind: "self", scope: "self" },
-        components: [Stone2],
+        components: [statBonus({ dexterity: 6, hp: 15 })],
     },
     {
         name: "Reckoning",
@@ -158,7 +150,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 12,
         minimumStats: { dexterity: 55 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(14)],
     },
     {
         name: "Bastion's Care",
@@ -167,6 +159,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { dexterity: 24 },
         targeting: { kind: "ally", scope: "single" },
-        components: [Heal],
+        components: [Heal(12)],
     },
 ];

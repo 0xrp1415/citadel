@@ -2,16 +2,8 @@ import { IAbility } from "../../interface.js";
 import {
     ArcaneDamage,
     Heal,
-    Ward,
     BuffIntelligence,
-    RevealSecret,
-} from "../ability/components/index.js";
-import {
-    Focus1,
-    Focus2,
-    Focus3,
-    Focus4,
-    SageMix,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const INTELLIGENCE_ABILITIES: IAbility[] = [
@@ -22,7 +14,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { intelligence: 20 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(10)],
     },
     {
         name: "Mage's Focus",
@@ -31,7 +23,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "self", scope: "self" },
-        components: [Focus2],
+        components: [statBonus({ intelligence: 8 })],
     },
     {
         name: "Fireball",
@@ -40,7 +32,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(11)],
     },
     {
         name: "Grand Arcana",
@@ -49,7 +41,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { intelligence: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Focus3],
+        components: [statBonus({ intelligence: 15 })],
     },
     {
         name: "Chain Lightning",
@@ -58,7 +50,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(11)],
     },
     {
         name: "Learned Lore",
@@ -67,7 +59,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { intelligence: 18 },
         targeting: { kind: "self", scope: "self" },
-        components: [Focus1],
+        components: [statBonus({ intelligence: 4 })],
     },
     {
         name: "Frost Nova",
@@ -76,7 +68,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { intelligence: 22 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(9)],
     },
     {
         name: "Spell Mastery",
@@ -85,7 +77,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 7,
         minimumStats: { intelligence: 36, wisdom: 26 },
         targeting: { kind: "self", scope: "self" },
-        components: [SageMix],
+        components: [statBonus({ intelligence: 12, wisdom: 6 })],
     },
     {
         name: "Mana Surge",
@@ -94,7 +86,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [BuffIntelligence],
+        components: [BuffIntelligence(10)],
     },
     {
         name: "Archmage's Wrath",
@@ -103,7 +95,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 10,
         minimumStats: { intelligence: 50 },
         targeting: { kind: "self", scope: "self" },
-        components: [Focus4],
+        components: [statBonus({ intelligence: 25 })],
     },
     {
         name: "Eldritch Rupture",
@@ -112,7 +104,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(13)],
     },
     {
         name: "Acute Intellect",
@@ -121,7 +113,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { intelligence: 16 },
         targeting: { kind: "self", scope: "self" },
-        components: [Focus1],
+        components: [statBonus({ intelligence: 4 })],
     },
     {
         name: "Disintegrate",
@@ -130,7 +122,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 9,
         minimumStats: { intelligence: 44 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(14)],
     },
     {
         name: "Enchant Weapon",
@@ -139,7 +131,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "ally", scope: "single" },
-        components: [BuffIntelligence],
+        components: [BuffIntelligence(8)],
     },
     {
         name: "Spell Echo",
@@ -148,7 +140,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
         targeting: { kind: "self", scope: "self" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(12)],
     },
     {
         name: "Transcendent Mind",
@@ -157,7 +149,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { intelligence: 50, wisdom: 30 },
         targeting: { kind: "self", scope: "self" },
-        components: [SageMix],
+        components: [statBonus({ intelligence: 12, wisdom: 6 })],
     },
     {
         name: "Meteorshock",
@@ -166,6 +158,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         minimumLevel: 10,
         minimumStats: { intelligence: 46 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [ArcaneDamage],
+        components: [ArcaneDamage(13)],
     },
 ];

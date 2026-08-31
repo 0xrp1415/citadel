@@ -6,15 +6,7 @@ import {
     Stun,
     UnlockGate,
     DrainLife,
-} from "../ability/components/index.js";
-import {
-    Power1,
-    Power2,
-    Power3,
-    Power4,
-    BulwarkMix,
-    TitanMix,
-    JuggernautMix,
+    statBonus,
 } from "../ability/components/index.js";
 
 export const STRENGTH_ABILITIES: IAbility[] = [
@@ -25,7 +17,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { strength: 20 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(10)],
     },
     {
         name: "Berserker's Rage",
@@ -34,7 +26,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 4,
         minimumStats: { strength: 28 },
         targeting: { kind: "self", scope: "self" },
-        components: [Power1],
+        components: [statBonus({ strength: 5 })],
     },
     {
         name: "Mountain Smash",
@@ -43,7 +35,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { strength: 22 },
         targeting: { kind: "enemy", scope: "all" },
-        components: [Damage, Stagger],
+        components: [Damage(9), Stagger()],
     },
     {
         name: "Titan's Grip",
@@ -52,7 +44,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { strength: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [Power3],
+        components: [statBonus({ strength: 15 })],
     },
     {
         name: "Shieldbreaker",
@@ -61,7 +53,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { strength: 24 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(12)],
     },
     {
         name: "Iron Thews",
@@ -70,7 +62,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { strength: 18 },
         targeting: { kind: "self", scope: "self" },
-        components: [BulwarkMix],
+        components: [statBonus({ strength: 4, hp: 10 })],
     },
     {
         name: "Skullcrack",
@@ -79,7 +71,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 3,
         minimumStats: { strength: 26 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage, Stun],
+        components: [Damage(11), Stun()],
     },
     {
         name: "Juggernaut",
@@ -88,7 +80,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 7,
         minimumStats: { strength: 36, dexterity: 26 },
         targeting: { kind: "self", scope: "self" },
-        components: [JuggernautMix],
+        components: [statBonus({ strength: 10, dexterity: 6 })],
     },
     {
         name: "Siege Breaker",
@@ -97,7 +89,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "any", scope: "self" },
-        components: [UnlockGate],
+        components: [UnlockGate()],
     },
     {
         name: "Colossus Might",
@@ -106,7 +98,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 10,
         minimumStats: { strength: 50 },
         targeting: { kind: "self", scope: "self" },
-        components: [Power4],
+        components: [statBonus({ strength: 25 })],
     },
     {
         name: "Rend",
@@ -115,7 +107,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 2,
         minimumStats: { strength: 22 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(10)],
     },
     {
         name: "Boulder Charge",
@@ -124,7 +116,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage, Stagger],
+        components: [Damage(12), Stagger()],
     },
     {
         name: "War Cry",
@@ -133,7 +125,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 6,
         minimumStats: { strength: 32 },
         targeting: { kind: "ally", scope: "all" },
-        components: [BuffStrength],
+        components: [BuffStrength(10)],
     },
     {
         name: "Pulverize",
@@ -142,7 +134,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 8,
         minimumStats: { strength: 42 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [Damage],
+        components: [Damage(14)],
     },
     {
         name: "Unbreakable",
@@ -151,7 +143,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 11,
         minimumStats: { strength: 52, hp: 40 },
         targeting: { kind: "self", scope: "self" },
-        components: [TitanMix],
+        components: [statBonus({ strength: 20, hp: 30 })],
     },
     {
         name: "Blood Pact",
@@ -160,7 +152,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "enemy", scope: "single" },
-        components: [DrainLife],
+        components: [DrainLife(10)],
     },
     {
         name: "Grit",
@@ -169,6 +161,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         minimumLevel: 1,
         minimumStats: { strength: 15 },
         targeting: { kind: "self", scope: "self" },
-        components: [Power1],
+        components: [statBonus({ strength: 5 })],
     },
 ];

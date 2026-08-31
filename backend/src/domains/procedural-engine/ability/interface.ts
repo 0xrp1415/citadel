@@ -1,5 +1,4 @@
 import { IStats } from "../entity/stats.js";
-import { MulberryRNG } from "../rng.js";
 
 export interface IAbilityRarity {
     name: string;
@@ -12,6 +11,15 @@ export type TAbilityTargetScope = "single" | "all" | "self";
 export interface IAbilityTargeting {
     kind: TAbilityTargetKind;
     scope: TAbilityTargetScope;
+}
+
+export interface IAbilityRoomGate {
+    direction: string;
+    type: "combat" | "puzzle" | "challenge" | null;
+    requiredStat: keyof IStats | null;
+    difficulty: number;
+    opened: boolean;
+    open(): void;
 }
 
 export interface IAbility {
@@ -52,18 +60,17 @@ export interface IAbilityActiveContext {
     allies: IAbilityActor[];
     targets: IAbilityActor[];
     targeting: IAbilityTargeting;
-    rng: MulberryRNG;
+    gate: IAbilityRoomGate | null;
 }
 
 export interface IAbilityPassiveContext {
     actor: IAbilityActor;
-    modifiers: Partial<Record<keyof IStats, number>>;
 }
-
 
 export interface IAbilityPassiveComponent extends IAbilityComponentBase {
     type: "passive";
-    statModifiers: Partial<Record<keyof IStats, number>>;
+    onActivate: (context: IAbilityPassiveContext) => void;
+    onDeactivate: (context: IAbilityPassiveContext) => void;
 }
 
 export interface IAbilityActiveComponent extends IAbilityComponentBase {
