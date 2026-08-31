@@ -87,6 +87,7 @@ export interface RoomPublicJSON {
   baseDifficulty: number
   distanceBonus: number
   isCurrentRoom: boolean
+  isVisited: boolean
   exits: {
     left: ExitPublicJSON | null
     right: ExitPublicJSON | null
@@ -108,6 +109,15 @@ export interface RoomMessage {
 export interface MessageUpdatePayload {
   resolverBusy: boolean
   messages: RoomMessage[]
+}
+
+export type ConfirmationType = 'unanimous' | 'majority'
+
+export interface ConfirmationUpdatePayload {
+  type: ConfirmationType
+  votes: Record<string, boolean>
+  deadlineAt: number
+  durationMs: number
 }
 
 export interface RoomData {

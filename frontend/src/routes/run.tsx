@@ -133,7 +133,7 @@ function statusLabel(status: PlayerPublic['status']): string {
 function Run() {
   const navigate = useNavigate()
   const roomToken = getRoomToken()
-  const { room, connected, error: socketError } = useRoomSocket(roomToken)
+  const { room, connected, error: socketError, confirmation } = useRoomSocket(roomToken)
 
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
@@ -194,6 +194,19 @@ function Run() {
       setComposerBusy(false)
     }
   }, [draft, room, roomToken, resetComposer])
+
+  const handleConfirm = useCallback(
+    async (accept: boolean) => {
+      if (!roomToken) return
+      setPlayError(null)
+      try {
+        await sendAction(roomToken, 'player_confirm', { accept })
+      } catch (err) {
+        setPlayError(errorMessage(err))
+      }
+    },
+    [roomToken],
+  )
 
   useEffect(() => {
     if (!roomToken) {
@@ -486,6 +499,22 @@ function Run() {
       {mapOpen && room?.map && (
         <MapModal room={room} onClose={() => setMapOpen(false)} />
       )}
+
+      {confirmation && (
+        <ConfirmationModal
+          type={confirmation.type}
+          votes={confirmation.votes}
+          deadlineAt={confirmation.deadlineAt}
+          durationMs={confirmation.durationMs}
+          totalVoters={
+            (room?.players ?? []).filter((p) => p.status !== 'disconnected' && p.status !== 'left')
+              .length
+          }
+          playerNameById={playerNameById}
+          selfPublicId={selfPublicId}
+          onVote={handleConfirm}
+        />
+      )}
     </div>
   )
 }
@@ -609,8 +638,9 @@ function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () =>
         .map((d) => {
           const exit = exits[d]!
           const neighborRoom = map?.rooms[exit.targetRoomId]
-          return { dir: d, type: neighborRoom?.type ?? 'unknown' }
+          return { dir: d, isVisited: neighborRoom?.isVisited ?? false, type: neighborRoom?.type ?? 'unknown' }
         })
+        .filter((n) => n.isVisited)
     : []
 
   return (
@@ -723,7 +753,7 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
   const positions = computePositions(map)
   const visibleRooms = map.rooms
     .map((r, i) => ({ ...r, index: i }))
-    .filter((r) => r.type !== 'secret')
+    .filter((r) => r.isVisited)
   const visibleIds = new Set(visibleRooms.map((r) => r.index))
 
   const nodes: MapRoom[] = visibleRooms.map((r) => {
@@ -975,6 +1005,160 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
           </button>
         </div>
         {room.map && <MapCanvas map={room.map} />}
+      </div>
+    </div>
+  )
+}
+
+interface ConfirmationModalProps {
+  type: 'unanimous' | 'majority'
+  votes: Record<string, boolean>
+  deadlineAt: number
+  durationMs: number
+  totalVoters: number
+  playerNameById: Map<string, string>
+  selfPublicId: string | null
+  onVote: (accept: boolean) => void
+}
+
+function ConfirmationModal({
+  type,
+  votes,
+  deadlineAt,
+  durationMs,
+  totalVoters,
+  playerNameById,
+  selfPublicId,
+  onVote,
+}: ConfirmationModalProps) {
+  const voteRef = useRef<HTMLDivElement>(null)
+  const confirmRef = useRef<HTMLButtonElement>(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    confirmRef.current?.focus()
+
+    const tick = () => setNow(Date.now())
+    const id = window.setInterval(tick, 250)
+    return () => {
+      window.clearInterval(id)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
+  const myVote = selfPublicId !== null ? votes[selfPublicId] : undefined
+  const hasSpoken = myVote !== undefined
+  const remainingMs = Math.max(0, deadlineAt - now)
+  const remainingSec = Math.ceil(remainingMs / 1000)
+  const pct = totalVoters > 0 && durationMs > 0 ? Math.min(100, (remainingMs / durationMs) * 100) : 0
+
+  const forwards = Object.entries(votes)
+    .filter(([, v]) => v)
+    .map(([id]) => playerNameById.get(id) ?? id)
+  const holds = Object.entries(votes)
+    .filter(([, v]) => !v)
+    .map(([id]) => playerNameById.get(id) ?? id)
+  const unspoken = Math.max(0, totalVoters - (forwards.length + holds.length))
+
+  return (
+    <div className="mapmodal__scrim">
+      <div
+        className="mapmodal confirmmodal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Party vote"
+        ref={voteRef}
+      >
+        <header className="confirmmodal__head">
+          <span className="confirmmodal__eyebrow">the descent</span>
+          <h2 className="confirmmodal__title">
+            {type === 'unanimous' ? 'moves as one' : 'the party decides'}
+          </h2>
+          <p className="confirmmodal__rule">
+            {type === 'unanimous'
+              ? 'silence is consent — only a spoken hold can refuse the turn.'
+              : 'the party moves, and a majority settles the course.'}
+          </p>
+          <div className="confirmmodal__clock" aria-label={`${remainingSec} seconds remain`}>
+            <span className="confirmmodal__clock-num">{remainingSec}</span>
+            <span className="confirmmodal__clock-unit">s remain</span>
+          </div>
+          <div
+            className="confirmmodal__rod"
+            role="presentation"
+            style={pct > 0 ? { width: `${pct}%` } : undefined}
+          />
+        </header>
+
+        <div className="confirmmodal__body">
+          <div className="confirmmodal__roll">
+            <section className="confirmmodal__col confirmmodal__col--yes">
+              <span className="confirmmodal__col-head">forward</span>
+              <span className="confirmmodal__col-count">{forwards.length}</span>
+              <div className="confirmmodal__names">
+                {forwards.length === 0 ? (
+                  <span className="confirmmodal__empty">none yet</span>
+                ) : (
+                  forwards.map((name) => (
+                    <span key={name} className="confirmmodal__name confirmmodal__name--yes">
+                      {name}
+                    </span>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section className="confirmmodal__col confirmmodal__col--no">
+              <span className="confirmmodal__col-head">hold</span>
+              <span className="confirmmodal__col-count">{holds.length}</span>
+              <div className="confirmmodal__names">
+                {holds.length === 0 ? (
+                  <span className="confirmmodal__empty">none yet</span>
+                ) : (
+                  holds.map((name) => (
+                    <span key={name} className="confirmmodal__name confirmmodal__name--no">
+                      {name}
+                    </span>
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+
+          {unspoken > 0 && (
+            <p className="confirmmodal__unspoken">
+              {unspoken} silent — counted as forward
+            </p>
+          )}
+
+          <div className="confirmmodal__actions">
+            <button
+              ref={confirmRef}
+              type="button"
+              className="btn confirmmodal__choice confirmmodal__choice--yes"
+              onClick={() => onVote(true)}
+              aria-pressed={myVote === true}
+            >
+              forward
+            </button>
+            <button
+              type="button"
+              className="btn confirmmodal__choice confirmmodal__choice--no"
+              onClick={() => onVote(false)}
+              aria-pressed={myVote === false}
+            >
+              hold
+            </button>
+          </div>
+
+          {hasSpoken && (
+            <p className="confirmmodal__spoken">
+              you may change your voice while time holds.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   )
