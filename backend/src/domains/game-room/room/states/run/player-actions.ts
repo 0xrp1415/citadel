@@ -22,10 +22,20 @@ export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 404, error: "Player not found" };
         }
 
+        if (amount === 0) {
+            return { ok: false, status: 400, error: "No change requested" };
+        }
+
+        if (amount > 0 && !player.Progression.canAffordSkill(amount)) {
+            return { ok: false, status: 400, error: "Not enough skill points" };
+        }
+
         const success = player.Combat.increaseBaseStatBy(stat, amount, player.Progression.Level);
         if (!success) {
             return { ok: false, status: 400, error: "Failed to change player stats" };
         }
+
+        player.Progression.spendSkillPoints(amount);
 
         ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };
