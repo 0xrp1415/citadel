@@ -1,5 +1,7 @@
 Abilities come from **scrolls** — and only scrolls.
 
+> **Status:** the ability **system** is implemented (97 abilities across 6 stat trees, with active/passive behaviour, components, and targeting). Scroll **acquisition** in-run is *not yet wired*.
+
 ```
 scroll found during run
    ↓
@@ -19,13 +21,13 @@ ability learned for THIS RUN only
 | Type | Behaviour |
 |---|---|
 | **Passive** | Always active, no cost |
-| **Active** | Costs **mana in battle**; **free outside battle** |
+| **Active** | Costs a resource per use |
 
 ## Limits & usage
 
 - **Slots** — each character holds a limited set *(1 active + 2 passive)*
-- **In battle** — actives trigger via `use_ability` and draw from the mana pool ([[Mechanics/Mana]])
+- **In battle** — actives trigger via `use_ability`
 - **Out of battle** — actives are free to use, still via `use_ability`
 - Abilities can be used in both combat and narration/exploration scenes
 
-See also: [[Mechanics/Mechanics]] · [[Mechanics/Mana]] · [[Mechanics/Action Tools]]
+See also: [[Mechanics/Mechanics]] · [[Mechanics/Action Tools]]

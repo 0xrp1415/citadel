@@ -44,6 +44,4 @@ How a character is built at the staging grounds.
 - **Gear** — every character starts with a bat and three armor pieces (wooden helmet, chestplate, greaves) (see [[Mechanics/Equipment]])
 - **Gold** — every character starts with **200 gold**, spent at the merchant ([[Mechanics/Stasis]])
 
-> Mana is **not** a character stat — it's per-battle state (see [[Mechanics/Mana]]).
-
 See also: [[Mechanics/Mechanics]] · [[Mechanics/Resolution]]

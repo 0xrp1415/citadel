@@ -32,7 +32,6 @@ Encounters are **turn-based and text-based**. Each round the party shares **3 mo
 
 - **`use_ability`** triggers a learned ability ([[Mechanics/Abilities]])
 - **`use_item`** spends a tracked consumable ([[Mechanics/Items]])
-- In battle, an active ability's **mana cost** attaches to the action ([[Mechanics/Mana]])
 - Outside battle, actives are free
 - **Each action spends 1 move** from the party's 3-move round budget ([[Mechanics/Resolution]]); at most 3 actions per round
 - The verdict schema keeps the AI honest: it validates the structured actions, then the [[Mechanics/Action Validation]] step decides acceptability against the room facts

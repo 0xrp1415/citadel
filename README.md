@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, and character system are implemented. The AI DM (resolve + narration) is implemented but not yet wired into the run loop; gameplay loop (combat, encounters, stasis) is not yet built.
+> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, character system, the full ability system, and the AI DM (wired into the run loop as judge + narrator) are implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: the shared move economy, combat encounters with enemies, dice/DC resolution, XP/level-up rewards, loot & equipment progression, and the merchant (stasis).
 
 
 ## Overview
@@ -24,15 +24,15 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 ## Features
 
 - **Free-text play** — actions are typed as plain text and structured into a verdict (`execute` / `not_allowed` / `ambiguous`); an `execute` verdict carries up to 6 structured actions (`intent` / `target_type` / `target_id` / `direction` / `resource`)
-- **Shared action economy** — the party gets **3 moves per round**, split however they choose; AGI breaks ties, unspent moves are lost, then monsters respond
-- **Deterministic resolution** — every roll is `d20 + stat + modifiers` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**
+- **Shared action economy** — *planned*: the party gets **3 moves per round**, split however they choose; AGI breaks ties, unspent moves are lost, then monsters respond. Not yet built — actions currently resolve one at a time with no move budget.
+- **Deterministic resolution** — *planned*: every roll is `d20 + stat + modifiers` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**. The seeded engine and action resolvers exist, but the dice/DC roll isn't wired in yet.
 - **Characters** — STR / DEX / INT / WIS / AGI / HP; every stat starts at base 20, plus **50 bonus points** (max 40 per stat at creation), with race as a cosmetic choice
-- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; bosses grant bonus points to survivors
-- **Stasis rooms** — a rest checkpoint at the start of every dungeon: restore HP, spend stat points, and visit the merchant (buy/sell gear for gold)
-- **Equipment** — weapon and armor slots, upgraded via drops or merchant purchases; better gear drops in any room, and dropped gear can be dismantled for a small XP bump
-- **Abilities from scrolls** — 1 active + 2 passive slots; actives cost **mana, but only in battle** — outside combat they're free
-- **Fainting & revives** — a player at 0 HP is downed for the encounter; an ally can spend a revive action, and a full party wipe is the only way a run ends
-- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; a typical run lands around **20–30 minutes**
+- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; bosses grant bonus points to survivors. XP/level-up and boss bonuses are *planned* — XP is never awarded in a run yet.
+- **Stasis rooms** — *planned*: a rest checkpoint at the start of every dungeon: restore HP, spend stat points, and visit the merchant (buy/sell gear for gold). Not yet built.
+- **Equipment** — *planned*: weapon and armor slots, upgraded via drops or merchant purchases; better gear drops in any room, and dropped gear can be dismantled for a small XP bump. Slots exist on the sheet; drops, merchant, and dismantling are not built.
+- **Abilities from scrolls** — 1 active + 2 passive slots. The 97-ability system is built, but scroll acquisition is *planned*.
+- **Fainting & revives** — *planned*: a player at 0 HP is downed for the encounter; an ally can spend a revive action, and a full party wipe is the only way a run ends. Dead-state detection exists but downed/revive/wipe handling isn't wired up.
+- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; a typical run lands around **20–30 minutes**. Difficulty scaling is *planned*.
 - **Pacing that doesn't stall** — the run advances only when every connected (socket-alive) player votes yes; narration lands as each event resolves
 
 ## Roadmap
@@ -48,12 +48,12 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Join the room's Socket.io room on connect
 
 ### Session & state
-- [x] Room session lifecycle (run/encounter loop skeleton)
+- [x] Room session lifecycle (run/encounter loop)
 - [x] In-memory room state management (players, character sheets, config)
 - [x] Broadcast scene updates / results to all clients
-- [ ] Run/encounter game loop (InRunState is a stub — accepts actions but processes nothing)
-- [ ] Round/turn system (shared action economy: 3 moves per round)
-- [ ] Advance gate: every connected (socket-alive) player must vote yes to advance
+- [x] Run/encounter game loop (InRunState: accepts actions, resolves them through the DM + engine)
+- [ ] Round/turn system (shared action economy: 3 moves per round) — actions currently resolve one at a time with no move budget
+- [x] Advance gate: every connected (socket-alive) player must vote yes to advance
 
 ### Characters
 - [x] Stat system (STR / DEX / INT / WIS / AGI / HP)
@@ -61,10 +61,9 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Race selection (cosmetic: elf / dwarf / human / orc / goblin / troll)
 - [x] Run-scoped leveling (cubic XP curve, +3 skill points per level)
 - [x] Skill point allocation
-- [ ] Abilities from scrolls (1 active + 2 passive slots)
-- [ ] Mana system (costs mana in combat, free outside)
-- [ ] In-run stat modification and level-up UI
-- [ ] Per-encounter XP awards and boss bonus XP
+- [x] Ability system (97 abilities across 6 stat trees, with active/passive, components, targeting) — acquired by claiming scrolls in-run (acquisition not yet wired)
+- [x] In-run stat modification (skill-point spend at grace rooms; full level-up UI pending)
+- [ ] Per-encounter XP awards and boss bonus XP — XP is not yet awarded during a run
 
 ### Procedural generation
 - [x] Seeded RNG (MulberryRNG, FNV-1a string hash)
@@ -76,13 +75,13 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Passage events (combat / puzzle / challenge with stat requirements, depth-scaled)
 - [x] Map serialization and frontend rendering (BFS grid layout, pan/zoom, type coloring)
 - [ ] Dice roll resolution (d20 + stat + modifiers vs DC)
-- [ ] DC calculation system
-- [ ] Action resolution pipeline
+- [ ] DC calculation system — events carry a `difficulty`/`requiredStat` but the engine never rolls against a DC
+- [x] Action resolution pipeline (move / look / rest / use_item / use_ability resolvers)
 
 ### Equipment & gear
 - [x] Data model (weapon / armor slots, consumables, gold)
 - [x] Default starter gear (wooden helmet / chestplate / greaves / bat)
-- [x] Consumables (health potion, gold key, lockpick)
+- [x] Consumables (health potion works; gold key / lockpick tracked but have no game effect yet)
 - [ ] Gear catalog / loot tables
 - [ ] Gear drop logic (rewards from rooms)
 - [ ] Equip / unequip actions
@@ -93,19 +92,19 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Structure free text into structured verdicts (intent / target / direction / resource)
 - [x] Judge actions (execute / not_allowed / ambiguous, parse-failure fallback)
 - [x] Narrate outcomes (in-world prose)
-- [ ] Wire DungeonMaster into GameRoom (room snapshot → resolve → execute → narrate)
+- [x] Wire DungeonMaster into GameRoom (room snapshot → resolve → execute → narrate)
 
 ### Frontend
 - [x] Login / identity page
 - [x] Lobby (expedition management, invite codes, player roster, host controls, character modal)
 - [x] Run page layout (party manifest, field log, room card)
 - [x] Map visualization (interactive canvas with pan/zoom, room type colors, connectors)
-- [ ] Action input UI (text field for player actions)
-- [ ] Real-time transcript from server (replacing hardcoded placeholder)
-- [ ] Scene description display
+- [x] Action input UI (text field for player actions, @mention autocomplete)
+- [x] Real-time transcript from server (with speaker attribution, self-highlighting)
+- [x] Scene description display (room card + DM narration)
 - [ ] Move counter / shared action economy display
-- [ ] Fog of war / explored vs unexplored rooms
-- [ ] Room navigation from map
+- [x] Fog of war / explored vs unexplored rooms (only visited rooms serialize)
+- [ ] Room navigation from map (map is view-only)
 
 ### Combat & encounters
 - [ ] Combat state and encounter loop
@@ -115,9 +114,9 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [ ] Full party wipe = run end
 
 ### Stasis rooms
-- [ ] Grace room rest behavior (HP restore)
-- [ ] In-run stat point spending
-- [ ] Merchant / shop UI
+- [x] Grace room rest behavior (HP restore) — the `rest` action heals to full in grace rooms
+- [x] In-run stat point spending — `change_player_stats` action works in-run
+- [ ] Merchant / shop UI (buy / sell)
 
 ## Theme
 

@@ -80,7 +80,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         components: [statBonus({ intelligence: 12, wisdom: 6 })],
     },
     {
-        name: "Mana Surge",
+        name: "Arcane Surge",
         flavor_text: "Overcharge your next spell to frightening heights.",
         rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
