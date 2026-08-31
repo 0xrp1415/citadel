@@ -20,12 +20,14 @@ class DungeonMaster implements IDungeonMaster {
     private readonly roomViewGenerator: TRoomViewGenerator;
 
     private messages: TTranscriptEntry[] = [];
-    private model: ChatGroq;
+    private readonly resolveModel: ChatGroq;
+    private readonly narrateModel: ChatGroq;
     public onStateChange?: (state: "idle" | "active") => void;
 
-    constructor(roomViewGenerator: TRoomViewGenerator, model: ChatGroq) {
+    constructor(roomViewGenerator: TRoomViewGenerator, resolveModel: ChatGroq, narrateModel: ChatGroq) {
         this.roomViewGenerator = roomViewGenerator
-        this.model = model
+        this.resolveModel = resolveModel
+        this.narrateModel = narrateModel
     }
 
     private setState(state: "idle" | "active"): void {
@@ -43,7 +45,7 @@ class DungeonMaster implements IDungeonMaster {
             const roomView = await this.roomViewGenerator();
             const entry: TTranscriptEntry = { role: "player", text: text.toLowerCase().trim(), speaker };
 
-            const verdict = await Resolve(this.model, roomView, this.messages, entry, RESOLVE_PROMPT);
+            const verdict = await Resolve(this.resolveModel, roomView, this.messages, entry, RESOLVE_PROMPT);
             this.messages.push(entry);
             this.messages.push({ role: "dm", text: JSON.stringify(verdict) });
             if (this.messages.length > 20) {
@@ -61,7 +63,7 @@ class DungeonMaster implements IDungeonMaster {
         }
         this.setState("active");
         try {
-            return await Narrate(this.model, eventText);
+            return await Narrate(this.narrateModel, eventText);
         } finally {
             this.setState("idle");
         }
@@ -73,15 +75,23 @@ class DungeonMaster implements IDungeonMaster {
     }
 }
 
+const RESOLVE_TEMPERATURE = 0.5;
+const NARRATE_TEMPERATURE = 0.2;
+
 export function CreateDungeonMaster({ roomViewGenerator, onStateChange }: { roomViewGenerator: TRoomViewGenerator; onStateChange?: (state: "idle" | "active") => void }): IDungeonMaster {
     config();
-    const model = new ChatGroq({
+    const resolveModel = new ChatGroq({
         model: "openai/gpt-oss-120b",
         apiKey: process.env.GROQ_API_KEY,
-        temperature: 0.2,
+        temperature: RESOLVE_TEMPERATURE,
+    });
+    const narrateModel = new ChatGroq({
+        model: "openai/gpt-oss-120b",
+        apiKey: process.env.GROQ_API_KEY,
+        temperature: NARRATE_TEMPERATURE,
     });
 
-    const dm = new DungeonMaster(roomViewGenerator, model);
+    const dm = new DungeonMaster(roomViewGenerator, resolveModel, narrateModel);
     dm.onStateChange = onStateChange;
     return dm;
 }
