@@ -44,7 +44,8 @@ export class GameRoomResolver implements IGameRoomResolver {
     }
 
     private async Execute(actions: DmAction[], actorId: string): Promise<void> {
-        const actor = this.context.Party.getPlayer(actorId);
+        const publicId = actorId.replace(/^player:/, "");
+        const actor = this.context.Party.getPlayerByPublicId(publicId) ?? this.context.Party.getPlayer(actorId);
 
         for (const action of actions) {
             await resolveAction(action, actor, this.context, (message: string) => this.NarrateOutcomes(message));
