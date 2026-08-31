@@ -1,5 +1,6 @@
 export * from "./rng.js"
 export * from "./entity/index.js"
+export * from "./ability/index.js"
 export * from "./room.js"
 export * from "./passage.js"
 export * from "./map.js"
