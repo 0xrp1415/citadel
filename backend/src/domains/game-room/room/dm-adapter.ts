@@ -46,6 +46,11 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
                     gold_key: member.Inventory.Consumables.gold_key,
                     lockpick: member.Inventory.Consumables.lockpick,
                 },
+                abilities: member.Abilities.Abilities.map((ability) => ({
+                    name: ability.name,
+                    flavor_text: ability.flavor_text,
+                    targeting: ability.targeting,
+                })),
             })),
 
         };

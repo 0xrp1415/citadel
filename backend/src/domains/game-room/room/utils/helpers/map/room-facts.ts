@@ -12,7 +12,12 @@ export interface IRoomFactContextOptions {
 function partyLine(players: Player[]): string {
     if (players.length === 0) return "party: (empty)";
     const status = (p: Player) => (p.Combat.Health.CurrentHealth > 0 ? "alive" : "down");
-    return `party: ${players.map((p) => `${p.Identity.name} (${status(p)})`).join(", ")}`;
+    const describe = (p: Player) => {
+        const abilities = p.Abilities.Names;
+        const abilitiesPart = abilities.length > 0 ? `; abilities: ${abilities.join(", ")}` : "";
+        return `${p.Identity.name} (${status(p)})${abilitiesPart}`;
+    };
+    return `party: ${players.map(describe).join(", ")}`;
 }
 
 export function buildRoomFactContext(

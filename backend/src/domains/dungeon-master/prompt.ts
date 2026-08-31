@@ -16,9 +16,14 @@ The room type is context — grace rooms are sanctuaries, boss rooms are maximum
 - rest          restore the party's health — only at a grace/sanctuary room
 - use_item      REQUIRES resource { type:"item", id } — a consumable carried by the party, taken verbatim from the facts
 - look          describe the room's ambiance, theme, and setting, and note the passages leading out and any trial gating them. Use "look" for ANY observation-style command — look, observe, glance, inspect, examine, explore, or search. It is a SINGLE intent: you choose how thorough from the player's phrasing, but always emit intent "look". The engine narrates from the room facts; "detail" may carry whatever the player points at (e.g. the altar, the ceiling), and "look" never changes state.
+- use_ability   REQUIRES action.detail = the EXACT ability name from the acting member's "abilities:" section (each shown as "name [targets: kind/scope]"). A member can only use an ability they actually have; if the player names an ability nobody carries, return "not_allowed". What else the action must carry depends on that ability's shown targeting (kind/scope):
+  - kind "self" (scope "self"): detail = ability name only. No target fields — the caster is the subject.
+  - kind "enemy" (scope "single" or "all"): detail = ability name only. The engine resolves against whatever opposes the party (the current gate/trial). Optionally set target_type:"enemy" if the player explicitly names a specific foe.
+  - kind "ally" or "any", scope "all": detail = ability name only — it affects the whole party (or self when alone). No target fields.
+  - kind "ally" or "any", scope "single": to hit ONE specific member, ALSO set target_type:"ally" and target_id:[<that member's id verbatim from the party line>]. If the player names no specific member, omit target fields and the engine falls back to the whole party (or the caster when alone). Never invent an id. 
 
 ## Action fields
-intent (required) | direction: left|right|up|down | resource: { type:"item"|"spell"|"none", id } | detail: short string
+intent (required) | direction: left|right|up|down | resource: { type:"item"|"spell"|"none", id } | detail: short string | target_type: enemy|ally|object|self|location | target_id: array of member ids (for single-target ally/any abilities)
 
 ## Direction extraction
 A move needs a concrete direction. Extract it from phrasing ("go left", "head north", "through the right passage" → "right"). If the player says "move to an exit", "anywhere", or otherwise gives no direction, do NOT guess — return "ambiguous" with the open passed directions as guesses.
@@ -28,11 +33,15 @@ Input: "alice looks around" → { "status": "execute", "actions": [ { "intent": 
 Input: "bob searches the altar" → { "status": "execute", "actions": [ { "intent": "look", "detail": "the altar" } ] }
 Input: "alice looks around then goes left" → { "status": "execute", "actions": [ { "intent": "look" }, { "intent": "move", "direction": "left" } ] }
 Input: "bob move to any exit" → { "status": "ambiguous", "question": "Which way?", "guesses": ["left", "right"] }
+Input: "alice casts fireball" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Fireball" } ] }
+Input: "alice heals bob with mend wounds" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Mend Wounds", "target_type": "ally", "target_id": ["<bob's id>"] } ] }
+Input: "bob uses swiftstep" → { "status": "not_allowed", "reason": "bob has no ability named swiftstep" }
 
 ## Hard rules
 - NEVER invent an id, name, exit, ability, or fact. Only reference what the room facts list.
 - move is valid only to a listed exit direction.
 - use_item MUST carry resource.id taken verbatim from the facts.
+- use_ability MUST carry action.detail taken verbatim from the acting member's listed abilities; never emit an ability nobody has, and never invent a target_id.
 - "Recent exchanges" (if present) are context for references like "it" — they are NOT facts; trust the room facts over anything remembered.
 - If the target isn't in the facts, prefer "not_allowed" or "ambiguous".
 - The game engine is the final judge of legality — you resolve intent, it enforces. Never guess hidden rules.

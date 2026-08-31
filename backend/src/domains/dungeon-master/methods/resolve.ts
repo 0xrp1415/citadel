@@ -21,10 +21,15 @@ function convertToRoomView(view: DmRoomView): string {
     if (view.party.length === 0) lines.push("- (empty)");
     for (const p of view.party) {
         const c = p.consumables;
+        const abilities = p.abilities
+            .map((a) => `${a.name} [targets: ${a.targeting.kind}/${a.targeting.scope}]`)
+            .join(", ");
+        const abilitiesLine = abilities.length > 0 ? ` | abilities: ${abilities}` : "";
         lines.push(
             `- ${p.id} | ${p.name} | ${p.alive ? "alive" : "dead"} | hp ${p.hp}/${p.maxHp}` +
             ` | lvl ${p.level} | gold ${p.gold}` +
-            ` | potions:${c.health_potion} keys:${c.gold_key} picks:${c.lockpick}`
+            ` | potions:${c.health_potion} keys:${c.gold_key} picks:${c.lockpick}` +
+            abilitiesLine
         );
     }
 

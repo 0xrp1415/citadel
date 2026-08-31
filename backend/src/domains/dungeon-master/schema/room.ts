@@ -1,5 +1,5 @@
 import z from "zod";
-
+import { IAbility } from "../../procedural-engine/index.js";
 export const ZDmPassageEvent = z.object({
     type: z.enum(["combat", "puzzle", "challenge"]),
     requiredStat: z.enum(["hp", "strength", "dexterity", "intelligence", "wisdom", "agility"]),
@@ -12,6 +12,14 @@ export const ZDmExitSnapshot = z.object({
     unlocked: z.boolean(),
 });
 
+export const ZDMPartyMemberAbilitySnapshot = z.object({
+    name: z.string(),
+    flavor_text: z.string(),
+    targeting: z.object({
+        kind: z.enum(["enemy", "ally", "self", "any"]),
+        scope: z.enum(["single", "all", "self"]),
+    })
+});
 export const ZDmPartyMemberSnapshot = z.object({
     id: z.string(),
     name: z.string(),
@@ -25,6 +33,7 @@ export const ZDmPartyMemberSnapshot = z.object({
         gold_key: z.number(),
         lockpick: z.number(),
     }),
+    abilities: z.array(ZDMPartyMemberAbilitySnapshot),
 });
 
 export const ZDmRoomView = z.object({
