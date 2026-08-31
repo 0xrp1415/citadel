@@ -1226,6 +1226,11 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
   const items = itemList(stats)
   const xpPct = stats.level > 0 ? Math.round((stats.experience / (stats.level * 100)) * 100) : 0
 
+  const [activeTab, setActiveTab] = useState<'stats' | 'gear' | 'items' | 'abilities'>('stats')
+
+  const canModifyStats =
+    player.playerId === selfPlayerId && stats.skill_points > 0 && currentRoomType === 'grace'
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -1353,112 +1358,130 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
             </div>
           </div>
 
-          {(() => {
-            const isSelf = player.playerId === selfPlayerId
-            const canModify = isSelf && stats.skill_points > 0 && currentRoomType === 'grace'
-            return canModify ? (
-              <ul className="sheet__stats sheet__stats--file">
-                {SHEET_STATS.map(({ key, label }) => {
-                  const base = stats.base_stats[key]
-                  const mod = stats.stat_modifiers[key]
+          <div className="filecard__secs" role="tablist" aria-label="Expeditioner file sections">
+            {(
+              [
+                { id: 'stats', label: 'Stats' },
+                { id: 'gear', label: 'Gear' },
+                { id: 'items', label: 'Items' },
+                { id: 'abilities', label: 'Abilities' },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                className={`filecard__sec${activeTab === tab.id ? ' filecard__sec--active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="filecard__tabpanel" role="tabpanel">
+            {activeTab === 'stats' &&
+              (canModifyStats ? (
+                <ul className="sheet__stats sheet__stats--file">
+                  {SHEET_STATS.map(({ key, label }) => {
+                    const base = stats.base_stats[key]
+                    const mod = stats.stat_modifiers[key]
+                    return (
+                      <li className="sheet__row" key={key}>
+                        <span className="sheet__row-k">{label}</span>
+                        <span className="sheet__row-v">
+                          {base}
+                          {mod !== 0 && (
+                            <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
+                              {mod > 0 ? `+${mod}` : mod}
+                            </span>
+                          )}
+                        </span>
+                        <span className="sheet__row-steppers">
+                          <button
+                            type="button"
+                            className="btn btn--ghost sheet__step"
+                            disabled={busy || base <= STAT_FLOOR}
+                            onClick={() => onChangeStat(key, -1)}
+                            aria-label={`lower ${label}`}
+                          >
+                            --
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--ghost sheet__step"
+                            disabled={busy || base >= STAT_CAP || stats.skill_points <= 0}
+                            onClick={() => onChangeStat(key, +1)}
+                            aria-label={`raise ${label}`}
+                          >
+                            +
+                          </button>
+                        </span>
+                      </li>
+                    )
+                  })}
+                  <li className="sheet__row sheet__row--meta">
+                    <span className="sheet__row-k">Skill points</span>
+                    <span className="sheet__row-v">{stats.skill_points}</span>
+                  </li>
+                </ul>
+              ) : (
+                <dl className="filecard__stats">
+                  {DOSSIER_FIELDS.map((field) => {
+                    const base = stats.base_stats[field.key]
+                    const mod = stats.stat_modifiers[field.key]
+                    const total = base + mod
+                    return (
+                      <div className="filecard__stat" key={field.key}>
+                        <dt className="filecard__k">{field.label}</dt>
+                        <dd className="filecard__v">
+                          {total}
+                          {mod !== 0 && (
+                            <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
+                              {mod > 0 ? `+${mod}` : mod}
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                    )
+                  })}
+                </dl>
+              ))}
+
+            {activeTab === 'gear' && (
+              <ul className="filecard__gear">
+                {[
+                  { label: 'Weapon', name: stats.weapon_stats.weaponName, stats: stats.weapon_stats.stats },
+                  { label: 'Head', name: stats.armor_stats.head.armorName, stats: stats.armor_stats.head.stats },
+                  { label: 'Chest', name: stats.armor_stats.chest.armorName, stats: stats.armor_stats.chest.stats },
+                  { label: 'Greaves', name: stats.armor_stats.greaves.armorName, stats: stats.armor_stats.greaves.stats },
+                ].map(({ label, name, stats: pieceStats }) => {
+                  const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
                   return (
-                    <li className="sheet__row" key={key}>
-                      <span className="sheet__row-k">{label}</span>
-                      <span className="sheet__row-v">
-                        {base}
-                        {mod !== 0 && (
-                          <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
-                            {mod > 0 ? `+${mod}` : mod}
+                    <li className="filecard__gear-row" key={label}>
+                      <span className="filecard__gear-slot">{label}</span>
+                      <span className="filecard__gear-body">
+                        <span className="filecard__gear-name">{name}</span>
+                        {entries.length > 0 && (
+                          <span className="filecard__gear-stats">
+                            {entries.map(([k, v]) => (
+                              <span className="filecard__ws" key={k}>
+                                <span className="filecard__ws-k">{k}</span>
+                                <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
+                                  {v > 0 ? `+${v}` : v}
+                                </span>
+                              </span>
+                            ))}
                           </span>
                         )}
-                      </span>
-                      <span className="sheet__row-steppers">
-                        <button
-                          type="button"
-                          className="btn btn--ghost sheet__step"
-                          disabled={busy || base <= STAT_FLOOR}
-                          onClick={() => onChangeStat(key, -1)}
-                          aria-label={`lower ${label}`}
-                        >
-                          --
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn--ghost sheet__step"
-                          disabled={busy || base >= STAT_CAP || stats.skill_points <= 0}
-                          onClick={() => onChangeStat(key, +1)}
-                          aria-label={`raise ${label}`}
-                        >
-                          +
-                        </button>
                       </span>
                     </li>
                   )
                 })}
-                <li className="sheet__row sheet__row--meta">
-                  <span className="sheet__row-k">Skill points</span>
-                  <span className="sheet__row-v">{stats.skill_points}</span>
-                </li>
               </ul>
-            ) : (
-              <dl className="filecard__stats">
-                {DOSSIER_FIELDS.map((field) => {
-                  const base = stats.base_stats[field.key]
-                  const mod = stats.stat_modifiers[field.key]
-                  const total = base + mod
-                  return (
-                    <div className="filecard__stat" key={field.key}>
-                      <dt className="filecard__k">{field.label}</dt>
-                      <dd className="filecard__v">
-                        {total}
-                        {mod !== 0 && (
-                          <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
-                            {mod > 0 ? `+${mod}` : mod}
-                          </span>
-                        )}
-                      </dd>
-                    </div>
-                  )
-                })}
-              </dl>
-            )
-          })()}
+            )}
 
-          <div className="filecard__weapon">
-            <span className="filecard__weapon-k">Weapon</span>
-            <span className="filecard__weapon-name">{stats.weapon_stats.weaponName}</span>
-            <div className="filecard__weapon-stats">
-              {Object.entries(stats.weapon_stats.stats)
-                .filter(([, v]) => v !== 0)
-                .map(([k, v]) => (
-                  <span className="filecard__ws" key={k}>
-                    <span className="filecard__ws-k">{k}</span>
-                    <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
-                      {v > 0 ? `+${v}` : v}
-                    </span>
-                  </span>
-                ))}
-            </div>
-          </div>
-
-          <div className="filecard__columns">
-            <div className="filecard__col">
-              <span className="filecard__col-k">Armor</span>
-              <ul className="filecard__list">
-                {[
-                  { slot: 'head', piece: stats.armor_stats.head },
-                  { slot: 'chest', piece: stats.armor_stats.chest },
-                  { slot: 'greaves', piece: stats.armor_stats.greaves },
-                ].map(({ slot, piece }) => (
-                  <li className="filecard__item" key={slot}>
-                    <span className="filecard__item-slot">{slot}</span>
-                    {piece.armorName}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="filecard__col">
-              <span className="filecard__col-k">Items</span>
+            {activeTab === 'items' && (
               <ul className="filecard__list">
                 {items.length > 0 ? (
                   items.map((item) => (
@@ -1470,21 +1493,20 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                   <li className="filecard__item">none carried</li>
                 )}
               </ul>
-            </div>
-            <div className="filecard__col">
-              <span className="filecard__col-k">Abilities</span>
-              <ul className="filecard__list">
-                {stats.abilities.length > 0 ? (
-                  stats.abilities.map((ability) => (
-                    <li className="filecard__item" key={ability}>
+            )}
+
+            {activeTab === 'abilities' &&
+              (stats.abilities.length > 0 ? (
+                <ul className="filecard__chips">
+                  {stats.abilities.map((ability) => (
+                    <li className="filecard__chip" key={ability}>
                       {ability}
                     </li>
-                  ))
-                ) : (
-                  <li className="filecard__item">none mastered</li>
-                )}
-              </ul>
-            </div>
+                  ))}
+                </ul>
+              ) : (
+                <span className="filecard__empty">none mastered</span>
+              ))}
           </div>
 
           <footer className="filecard__foot">
