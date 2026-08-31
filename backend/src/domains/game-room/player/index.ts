@@ -1,4 +1,5 @@
 import { DefaultArmourGenerator, DefaultWeaponGenerator, DefaultGold, DefaultSkillPoints } from "./defaults.js";
+import { PlayerAbilities } from "./abilities.js";
 import { PlayerCombat } from "./combat.js";
 import { PlayerIdentity } from "./identity.js";
 import { PlayerInventory } from "./inventory.js";
@@ -6,6 +7,7 @@ import { PlayerProgression } from "./progression.js";
 import { PlayerSocket } from "./socket.js";
 import { PlayerPublic, PlayerRunEntityJSON, PlayerStatus } from "./types.js";
 export type { PlayerPublic, PlayerRunEntityJSON, PlayerStatus } from "./types.js";
+import { IAbility } from "../../procedural-engine/index.js";
 
 export class Player {
     public status: PlayerStatus;
@@ -15,8 +17,9 @@ export class Player {
     private combat: PlayerCombat;
     private progression: PlayerProgression;
     private inventory: PlayerInventory;
+    private abilities: PlayerAbilities;
 
-    constructor(userId: string, playerId: string, playerPublicId: string, name: string) {
+    constructor(userId: string, playerId: string, playerPublicId: string, name: string, startingAbilities: IAbility[] = []) {
         this.identity = new PlayerIdentity(userId, playerId, playerPublicId, name);
         this.status = "joined";
 
@@ -29,6 +32,7 @@ export class Player {
             this.progression.Level
         );
         this.inventory = new PlayerInventory(DefaultGold());
+        this.abilities = new PlayerAbilities(startingAbilities);
     }
 
     public get Socket(): PlayerSocket {
@@ -46,7 +50,10 @@ export class Player {
     public get Inventory(): PlayerInventory {
         return this.inventory;
     }
-
+    public get Abilities(): PlayerAbilities {
+        return this.abilities;
+    }
+    
     // --- JSON ---
     public get JSON(): PlayerRunEntityJSON {
         return {
@@ -60,6 +67,7 @@ export class Player {
             gold: this.inventory.Gold,
             consumables: this.inventory.Consumables,
             health: this.combat.Health,
+            abilities: this.abilities.Names,
         };
     }
 

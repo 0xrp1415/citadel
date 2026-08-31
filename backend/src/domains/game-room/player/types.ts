@@ -49,6 +49,7 @@ export type PlayerRunEntityJSON = {
     gold: number;
     consumables: Consumables;
     health: IEntityHealthStatGetters;
+    abilities: string[];
 };
 
 export interface PlayerPublic {
