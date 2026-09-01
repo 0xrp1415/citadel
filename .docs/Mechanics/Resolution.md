@@ -20,6 +20,15 @@ Each round has two phases:
 - **Roll die** — `d20 + stat + modifiers` vs a **difficulty class** set by the dungeon
 - **Modifiers** come from gear bonuses ([[Mechanics/Equipment]]), abilities ([[Mechanics/Abilities]]), and run-long boons/banes
 
+## Trial challenges
+
+Locked passages are barred by a **trial**: combat, puzzle, or challenge, each gating a specific stat. A player attempts it with the `challenge` action. The engine rolls `d20 + stat` against a **difficulty class** (`8 + difficulty × 4`):
+
+- **combat / puzzle** — the acting member's stat
+- **challenge** — the party's average stat
+
+On a success the passage unlocks; on a failure it stays barred and may be retried.
+
 ## Resolution steps
 
 1. **Party round** — the party spends its 3 moves; players allocate them freely
