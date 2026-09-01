@@ -14,10 +14,10 @@ export interface IMapConfig {
 }
 
 export interface IRoomExits {
-    left: Passage | null;
-    right: Passage | null;
-    up: Passage | null;
-    down: Passage | null;
+    north: Passage | null;
+    south: Passage | null;
+    east: Passage | null;
+    west: Passage | null;
 }
 
 export interface IRoomMetadata {

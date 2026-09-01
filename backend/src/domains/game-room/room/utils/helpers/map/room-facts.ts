@@ -2,7 +2,7 @@ import { IMap, IRoomMetadata } from "../../../../../procedural-engine/index.js";
 import { Player } from "../../../../player/index.js";
 import { deriveRoomExits } from "./exits.js";
 
-const DIRS = ["left", "right", "up", "down"] as const;
+const DIRS = ["north", "south", "east", "west"] as const;
 
 export interface IRoomFactContextOptions {
     transition?: string;

@@ -40,10 +40,10 @@ export const ZDmRoomView = z.object({
     roomId: z.number(),
     roomType: z.enum(["grace", "normal", "boss", "puzzle", "miniboss", "treasure", "secret"]),
     exits: z.object({
-        left: ZDmExitSnapshot.nullable(),
-        right: ZDmExitSnapshot.nullable(),
-        up: ZDmExitSnapshot.nullable(),
-        down: ZDmExitSnapshot.nullable(),
+        north: ZDmExitSnapshot.nullable(),
+        south: ZDmExitSnapshot.nullable(),
+        east: ZDmExitSnapshot.nullable(),
+        west: ZDmExitSnapshot.nullable(),
     }),
     party: z.array(ZDmPartyMemberSnapshot),
 });

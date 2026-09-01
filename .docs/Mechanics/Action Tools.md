@@ -11,7 +11,7 @@ Encounters are **turn-based and text-based**. Each round the party shares **3 mo
   "intent": "attack|defend|aid|interact|move|negotiate|use_item|use_ability",
   "target_type": "enemy|ally|object|self|location",
   "target_id": ["..."] ,
-  "direction": "left|right|up|down",
+  "direction": "north|south|east|west",
   "detail": "what the player says or does",
   "resource": { "type": "item|spell|none", "id": "" }
 }

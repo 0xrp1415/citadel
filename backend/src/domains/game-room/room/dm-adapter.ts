@@ -27,7 +27,7 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
 
     private async GenerateRoomView(): ReturnType<TRoomViewGenerator> {
         const currentRoom = this.context.Map.CurrentRoom;
-        const exits = deriveRoomExits(currentRoom?.id ?? 0, currentRoom?.exits ?? { left: null, right: null, up: null, down: null })
+        const exits = deriveRoomExits(currentRoom?.id ?? 0, currentRoom?.exits ?? { north: null, south: null, east: null, west: null })
 
         return {
             roomId: currentRoom?.id ?? 0,

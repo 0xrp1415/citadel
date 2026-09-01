@@ -38,7 +38,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         this.GenerateMap(config);
     }
 
-    public Travel(direction: "left" | "right" | "up" | "down"): number | null {
+    public Travel(direction: "north" | "south" | "east" | "west"): number | null {
         const currentRoom = this.CurrentRoom;
         if (!currentRoom) return null;
 
@@ -62,7 +62,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         const room = this.CurrentRoom;
         if (!room) return;
 
-        for (const dir of ["left", "right", "up", "down"] as const) {
+        for (const dir of ["north", "south", "east", "west"] as const) {
             const passage = room.exits[dir];
             if (passage && !passage.Unlocked && passage.Event === null) {
                 passage.unlock();

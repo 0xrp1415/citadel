@@ -15,10 +15,10 @@ export interface IRoomPublicJSON {
     isCurrentRoom: boolean;
     isVisited: boolean;
     exits: {
-        left: IExitPublicJSON | null;
-        right: IExitPublicJSON | null;
-        up: IExitPublicJSON | null;
-        down: IExitPublicJSON | null;
+        north: IExitPublicJSON | null;
+        south: IExitPublicJSON | null;
+        east: IExitPublicJSON | null;
+        west: IExitPublicJSON | null;
     };
 }
 

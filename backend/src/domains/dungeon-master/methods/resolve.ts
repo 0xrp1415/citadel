@@ -8,7 +8,7 @@ function convertToRoomView(view: DmRoomView): string {
 
     lines.push(`ROOM #${view.roomId} (${view.roomType})`);
 
-    const dirs = ["left", "right", "up", "down"] as const;
+    const dirs = ["north", "south", "east", "west"] as const;
     lines.push("EXITS:");
     for (const d of dirs) {
         const exit = view.exits[d];

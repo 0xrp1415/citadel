@@ -5,20 +5,20 @@ export type Coord = { x: number; y: number };
 export type Offset = { dx: number; dy: number };
 export type Grid = Map<string, Room>;
 
-export const DIRECTIONS: Direction[] = ["up", "down", "left", "right"];
+export const DIRECTIONS: Direction[] = ["north", "south", "east", "west"];
 
 export const OFFSETS: Record<Direction, Offset> = {
-    up: { dx: 0, dy: -1 },
-    down: { dx: 0, dy: 1 },
-    left: { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 },
+    north: { dx: 0, dy: -1 },
+    south: { dx: 0, dy: 1 },
+    west: { dx: -1, dy: 0 },
+    east: { dx: 1, dy: 0 },
 };
 
 export const OPPOSITE: Record<Direction, Direction> = {
-    up: "down",
-    down: "up",
-    left: "right",
-    right: "left",
+    north: "south",
+    south: "north",
+    west: "east",
+    east: "west",
 };
 
 export function coordKey(x: number, y: number): string {

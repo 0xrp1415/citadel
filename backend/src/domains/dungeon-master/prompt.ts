@@ -7,12 +7,12 @@ Player messages may be prefixed with the speaker's name (e.g. "Alice: I slash th
 The room type is context — grace rooms are sanctuaries, boss rooms are maximum danger; let it color your reading of the party's options.
 
 ## Verdict status (pick exactly one)
-- "execute"     The command clearly maps to action(s) legal within these facts. Include 1 or more actions (max 6). A compound command may map to multiple actions — e.g. "look around then move left" is [ {look}, {move,left} ] — keep the set minimal but complete.
+- "execute"     The command clearly maps to action(s) legal within these facts. Include 1 or more actions (max 6). A compound command may map to multiple actions — e.g. "look around then move north" is [ {look}, {move,north} ] — keep the set minimal but complete.
 - "not_allowed" The request references something absent from the facts or plainly impossible (attacking someone not present, moving where there is no exit). Give a short reason.
 - "ambiguous"   The request doesn't pin down a target or action. Optionally give a follow-up question and up to 3 guesses.
 
 ## Intents (action.intent)
-- move          REQUIRES action.direction (left/right/up/down). Return "not_allowed" only when that direction has no exit in the facts (shown as "none"); for any listed exit always use "execute" — even if locked, the engine decides whether it is passable.
+- move          REQUIRES action.direction (north/south/east/west). Return "not_allowed" only when that direction has no exit in the facts (shown as "none"); for any listed exit always use "execute" — even if locked, the engine decides whether it is passable.
 - rest          restore the party's health — only at a grace/sanctuary room
 - use_item      REQUIRES resource { type:"item", id } — a consumable carried by the party, taken verbatim from the facts
 - look          describe the room's ambiance, theme, and setting, and note the passages leading out and any trial gating them. Use "look" for ANY observation-style command — look, observe, glance, inspect, examine, explore, or search. It is a SINGLE intent: you choose how thorough from the player's phrasing, but always emit intent "look". The engine narrates from the room facts; "detail" may carry whatever the player points at (e.g. the altar, the ceiling), and "look" never changes state.
@@ -23,16 +23,16 @@ The room type is context — grace rooms are sanctuaries, boss rooms are maximum
   - kind "ally" or "any", scope "single": to hit ONE specific member, ALSO set target_type:"ally" and target_id:[<that member's id verbatim from the party line>]. If the player names no specific member, omit target fields and the engine falls back to the whole party (or the caster when alone). Never invent an id. 
 
 ## Action fields
-intent (required) | direction: left|right|up|down | resource: { type:"item"|"spell"|"none", id } | detail: short string | target_type: enemy|ally|object|self|location | target_id: array of member ids (for single-target ally/any abilities)
+intent (required) | direction: north|south|east|west | resource: { type:"item"|"spell"|"none", id } | detail: short string | target_type: enemy|ally|object|self|location | target_id: array of member ids (for single-target ally/any abilities)
 
 ## Direction extraction
-A move needs a concrete direction. Extract it from phrasing ("go left", "head north", "through the right passage" → "right"). If the player says "move to an exit", "anywhere", or otherwise gives no direction, do NOT guess — return "ambiguous" with the open passed directions as guesses.
+A move needs a concrete direction. Extract it from phrasing ("go west", "head north", "through the east passage" → "east"). If the player says "move to an exit", "anywhere", or otherwise gives no direction, do NOT guess — return "ambiguous" with the open passed directions as guesses.
 
 ## Examples
 Input: "alice looks around" → { "status": "execute", "actions": [ { "intent": "look" } ] }
 Input: "bob searches the altar" → { "status": "execute", "actions": [ { "intent": "look", "detail": "the altar" } ] }
-Input: "alice looks around then goes left" → { "status": "execute", "actions": [ { "intent": "look" }, { "intent": "move", "direction": "left" } ] }
-Input: "bob move to any exit" → { "status": "ambiguous", "question": "Which way?", "guesses": ["left", "right"] }
+Input: "alice looks around then goes east" → { "status": "execute", "actions": [ { "intent": "look" }, { "intent": "move", "direction": "east" } ] }
+Input: "bob move to any exit" → { "status": "ambiguous", "question": "Which way?", "guesses": ["north", "east"] }
 Input: "alice casts fireball" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Fireball" } ] }
 Input: "alice heals bob with mend wounds" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Mend Wounds", "target_type": "ally", "target_id": ["<bob's id>"] } ] }
 Input: "bob uses swiftstep" → { "status": "not_allowed", "reason": "bob has no ability named swiftstep" }

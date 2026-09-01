@@ -26,10 +26,10 @@ export interface IRoomPublic {
     get BaseDifficulty(): number;
     get DistanceBonus(): number;
     get AdjacentPassages(): {
-        left: Passage | null,
-        right: Passage | null,
-        up: Passage | null,
-        down: Passage | null
+        north: Passage | null,
+        south: Passage | null,
+        east: Passage | null,
+        west: Passage | null
     };
 }
 
@@ -40,11 +40,11 @@ export class Room implements IRoomPublic {
     distanceBonus: number = 0;
 
     adjacentPassages: {
-        left: Passage | null,
-        right: Passage | null,
-        up: Passage | null,
-        down: Passage | null
-    } = { down: null, left: null, right: null, up: null };
+        north: Passage | null,
+        south: Passage | null,
+        east: Passage | null,
+        west: Passage | null
+    } = { south: null, north: null, east: null, west: null };
 
     constructor(id: number) {
         this.id = id;
@@ -81,10 +81,10 @@ export class Room implements IRoomPublic {
 
     get AdjacentPassages() {
         return {
-            left: this.adjacentPassages.left,
-            right: this.adjacentPassages.right,
-            up: this.adjacentPassages.up,
-            down: this.adjacentPassages.down
+            north: this.adjacentPassages.north,
+            south: this.adjacentPassages.south,
+            east: this.adjacentPassages.east,
+            west: this.adjacentPassages.west
         };
     }
 }

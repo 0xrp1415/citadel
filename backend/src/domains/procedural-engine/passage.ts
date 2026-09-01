@@ -1,6 +1,6 @@
 import { IStats } from "./entity/stats.js";
 
-export type Direction = "up" | "down" | "left" | "right";
+export type Direction = "north" | "south" | "east" | "west";
 
 export type PassageEventType = "combat" | "puzzle" | "challenge";
 
