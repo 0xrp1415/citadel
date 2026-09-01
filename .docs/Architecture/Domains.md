@@ -43,7 +43,7 @@ The AI agent — the game's voice, scribe, and judge.
   - Called on **action intake** (`Resolve`) and **after resolution** (`Narrate`). It never decides outcomes — `execute` actions go to procedural-engine, which resolves them.
   - Never owns game state; it reads through `roomViewGenerator`, it can't mutate anything.
   - If the model output fails to parse, `Resolve` falls back to `not_allowed`; a session never blocks on the AI.
-- **Notes:** the model is currently bound to Groq (`openai/gpt-oss-120b`, structured-output `jsonMode`) inside `CreateDungeonMaster`; the swappable-provider port is not implemented yet.
+- **Notes:** the model is bound to Groq (`openai/gpt-oss-120b`, structured-output `jsonMode`) inside `CreateDungeonMaster`.
 
 ## Procedural Engine
 

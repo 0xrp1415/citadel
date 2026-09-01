@@ -156,14 +156,14 @@ roll 12 + 26 vs 18 → hit
 | **Client** | React (Vite) + socket.io-client — static SPA, no install |
 | **Server** | Node.js + Socket.io (Express/Fastify for REST) — single process for MVP |
 | **AI** | LangChain.js (Groq, `openai/gpt-oss-120b`), in-process — DungeonMaster: `Resolve` (free text → structured verdict) + `Narrate` (event → prose) |
-| **Database** | PostgreSQL — free, self-hosted; JSONB for run snapshots; live session state stays in-memory |
+| **State** | In-memory (users, game rooms, run state) — everything is lost on server restart |
 | **Transport** | REST for entry/routing, Socket.io for live game events |
 
 **Architecture rules:**
 
 - **Single process** — one Node server holds sockets, game state, and the in-process agent for the MVP
-- **AI is bound to Groq for now** — `CreateDungeonMaster` uses ChatGroq (`openai/gpt-oss-120b`); a swappable-provider port is planned but not implemented
-- **State split** — live session state is in-memory; PostgreSQL persists identity and run snapshots
+- **AI is bound to Groq** — `CreateDungeonMaster` uses ChatGroq (`openai/gpt-oss-120b`)
+- **State is in-memory** — no database; users and game rooms live in memory and are cleared on restart
 - **No-install client** — the browser is the only client
 
 ## Architecture
@@ -179,7 +179,7 @@ The backend splits into four domains, each owning a narrow slice of a session:
 
 - **User** issues a `user_id` once and reuses it across every expedition; it hands off to GameRoom after auth.
 - **GameRoom** is authoritative: one instance per expedition, owning player mapping, character sheets, room lifecycle, and the run/encounter loop. It never rolls, generates, or resolves — it *asks* the AI to structure/judge/narrate and *hands* validated actions to the engine.
-- **DungeonMaster** turns free text into a structured verdict (`execute` / `not_allowed` / `ambiguous`) and narrates decided outcomes as single-shot prose. It's currently bound to Groq (`openai/gpt-oss-120b`) via `CreateDungeonMaster`; a swappable-provider port is planned but not implemented. It never decides outcomes and never owns state — parse failures fall back to `not_allowed`.
+- **DungeonMaster** turns free text into a structured verdict (`execute` / `not_allowed` / `ambiguous`) and narrates decided outcomes as single-shot prose. It's bound to Groq (`openai/gpt-oss-120b`) via `CreateDungeonMaster`. It never decides outcomes and never owns state — parse failures fall back to `not_allowed`.
 - **ProceduralEngine** is the single source of randomness — seeded RNG, dungeon generation, DCs, dice rolls — and resolves validated actions into deterministic outcomes. Pure, no I/O, trivially testable.
 
 ### Request flow
