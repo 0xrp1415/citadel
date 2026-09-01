@@ -9,20 +9,27 @@ export interface Stats {
   agility: number
 }
 
-export type GearSlot = 'head' | 'chest' | 'greaves'
+export type GearSlot = 'head' | 'chest' | 'greaves' | 'weapon'
+
+export type RarityName = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+export interface Rarity {
+  name: RarityName
+  rarityLevel: number
+}
 
 export interface ArmorPiece {
   armorId: string
   armorName: string
   description: string
   stats: Stats
-  gear_position: GearSlot
+  gear_position: 'head' | 'chest' | 'greaves'
+  rarity: Rarity
 }
 
 export interface ArmorSlots {
-  head: ArmorPiece
-  chest: ArmorPiece
-  greaves: ArmorPiece
+  head: ArmorPiece | null
+  chest: ArmorPiece | null
+  greaves: ArmorPiece | null
 }
 
 export interface WeaponPiece {
@@ -30,23 +37,51 @@ export interface WeaponPiece {
   weaponName: string
   description: string
   stats: Stats
+  rarity: Rarity
+}
+
+export type ItemType = 'gear' | 'consumable' | 'scroll'
+
+export interface RunItem {
+  id: string
+  name: string
+  description: string
+  type: ItemType
+  rarity: Rarity
+  stackable: boolean
+  buyPrice: number
+  slot?: GearSlot
+  stats?: Stats
+  required_stats?: Stats
+  ability?: string
+  ability_description?: string
 }
 
 export type ConsumableType = 'health_potion' | 'gold_key' | 'lockpick'
 export type Consumables = Record<ConsumableType, number>
 
+export type Ability = {
+  name: string
+  flavor_text: string
+  description: string
+  targeting: { kind: 'enemy' | 'ally' | 'self' | 'any'; scope: 'single' | 'all' | 'self' }
+  minimumLevel: number
+  minimumStats: Partial<Stats>
+}
+
 export interface PlayerRunEntity {
   base_stats: Stats
   stat_modifiers: Stats
   armor_stats: ArmorSlots
-  weapon_stats: WeaponPiece
+  weapon_stats: WeaponPiece | null
   level: number
   experience: number
   skill_points: number
   gold: number
   consumables: Consumables
+  items: RunItem[]
   health: { MaxHealth: number; CurrentHealth: number }
-  abilities: string[]
+  abilities: Ability[]
 }
 
 export interface PlayerPublic {
@@ -206,6 +241,18 @@ export async function changePlayerStatsBy(
   amount: number,
 ): Promise<void> {
   await sendAction(roomToken, 'change_player_stats', { stat, amount })
+}
+
+export async function equipItem(roomToken: string, index: number): Promise<void> {
+  await sendAction(roomToken, 'equip_item', { index })
+}
+
+export async function useInventoryItem(roomToken: string, id: string): Promise<void> {
+  await sendAction(roomToken, 'use_inventory_item', { id })
+}
+
+export async function unequipItem(roomToken: string, slot: GearSlot): Promise<void> {
+  await sendAction(roomToken, 'unequip_item', { slot })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {

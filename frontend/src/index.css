@@ -886,10 +886,8 @@
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 500;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .board__select {
@@ -1907,10 +1905,68 @@
 }
 
 .filecard__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-family: var(--font-data);
   font-size: 0.78rem;
   line-height: 1.5;
   color: var(--color-ink);
+}
+
+.filecard__item-name {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.filecard__item-slot {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+}
+
+.filecard__rarity {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgba(90, 74, 52, 0.3);
+  border-radius: 999px;
+  color: var(--color-mist);
+}
+
+.filecard__rarity--uncommon {
+  color: var(--color-teal);
+  border-color: rgba(28, 112, 100, 0.4);
+}
+
+.filecard__rarity--rare {
+  color: var(--color-ember);
+  border-color: rgba(176, 96, 34, 0.4);
+}
+
+.filecard__rarity--epic {
+  color: var(--color-wine);
+  border-color: rgba(126, 40, 68, 0.4);
+}
+
+.filecard__rarity--legendary {
+  color: var(--color-plum);
+  border-color: rgba(88, 48, 116, 0.4);
+}
+
+.filecard__sub-heading {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  margin: 1.3rem 0 0.6rem;
 }
 
 .filecard__gear {
@@ -1940,13 +1996,30 @@
 
 .filecard__gear-slot {
   flex: 0 0 auto;
-  width: 4rem;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  width: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.25rem;
   color: var(--color-teal);
-  padding-top: 0.3rem;
+}
+
+.filecard__gear-slot svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+}
+
+.filecard__gear-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0 0.15rem;
+  vertical-align: middle;
+  color: var(--color-wine);
+  opacity: 0.85;
 }
 
 .filecard__gear-body {
@@ -1962,6 +2035,29 @@
   font-weight: 500;
   color: var(--color-ink);
   line-height: 1.2;
+}
+
+.filecard__gear-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filecard__gear-desc {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  line-height: 1.5;
+  color: var(--color-mist);
+}
+
+.filecard__gear-missing {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-wine);
 }
 
 .filecard__gear-stats {
@@ -2153,16 +2249,22 @@
   color: var(--color-ink);
 }
 
+.currentroom__actions {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  border-top: 1px solid rgba(90, 74, 52, 0.15);
+}
+
 .currentroom__mapbtn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  flex: 1;
   width: 100%;
   padding: 0.6rem 0;
-  margin-top: auto;
   border: 0;
-  border-top: 1px solid rgba(90, 74, 52, 0.15);
   background: none;
   font-family: var(--font-data);
   font-size: 0.55rem;
@@ -2172,6 +2274,10 @@
   color: var(--color-teal);
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
+}
+
+.currentroom__mapbtn + .currentroom__mapbtn {
+  border-top: 1px solid rgba(90, 74, 52, 0.15);
 }
 
 .currentroom__mapbtn:hover,
@@ -2888,3 +2994,371 @@
   text-align: center;
 }
 
+
+/* ---- inventory / gear modal interactions ---- */
+
+.filecard__tab--simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.filecard__tab--simple .filecard__tab-label {
+  justify-self: auto;
+  text-align: left;
+}
+
+.filecard__inventory-hint {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.filecard__inventory-error {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  line-height: 1.45;
+  color: var(--color-danger);
+}
+
+.filecard__group + .filecard__group {
+  margin-top: 0.4rem;
+}
+
+.filecard__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filecard__item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.filecard__item-nav {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  text-align: left;
+}
+.filecard__item-nav:hover .filecard__item-name {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.filecard__item-nav .filecard__item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.filecard__item-nav .filecard__rarity,
+.filecard__item-nav .filecard__item-slot {
+  flex: 0 0 auto;
+}
+
+.filecard__tooltip--fixed {
+  position: fixed;
+  z-index: 200;
+  width: 300px;
+  max-height: calc(100svh - 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+  border: 1px solid rgba(90, 74, 52, 0.45);
+  border-radius: 5px;
+  background: rgba(252, 249, 242, 0.995);
+  color: var(--color-ink);
+  box-shadow: 0 12px 28px rgba(37, 26, 15, 0.38);
+  font-family: var(--font-data);
+  pointer-events: none;
+}
+
+.filecard__tooltip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(90, 74, 52, 0.22);
+}
+
+.filecard__tooltip-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-ember);
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.filecard__tooltip-desc {
+  font-size: 0.7rem;
+  line-height: 1.55;
+  color: var(--color-ink);
+}
+
+.filecard__tooltip-teaches {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid rgba(28, 112, 100, 0.5);
+  background: rgba(28, 112, 100, 0.08);
+  border-radius: 0 3px 3px 0;
+}
+.filecard__tooltip-teaches-k {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+}
+.filecard__tooltip-teaches-v {
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--color-teal);
+}
+
+.filecard__tooltip-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.filecard__tooltip-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.filecard__tooltip-price {
+  font-size: 0.66rem;
+  color: var(--color-wine);
+}
+
+.field__req {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.field__req-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid rgba(190, 48, 48, 0.35);
+  border-radius: 999px;
+  background: rgba(190, 48, 48, 0.08);
+  font-size: 0.62rem;
+}
+.field__req-k {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-mist);
+}
+.field__req-v {
+  font-weight: 700;
+  color: var(--color-wine);
+  font-variant-numeric: tabular-nums;
+}
+
+.field__req--met .field__req-chip {
+  border-color: rgba(90, 74, 52, 0.18);
+  background: rgba(90, 74, 52, 0.07);
+}
+.field__req--met .field__req-k {
+  color: var(--color-mist);
+}
+.field__req--met .field__req-v {
+  color: var(--color-ink);
+}
+
+.filecard__ability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  list-style: none;
+}
+.filecard__ability {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(90, 74, 52, 0.18);
+  border-left: 3px solid var(--color-wine);
+  background: rgba(241, 236, 224, 0.4);
+}
+.filecard__ability-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.filecard__ability-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.filecard__ability-target {
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+}
+.filecard__ability-flavor {
+  font-size: 0.66rem;
+  font-style: italic;
+  color: var(--color-ink);
+}
+.filecard__ability-desc {
+  font-size: 0.62rem;
+  color: var(--color-mist);
+}
+.filecard__ability-req {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  opacity: 0.8;
+}
+
+.filecard__item-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+  padding: 0.55rem 0.65rem;
+  border-left: 2px solid rgba(28, 112, 100, 0.35);
+  background: rgba(241, 236, 224, 0.6);
+}
+
+.filecard__item-desc {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--color-mist);
+}
+.filecard__item-desc--teaches {
+  color: var(--color-teal);
+}
+.filecard__item-desc--price {
+  color: var(--color-mist);
+}
+
+.filecard__item-required {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.filecard__item-gate {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-wine);
+}
+
+.filecard__ws-v--neg {
+  color: var(--color-wine);
+}
+
+.filecard__gear-foot {
+  margin: 1.2rem 0 0;
+  text-align: center;
+}
+
+/* ---- pokemon-bag inventory layout ---- */
+
+.bag {
+  display: flex;
+  align-items: stretch;
+}
+
+.filecard__tabpanel.bag {
+  padding: 0;
+}
+
+.bag__sidebar {
+  flex: 0 0 auto;
+  width: 10rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1rem 0.85rem 1.2rem;
+  border-right: 1px solid rgba(90, 74, 52, 0.22);
+  background: rgba(241, 236, 224, 0.45);
+}
+
+.bag__pocket {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.55rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+  text-align: left;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.bag__pocket:hover {
+  color: var(--color-ink);
+}
+.bag__pocket--active {
+  color: var(--color-teal);
+  background: rgba(31, 110, 96, 0.1);
+}
+.bag__pocket svg {
+  flex: none;
+}
+.bag__pocket-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+.bag__pocket-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+  flex: none;
+}
+
+.bag__main {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem 1.4rem 1.4rem;
+}
+.bag__main > .filecard__list {
+  margin-top: 0.4rem;
+}

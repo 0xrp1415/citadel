@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
-import type { ConsumableType, MapPublicJSON, PlayerPublic, PlayerRunEntity, RoomData, RoomMessage, Stats } from '../rooms'
-import { changePlayerStatsBy, sendAction } from '../rooms'
+import type { Ability, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats } from '../rooms'
+import { changePlayerStatsBy, equipItem, sendAction, unequipItem, useInventoryItem as requestUseItem } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
@@ -138,7 +139,10 @@ function Run() {
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
   const [mapOpen, setMapOpen] = useState(false)
+  const [inventoryOpen, setInventoryOpen] = useState(false)
+  const [gearOpen, setGearOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [composerBusy, setComposerBusy] = useState(false)
   const [playError, setPlayError] = useState<string | null>(null)
@@ -155,6 +159,45 @@ function Run() {
       await changePlayerStatsBy(roomToken, stat, amount)
     } catch {
       // backend rejects via encounter guard; silent
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken])
+
+  const handleEquipItem = useCallback(async (index: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await equipItem(roomToken, index)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'equip failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken])
+
+  const handleUseItem = useCallback(async (id: string) => {
+    if (!roomToken) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await requestUseItem(roomToken, id)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'use failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken])
+
+  const handleUnequipItem = useCallback(async (slot: GearSlot) => {
+    if (!roomToken) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await unequipItem(roomToken, slot)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'unequip failed')
     } finally {
       setBusy(false)
     }
@@ -184,7 +227,6 @@ function Run() {
     setComposerBusy(true)
     setPlayError(null)
     try {
-      console.log('sending player_play:', JSON.stringify(text))
       await sendAction(roomToken, 'player_play', text)
       setDraft('')
       resetComposer()
@@ -250,14 +292,30 @@ function Run() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
       if (event.key === 'm' || event.key === 'M') {
-        if (openPlayerId) return
+        if (openPlayerId || inventoryOpen || gearOpen) return
         event.preventDefault()
         setMapOpen((prev) => !prev)
         return
       }
 
+      if (event.key === 'i' || event.key === 'I') {
+        if (openPlayerId || mapOpen) return
+        event.preventDefault()
+        setGearOpen(false)
+        setInventoryOpen((prev) => !prev)
+        return
+      }
+
+      if (event.key === 'g' || event.key === 'G') {
+        if (openPlayerId || mapOpen) return
+        event.preventDefault()
+        setInventoryOpen(false)
+        setGearOpen((prev) => !prev)
+        return
+      }
+
       if (event.key === 'p' || event.key === 'P') {
-        if (mapOpen) return
+        if (mapOpen || inventoryOpen || gearOpen) return
         event.preventDefault()
         if (openPlayerId) {
           setOpenPlayerId(null)
@@ -270,7 +328,7 @@ function Run() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [room, selfPlayerId, openPlayerId, mapOpen])
+  }, [room, selfPlayerId, openPlayerId, mapOpen, inventoryOpen, gearOpen])
 
   const dmActive = composerBusy || room?.dungeonMasterState === 'active'
 
@@ -479,7 +537,14 @@ function Run() {
       </LedgerFrame>
 
       <aside className="descent__rail descent__rail--map" aria-label="Current room">
-        {room && <CurrentRoomCard room={room} onOpenMap={() => setMapOpen(true)} />}
+        {room && (
+          <CurrentRoomCard
+            room={room}
+            onOpenMap={() => setMapOpen(true)}
+            onOpenInventory={() => setInventoryOpen(true)}
+            onOpenGear={() => setGearOpen(true)}
+          />
+        )}
       </aside>
 
       {openPlayer && (
@@ -498,6 +563,33 @@ function Run() {
 
       {mapOpen && room?.map && (
         <MapModal room={room} onClose={() => setMapOpen(false)} />
+      )}
+
+      {inventoryOpen && selfPlayer && (
+        <InventoryModal
+          player={selfPlayer}
+          isSelf={true}
+          onClose={() => setInventoryOpen(false)}
+          onEquip={handleEquipItem}
+          onUse={handleUseItem}
+          busy={busy}
+          actionError={actionError}
+        />
+      )}
+
+      {gearOpen && selfPlayer && (
+        <GearModal
+          player={selfPlayer}
+          isSelf={true}
+          busy={busy}
+          onClose={() => setGearOpen(false)}
+          onUnequip={handleUnequipItem}
+          actionError={actionError}
+          onOpenInventory={() => {
+            setGearOpen(false)
+            setInventoryOpen(true)
+          }}
+        />
       )}
 
       {confirmation && (
@@ -626,13 +718,19 @@ const ROOM_LABELS: Record<string, string> = {
   secret: 'Secret',
 }
 
-function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () => void }) {
+interface CurrentRoomCardProps {
+  room: RoomData
+  onOpenMap: () => void
+  onOpenInventory?: () => void
+  onOpenGear?: () => void
+}
+
+function CurrentRoomCard({ room, onOpenMap, onOpenInventory, onOpenGear }: CurrentRoomCardProps) {
   const map = room.map
   const currentRoom = room.currentRoom
   const roomIndex = currentRoom.index
 
   const exits = map?.rooms[roomIndex]?.exits
-  console.log('exits:', exits, 'map:', map)
   const neighbors = exits
     ? (['north', 'south', 'east', 'west'] as const)
         .filter((d) => exits[d] !== null)
@@ -666,20 +764,51 @@ function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () =>
           </ul>
         )}
       </div>
-      <button
-        type="button"
-        className="currentroom__mapbtn"
-        onClick={onOpenMap}
-        aria-label="Open descent map"
-        title="Open map (M)"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-          <line x1="8" y1="2" x2="8" y2="18" />
-          <line x1="16" y1="6" x2="16" y2="22" />
-        </svg>
-        <span>map</span>
-      </button>
+      <div className="currentroom__actions">
+        <button
+          type="button"
+          className="currentroom__mapbtn"
+          onClick={onOpenMap}
+          aria-label="Open descent map"
+          title="Open map (M)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+            <line x1="8" y1="2" x2="8" y2="18" />
+            <line x1="16" y1="6" x2="16" y2="22" />
+          </svg>
+          <span>map</span>
+        </button>
+        {onOpenInventory && (
+          <button
+            type="button"
+            className="currentroom__mapbtn"
+            onClick={onOpenInventory}
+            aria-label="Open inventory"
+            title="Open inventory (I)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 8h18l-1.2 12.2a1 1 0 0 1-1 .8H5.2a1 1 0 0 1-1-.8L3 8z" />
+              <path d="M8 10V6a4 4 0 0 1 8 0v4" />
+            </svg>
+            <span>inventory</span>
+          </button>
+        )}
+        {onOpenGear && (
+          <button
+            type="button"
+            className="currentroom__mapbtn"
+            onClick={onOpenGear}
+            aria-label="Open gear and abilities"
+            title="Open gear & abilities (G)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+            </svg>
+            <span>gear</span>
+          </button>
+        )}
+      </div>
     </section>
   )
 }
@@ -1174,19 +1303,758 @@ const DOSSIER_FIELDS: { label: string; key: keyof Stats }[] = [
   { label: 'Resolve', key: 'wisdom' },
 ]
 
-const CONSUMABLE_LABELS: Record<ConsumableType, string> = {
-  health_potion: 'health potion',
-  gold_key: 'gold key',
-  lockpick: 'lockpick',
+interface InventoryModalProps {
+  player: PlayerPublic
+  isSelf: boolean
+  onClose: () => void
+  onEquip: (index: number) => void
+  onUse: (id: string) => void
+  busy: boolean
+  actionError: string | null
 }
 
-function itemList(stats: PlayerRunEntity): string[] {
-  const items: string[] = []
-  for (const type of Object.keys(CONSUMABLE_LABELS) as ConsumableType[]) {
-    const count = stats.consumables[type]
-    if (count > 0) items.push(`${CONSUMABLE_LABELS[type]} ×${count}`)
+function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionError }: InventoryModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  const [tip, setTip] = useState<InventoryTip | null>(null)
+  const [activePocket, setActivePocket] = useState<PocketId>('consumables')
+
+  const stats = player.stats
+  const effectiveStats: Stats = {
+    hp: stats.base_stats.hp + stats.stat_modifiers.hp,
+    strength: stats.base_stats.strength + stats.stat_modifiers.strength,
+    dexterity: stats.base_stats.dexterity + stats.stat_modifiers.dexterity,
+    intelligence: stats.base_stats.intelligence + stats.stat_modifiers.intelligence,
+    wisdom: stats.base_stats.wisdom + stats.stat_modifiers.wisdom,
+    agility: stats.base_stats.agility + stats.stat_modifiers.agility,
   }
-  return items
+  const carried = stats.items ?? []
+  const consumables = carried.filter((item) => item.type === 'consumable')
+  const gear = carried.filter((item) => item.type === 'gear')
+  const scrolls = carried.filter((item) => item.type === 'scroll')
+
+  const pockets: { id: PocketId; label: string; count: number }[] = [
+    { id: 'consumables', label: 'consumables', count: consumables.length },
+    { id: 'gear', label: 'gear', count: gear.length },
+    { id: 'scrolls', label: 'scrolls', count: scrolls.length },
+  ]
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'i' || event.key === 'I') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [])
+
+  return (
+    <div className="filecard__scrim" onClick={onClose}>
+      <div
+        className="filecard"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${player.name} — inventory`}
+        ref={dialogRef}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="filecard__tab filecard__tab--simple">
+          <span className="filecard__tab-label">inventory</span>
+          <button
+            ref={closeRef}
+            type="button"
+            className="filecard__close"
+            onClick={onClose}
+            aria-label="Close inventory"
+          >
+            close ✕
+          </button>
+        </div>
+        <div className="filecard__sheet" key={player.playerId}>
+          <header className="filecard__head">
+            <h2 className="filecard__name">{player.name}</h2>
+            <div className="filecard__identity">
+              <span className="filecard__gold">{stats.gold} gold</span>
+            </div>
+          </header>
+
+          <div className="filecard__tabpanel bag" role="tabpanel">
+            <aside className="bag__sidebar" role="tablist" aria-label="Inventory pockets">
+              {pockets.map((pocket) => (
+                <button
+                  key={pocket.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activePocket === pocket.id}
+                  className={`bag__pocket${activePocket === pocket.id ? ' bag__pocket--active' : ''}`}
+                  onClick={() => setActivePocket(pocket.id)}
+                >
+                  <BagIcon pocket={pocket.id} size={15} />
+                  <span className="bag__pocket-label">{pocket.label}</span>
+                  <span className="bag__pocket-count">×{pocket.count}</span>
+                </button>
+              ))}
+            </aside>
+
+            <div className="bag__main">
+              <p className="filecard__inventory-hint">
+                click an item to inspect it{isSelf ? ' · use / read / equip it' : ''}
+              </p>
+              {actionError && <p className="filecard__inventory-error">{actionError}</p>}
+
+              {activePocket === 'consumables' &&
+                (consumables.length > 0 ? (
+                  <ul className="filecard__list">
+                    {consumables.map((item, i) => (
+                      <InventoryRow
+                        key={`${item.id}-${i}`}
+                        item={item}
+                        busy={busy}
+                        onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
+                        onLeave={() => setTip(null)}
+                        action={
+                          isSelf ? { label: 'use', onClick: () => onUse(item.id) } : null
+                        }
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="filecard__empty">nothing drinkable carried</span>
+                ))}
+
+              {activePocket === 'gear' &&
+                (gear.length > 0 ? (
+                  <ul className="filecard__list">
+                    {gear.map((item, i) => {
+                      const idx = stats.items ? stats.items.indexOf(item) : -1
+                      const canEquip =
+                        idx >= 0 &&
+                        isSelf &&
+                        item.type === 'gear' &&
+                        !!item.slot &&
+                        meetsRequired(item.required_stats ?? {}, effectiveStats)
+                      const unmet =
+                        item.type === 'gear' && item.required_stats
+                          ? (Object.keys(item.required_stats) as (keyof Stats)[])
+                              .filter(
+                                (k) =>
+                                  (item.required_stats![k] ?? 0) > 0 &&
+                                  effectiveStats[k] < item.required_stats![k],
+                              )
+                              .map((k) => `${k} ${item.required_stats![k]}`)
+                              .join(', ')
+                          : null
+                      return (
+                        <InventoryRow
+                          key={`${item.id}-${i}`}
+                          item={item}
+                          busy={busy}
+                          gateNote={unmet ? `needs ${unmet}` : null}
+                          onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
+                          onLeave={() => setTip(null)}
+                          action={
+                            isSelf
+                              ? canEquip
+                                ? { label: 'equip', onClick: () => onEquip(idx) }
+                                : null
+                              : null
+                          }
+                        />
+                      )
+                    })}
+                  </ul>
+                ) : (
+                  <span className="filecard__empty">nothing equippable carried</span>
+                ))}
+
+              {activePocket === 'scrolls' &&
+                (scrolls.length > 0 ? (
+                  <ul className="filecard__list">
+                    {scrolls.map((item, i) => (
+                      <InventoryRow
+                        key={`${item.id}-${i}`}
+                        item={item}
+                        busy={busy}
+                        onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
+                        onLeave={() => setTip(null)}
+                        action={
+                          isSelf ? { label: 'read', onClick: () => onUse(item.id) } : null
+                        }
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="filecard__empty">nothing to read carried</span>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {tip && <InventoryTooltip tip={tip} />}
+    </div>
+  )
+}
+
+interface InventoryRowProps {
+  item: RunItem
+  busy: boolean
+  action?: { label: string; onClick: () => void } | null
+  gateNote?: string | null
+  onHover: (item: RunItem, rect: DOMRect) => void
+  onLeave: () => void
+}
+
+function InventoryRow({ item, busy, action, gateNote, onHover, onLeave }: InventoryRowProps) {
+  return (
+    <li
+      className="filecard__item"
+      onMouseEnter={(event) => onHover(item, event.currentTarget.getBoundingClientRect())}
+      onMouseLeave={onLeave}
+    >
+      <div className="filecard__item-row">
+        <span className="filecard__item-nav">
+          <span className="filecard__item-name">{item.name}</span>
+          <span className={`filecard__rarity filecard__rarity--${item.rarity.name}`}>
+            {item.rarity.name}
+          </span>
+          {item.type === 'gear' && item.slot && (
+            <span className="filecard__item-slot">{item.slot}</span>
+          )}
+        </span>
+        {action && (
+          <button
+            type="button"
+            className="btn btn--ghost"
+            disabled={busy}
+            onClick={action.onClick}
+          >
+            {action.label}
+          </button>
+        )}
+      </div>
+      {gateNote && <span className="filecard__item-gate">{gateNote}</span>}
+    </li>
+  )
+}
+
+interface InventoryTip {
+  item: RunItem
+  rect: DOMRect
+  met: boolean
+}
+
+function InventoryTooltip({ tip }: { tip: InventoryTip }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const { innerWidth, innerHeight } = window
+    const gutter = 12
+    const W = el.offsetWidth
+    const H = el.offsetHeight
+    let left = tip.rect.right + gutter
+    if (left + W > innerWidth - gutter) left = tip.rect.left - gutter - W
+    left = Math.max(gutter, left)
+    let top = tip.rect.top
+    if (top + H > innerHeight - gutter) top = innerHeight - gutter - H
+    top = Math.max(gutter, top)
+    setPos({ left, top })
+  }, [tip])
+
+  const { item } = tip
+  const entries = item.stats ? Object.entries(item.stats).filter(([, v]) => v !== 0) : []
+  const requiredEntries = item.required_stats
+    ? Object.entries(item.required_stats).filter(([, v]) => v !== 0)
+    : []
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="filecard__tooltip filecard__tooltip--fixed"
+      role="tooltip"
+      style={pos ? { left: pos.left, top: pos.top } : { left: -9999, top: -9999 }}
+    >
+      <span className="filecard__tooltip-head">
+        <span className="filecard__tooltip-name">{item.name}</span>
+        <span className={`filecard__rarity filecard__rarity--${item.rarity.name}`}>
+          {item.rarity.name}
+        </span>
+      </span>
+      {item.description && <span className="filecard__tooltip-desc">{item.description}</span>}
+      {item.type === 'scroll' && item.ability && (
+        <span className="filecard__tooltip-teaches">
+          <span className="filecard__tooltip-teaches-k">teaches</span>
+          <span className="filecard__tooltip-teaches-v">
+            {item.ability}
+            {item.ability_description ? ` — ${item.ability_description}` : ''}
+          </span>
+        </span>
+      )}
+      {entries.length > 0 && (
+        <span className="filecard__tooltip-block">
+          <span className="filecard__tooltip-label">stats</span>
+          <span className="filecard__gear-stats">
+            {entries.map(([k, v]) => (
+              <span className="filecard__ws" key={k}>
+                <span className="filecard__ws-k">{k}</span>
+                <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
+                  {v > 0 ? `+${v}` : v}
+                </span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+      {requiredEntries.length > 0 && (
+        <span className="filecard__tooltip-block">
+          <span className="filecard__tooltip-label">requires</span>
+          <span className={tip.met ? 'field__req field__req--met' : 'field__req field__req--req'}>
+            {requiredEntries.map(([k, v]) => (
+              <span className="field__req-chip" key={k}>
+                <span className="field__req-k">{k}</span>
+                <span className="field__req-v">{v}</span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+      {item.type === 'consumable' && item.buyPrice > 0 && (
+        <span className="filecard__tooltip-price">shop value · {item.buyPrice} gold</span>
+      )}
+    </div>,
+    document.body,
+  )
+}
+
+function meetsRequired(required: Partial<Stats>, stats: Stats): boolean {
+  const keys = Object.keys(required) as (keyof Stats)[]
+  for (const key of keys) {
+    const value = required[key] ?? 0
+    if (value > 0 && stats[key] < value) return false
+  }
+  return true
+}
+
+function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ability[]; emptyText?: string }) {
+  if (abilities.length === 0) {
+    return <span className="filecard__empty">{emptyText}</span>
+  }
+  return (
+    <ul className="filecard__ability-list">
+      {abilities.map((ability) => {
+        const reqEntries = Object.entries(ability.minimumStats ?? {}).filter(([, v]) => v !== 0)
+        return (
+          <li className="filecard__ability" key={ability.name}>
+            <span className="filecard__ability-head">
+              <span className="filecard__ability-name">{ability.name}</span>
+              <span className="filecard__ability-target">
+                {ability.targeting.kind}/{ability.targeting.scope}
+              </span>
+            </span>
+            <span className="filecard__ability-flavor">{ability.flavor_text}</span>
+            <span className="filecard__ability-desc">{ability.description}</span>
+            {(ability.minimumLevel > 0 || reqEntries.length > 0) && (
+              <span className="filecard__ability-req">
+                requires lvl {ability.minimumLevel}
+                {reqEntries.length > 0 &&
+                  ` · ${reqEntries.map(([k, v]) => `${k} ${v}`).join(', ')}`}
+              </span>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+interface GearSlotIconProps {
+  slot: GearSlot
+  size?: number
+}
+
+function GearSlotIcon({ slot, size = 18 }: GearSlotIconProps) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+  }
+  switch (slot) {
+    case 'weapon':
+      return (
+        <svg {...common}>
+          <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+          <line x1="13" y1="19" x2="19" y2="13" />
+          <line x1="16" y1="16" x2="20" y2="20" />
+          <line x1="19" y1="21" x2="21" y2="19" />
+        </svg>
+      )
+    case 'head':
+      return (
+        <svg {...common}>
+          <path d="M6 17V9.5a6 6 0 0 1 12 0V17" />
+          <path d="M4.5 17h15" />
+          <path d="M9.75 12.25h4.5" />
+          <path d="M12 12.25v4.75" />
+        </svg>
+      )
+    case 'chest':
+      return (
+        <svg {...common}>
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          <path d="M12 9.5v5.5" />
+        </svg>
+      )
+    case 'greaves':
+      return (
+        <svg {...common}>
+          <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z" />
+          <path d="M14 20v-2.38c0-2.12 1.03-3.12 1-5.62.03-2.72 1.49-6 4.5-6C22.37 6 23 7.8 23 9.5c0 3.11-2 5.66-2 8.68V20a2 2 0 1 1-4 0Z" />
+        </svg>
+      )
+  }
+}
+
+type PocketId = 'consumables' | 'gear' | 'scrolls'
+
+interface BagIconProps {
+  pocket: PocketId
+  size?: number
+}
+
+function BagIcon({ pocket, size = 16 }: BagIconProps) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    'aria-hidden': true,
+  }
+  switch (pocket) {
+    case 'consumables':
+      return (
+        <svg {...common}>
+          <path d="M10 2v7.31a2 2 0 0 1-.29 1.06L4.7 17.48A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.7-3.52l-5.01-7.11A2 2 0 0 1 14 9.31V2" />
+          <path d="M8.5 2h7" />
+          <path d="M7 16h10" />
+        </svg>
+      )
+    case 'gear':
+      return (
+        <svg {...common}>
+          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        </svg>
+      )
+    case 'scrolls':
+      return (
+        <svg {...common}>
+          <path d="M19 17V5a2 2 0 0 0-2-2H4" />
+          <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
+        </svg>
+      )
+  }
+}
+
+interface GearModalProps {
+  player: PlayerPublic
+  isSelf: boolean
+  busy: boolean
+  onClose: () => void
+  onUnequip: (slot: GearSlot) => void
+  onOpenInventory: () => void
+  actionError: string | null
+}
+
+function GearModal({
+  player,
+  isSelf,
+  busy,
+  onClose,
+  onUnequip,
+  onOpenInventory,
+  actionError,
+}: GearModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  const [activeSection, setActiveSection] = useState<'gear' | 'abilities'>('gear')
+
+  const stats = player.stats
+
+  const FALLBACK_RARITY: Rarity = { name: 'common', rarityLevel: 1 }
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'g' || event.key === 'G') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [])
+
+  const slots: {
+    slot: GearSlot
+    label: string
+    name: string
+    description: string
+    rarity: Rarity
+    stats: Stats
+  }[] = []
+  if (stats.weapon_stats) {
+    slots.push({
+      slot: 'weapon',
+      label: 'Weapon',
+      name: stats.weapon_stats.weaponName,
+      description: stats.weapon_stats.description,
+      rarity: stats.weapon_stats.rarity ?? FALLBACK_RARITY,
+      stats: stats.weapon_stats.stats,
+    })
+  }
+  for (const { slot, label, piece } of [
+    { slot: 'head', label: 'Head', piece: stats.armor_stats.head },
+    { slot: 'chest', label: 'Chest', piece: stats.armor_stats.chest },
+    { slot: 'greaves', label: 'Greaves', piece: stats.armor_stats.greaves },
+  ] as const) {
+    if (piece) {
+      slots.push({
+        slot,
+        label,
+        name: piece.armorName,
+        description: piece.description,
+        rarity: piece.rarity ?? FALLBACK_RARITY,
+        stats: piece.stats,
+      })
+    }
+  }
+
+  const gearTotal: Stats = {
+    hp: 0,
+    strength: 0,
+    dexterity: 0,
+    intelligence: 0,
+    wisdom: 0,
+    agility: 0,
+  }
+  for (const entry of slots) {
+    const k = Object.keys(entry.stats) as (keyof Stats)[]
+    for (const key of k) gearTotal[key] += entry.stats[key]
+  }
+  const gearBonusEntries = (Object.keys(gearTotal) as (keyof Stats)[]).filter(
+    (k) => gearTotal[k] !== 0,
+  )
+
+  const emptySlots: string[] = []
+  if (!stats.weapon_stats) emptySlots.push('weapon')
+  for (const [key, piece] of [
+    ['head', stats.armor_stats.head],
+    ['chest', stats.armor_stats.chest],
+    ['greaves', stats.armor_stats.greaves],
+  ] as const) {
+    if (!piece) emptySlots.push(key)
+  }
+
+  return (
+    <div className="filecard__scrim" onClick={onClose}>
+      <div
+        className="filecard"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${player.name} — gear and abilities`}
+        ref={dialogRef}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="filecard__tab filecard__tab--simple">
+          <span className="filecard__tab-label">gear &amp; abilities</span>
+          <button
+            ref={closeRef}
+            type="button"
+            className="filecard__close"
+            onClick={onClose}
+            aria-label="Close gear"
+          >
+            close ✕
+          </button>
+        </div>
+        <div className="filecard__sheet" key={player.playerId}>
+          <header className="filecard__head">
+            <h2 className="filecard__name">{player.name}</h2>
+            <div className="filecard__identity">
+              <span className="filecard__level">Lv. {stats.level}</span>
+              <span className="filecard__sep">·</span>
+              <span className="filecard__gold">{stats.gold} gold</span>
+            </div>
+          </header>
+
+          <div className="filecard__secs" role="tablist" aria-label="Gear and abilities sections">
+            {(
+              [
+                { id: 'gear', label: 'Gear' },
+                { id: 'abilities', label: 'Abilities' },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeSection === tab.id}
+                className={`filecard__sec${activeSection === tab.id ? ' filecard__sec--active' : ''}`}
+                onClick={() => setActiveSection(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="filecard__tabpanel" role="tabpanel">
+            {activeSection === 'gear' && (() => {
+              return (
+                <>
+                  {slots.length > 0 ? (
+                    <ul className="filecard__gear">
+                      {slots.map(({ slot, label, name, description, rarity, stats: pieceStats }) => {
+                        const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
+                        return (
+                          <li className="filecard__gear-row" key={label}>
+                            <span className="filecard__gear-slot" title={label} aria-label={label}>
+                              <GearSlotIcon slot={slot} />
+                            </span>
+                            <span className="filecard__gear-body">
+                              <span className="filecard__gear-head">
+                                <span className="filecard__gear-name">{name}</span>
+                                <span className={`filecard__rarity filecard__rarity--${rarity.name}`}>
+                                  {rarity.name}
+                                </span>
+                              </span>
+                              <span className="filecard__gear-desc">{description}</span>
+                              {entries.length > 0 && (
+                                <span className="filecard__gear-stats">
+                                  {entries.map(([k, v]) => (
+                                    <span className="filecard__ws" key={k}>
+                                      <span className="filecard__ws-k">{k}</span>
+                                      <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
+                                        {v > 0 ? `+${v}` : v}
+                                      </span>
+                                    </span>
+                                  ))}
+                                </span>
+                              )}
+                              {isSelf && (
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  disabled={busy}
+                                  onClick={() => onUnequip(slot)}
+                                >
+                                  unequip
+                                </button>
+                              )}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  ) : (
+                    <span className="filecard__empty">nothing equipped</span>
+                  )}
+
+                  {emptySlots.length > 0 && (
+                    <p className="filecard__gear-missing">
+                      empty slots:{' '}
+                      {emptySlots.map((slot) => (
+                        <span className="filecard__gear-empty" key={slot} title={slot} aria-label={slot}>
+                          <GearSlotIcon slot={slot as GearSlot} size={16} />
+                        </span>
+                      ))}
+                      {isSelf && ' · equip gear from inventory to fill them'}
+                    </p>
+                  )}
+
+                  {gearBonusEntries.length > 0 && (
+                    <section className="filecard__group">
+                      <h3 className="filecard__sub-heading">gear bonus</h3>
+                      <span className="filecard__gear-stats">
+                        {gearBonusEntries.map((k) => (
+                          <span className="filecard__ws" key={k}>
+                            <span className="filecard__ws-k">{k}</span>
+                            <span className="filecard__ws-v filecard__ws-v--pos">
+                              +{gearTotal[k]}
+                            </span>
+                          </span>
+                        ))}
+                      </span>
+                    </section>
+                  )}
+                </>
+              )
+            })()}
+
+            {activeSection === 'abilities' && (() => {
+              return (
+                <>
+                  <h3 className="filecard__sub-heading">
+                    mastered abilities
+                    {stats.abilities.length > 0 ? ` · ${stats.abilities.length}` : ''}
+                  </h3>
+                  <AbilityList abilities={stats.abilities} emptyText="none mastered — read scrolls from your inventory to learn abilities" />
+                </>
+              )
+            })()}
+
+            {isSelf && activeSection === 'gear' && (
+              <p className="filecard__gear-foot">
+                {actionError && <span className="filecard__inventory-error">{actionError}</span>}
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={onOpenInventory}
+                >
+                  manage inventory (I)
+                </button>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 interface DossierCardProps {
@@ -1203,8 +2071,8 @@ interface DossierCardProps {
 
 function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomType, busy, onChangeStat, onClose, onSwitch }: DossierCardProps) {
   const index = players.findIndex((p) => p.playerId === player.playerId)
-  const previous = index > 0 ? players[index - 1] : players[players.length - 1]
-  const next = index < players.length - 1 ? players[index + 1] : players[0]
+  const previous = players.length > 1 ? (index > 0 ? players[index - 1] : players[players.length - 1]) : players[0] ?? null
+  const next = players.length > 1 ? (index < players.length - 1 ? players[index + 1] : players[0]) : players[0] ?? null
 
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -1224,13 +2092,12 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
       ? Math.round((health.CurrentHealth / health.MaxHealth) * 100)
       : 0
 
-  const items = itemList(stats)
   const xpPct = stats.level > 0 ? Math.round((stats.experience / (stats.level * 100)) * 100) : 0
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'gear' | 'items' | 'abilities'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'gear' | 'abilities'>('stats')
 
   const canModifyStats =
-    player.playerId === selfPlayerId && stats.skill_points > 0 && currentRoomType === 'grace'
+    player.playerId === selfPlayerId && currentRoomType === "grace"
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -1364,7 +2231,6 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
               [
                 { id: 'stats', label: 'Stats' },
                 { id: 'gear', label: 'Gear' },
-                { id: 'items', label: 'Items' },
                 { id: 'abilities', label: 'Abilities' },
               ] as const
             ).map((tab) => (
@@ -1449,80 +2315,75 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                 </dl>
               ))}
 
-            {activeTab === 'gear' && (
-              <ul className="filecard__gear">
-                {[
-                  { label: 'Weapon', name: stats.weapon_stats.weaponName, stats: stats.weapon_stats.stats },
-                  { label: 'Head', name: stats.armor_stats.head.armorName, stats: stats.armor_stats.head.stats },
-                  { label: 'Chest', name: stats.armor_stats.chest.armorName, stats: stats.armor_stats.chest.stats },
-                  { label: 'Greaves', name: stats.armor_stats.greaves.armorName, stats: stats.armor_stats.greaves.stats },
-                ].map(({ label, name, stats: pieceStats }) => {
-                  const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
-                  return (
-                    <li className="filecard__gear-row" key={label}>
-                      <span className="filecard__gear-slot">{label}</span>
-                      <span className="filecard__gear-body">
-                        <span className="filecard__gear-name">{name}</span>
-                        {entries.length > 0 && (
-                          <span className="filecard__gear-stats">
-                            {entries.map(([k, v]) => (
-                              <span className="filecard__ws" key={k}>
-                                <span className="filecard__ws-k">{k}</span>
-                                <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
-                                  {v > 0 ? `+${v}` : v}
+            {activeTab === 'gear' && (() => {
+              const slots: { slot: GearSlot; label: string; name: string; stats: Stats }[] = []
+              if (stats.weapon_stats) {
+                slots.push({ slot: 'weapon', label: 'Weapon', name: stats.weapon_stats.weaponName, stats: stats.weapon_stats.stats })
+              }
+              for (const { slot, label, piece } of [
+                { slot: 'head', label: 'Head', piece: stats.armor_stats.head },
+                { slot: 'chest', label: 'Chest', piece: stats.armor_stats.chest },
+                { slot: 'greaves', label: 'Greaves', piece: stats.armor_stats.greaves },
+              ] as const) {
+                if (piece) slots.push({ slot, label, name: piece.armorName, stats: piece.stats })
+              }
+              return slots.length > 0 ? (
+                <ul className="filecard__gear">
+                  {slots.map(({ slot, label, name, stats: pieceStats }) => {
+                    const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
+                    return (
+                      <li className="filecard__gear-row" key={label}>
+                        <span className="filecard__gear-slot" title={label} aria-label={label}>
+                          <GearSlotIcon slot={slot} />
+                        </span>
+                        <span className="filecard__gear-body">
+                          <span className="filecard__gear-name">{name}</span>
+                          {entries.length > 0 && (
+                            <span className="filecard__gear-stats">
+                              {entries.map(([k, v]) => (
+                                <span className="filecard__ws" key={k}>
+                                  <span className="filecard__ws-k">{k}</span>
+                                  <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
+                                    {v > 0 ? `+${v}` : v}
+                                  </span>
                                 </span>
-                              </span>
-                            ))}
-                          </span>
-                        )}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-
-            {activeTab === 'items' && (
-              <ul className="filecard__list">
-                {items.length > 0 ? (
-                  items.map((item) => (
-                    <li className="filecard__item" key={item}>
-                      {item}
-                    </li>
-                  ))
-                ) : (
-                  <li className="filecard__item">none carried</li>
-                )}
-              </ul>
-            )}
-
-            {activeTab === 'abilities' &&
-              (stats.abilities.length > 0 ? (
-                <ul className="filecard__chips">
-                  {stats.abilities.map((ability) => (
-                    <li className="filecard__chip" key={ability}>
-                      {ability}
-                    </li>
-                  ))}
+                              ))}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
               ) : (
-                <span className="filecard__empty">none mastered</span>
-              ))}
+                <span className="filecard__empty">nothing equipped</span>
+              )
+            })()}
+
+            {activeTab === 'abilities' && <AbilityList abilities={stats.abilities} />}
           </div>
 
           <footer className="filecard__foot">
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => onSwitch(previous.playerId)}
-            >
-              <span className="filecard__nav-arrow">{'\u2039'}</span>
-              <span className="filecard__nav-name">{previous.name}</span>
-            </button>
-            <button type="button" className="btn btn--ghost" onClick={() => onSwitch(next.playerId)}>
-              <span className="filecard__nav-name">{next.name}</span>
-              <span className="filecard__nav-arrow">{'\u203A'}</span>
-            </button>
+            {previous ? (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => onSwitch(previous.playerId)}
+              >
+                <span className="filecard__nav-arrow">{'\u2039'}</span>
+                <span className="filecard__nav-name">{previous.name}</span>
+              </button>
+            ) : (
+              <span />
+            )}
+            {next ? (
+              <button type="button" className="btn btn--ghost" onClick={() => onSwitch(next.playerId)}>
+                <span className="filecard__nav-name">{next.name}</span>
+                <span className="filecard__nav-arrow">{'\u203A'}</span>
+              </button>
+            ) : (
+              <span />
+            )}
           </footer>
         </div>
       </div>
