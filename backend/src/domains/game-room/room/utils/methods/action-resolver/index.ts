@@ -6,6 +6,7 @@ import { resolveMove } from "./resolve-move.js";
 import { resolveRest } from "./resolve-rest.js";
 import { resolveUseItem } from "./resolve-use-item.js";
 import { resolveAbility } from "./resolve-ability.js";
+import { resolveChallenge } from "./resolve-challenge.js";
 
 export async function resolveAction(action: DmAction, actor: Player | undefined, context: IGameRoomContext, narrate: (message: string) => Promise<void>): Promise<void> {
     console.log(`Resolving action: ${action.intent} for actor: ${actor?.Identity.name ?? "unknown"}`);
@@ -15,6 +16,7 @@ export async function resolveAction(action: DmAction, actor: Player | undefined,
         case "use_item": await resolveUseItem(action, actor, context, narrate); break;
         case "look": await resolveLook(action, actor, context, narrate); break;
         case "use_ability": await resolveAbility(action, actor, context, narrate); break;
+        case "challenge": await resolveChallenge(action, actor, context, narrate); break;
         default: break;
     }
 }

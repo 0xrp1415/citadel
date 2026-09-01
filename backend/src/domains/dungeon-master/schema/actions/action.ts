@@ -19,6 +19,9 @@ export const ZAction = z
     .refine(
         (a) => a.intent !== "use_item" || !!a.resource?.id,
         { message: "use_item requires a resource id" },
-    );
+    )
+    .refine((a) => a.intent !== "challenge" || !!a.direction, {
+        message: "challenge requires a direction",
+    });
 
 export type DmAction = z.infer<typeof ZAction>;

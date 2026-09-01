@@ -7,6 +7,7 @@ export type PassageEventType = "combat" | "puzzle" | "challenge";
 export interface IPassageEvent {
     type: PassageEventType;
     requiredStat: keyof IStats;
+    flavor_text: string;
     difficulty: number;
 }
 

@@ -5,5 +5,6 @@ export const ZActionIntent = z.enum([
     "rest",
     "use_item",
     "look",
-    "use_ability"
+    "use_ability",
+    "challenge"
 ]);

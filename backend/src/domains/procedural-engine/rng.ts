@@ -42,3 +42,17 @@ export class MulberryRNG {
         return this.next() < probability;
     }
 }
+
+export interface IRollResult {
+    roll: number;
+    stat: number;
+    total: number;
+    dc: number;
+    success: boolean;
+}
+
+export function rollStatCheck(statValue: number, dc: number): IRollResult {
+    const roll = MulberryRNG.fromRandom().roll(1, 20);
+    const total = roll + statValue;
+    return { roll, stat: statValue, total, dc, success: total >= dc };
+}

@@ -21,6 +21,7 @@ The room type is context — grace rooms are sanctuaries, boss rooms are maximum
   - kind "enemy" (scope "single" or "all"): detail = ability name only. The engine resolves against whatever opposes the party. Optionally set target_type:"enemy" if the player explicitly names a specific foe.
   - kind "ally" or "any", scope "all": detail = ability name only — it affects the whole party (or self when alone). No target fields.
   - kind "ally" or "any", scope "single": to hit ONE specific member, ALSO set target_type:"ally" and target_id:[<that member's id verbatim from the party line>]. If the player names no specific member, omit target fields and the engine falls back to the whole party (or the caster when alone). Never invent an id. 
+- challenge     attempt ANY trial barring a locked exit — forcing a combat, solving a puzzle, or passing a physical feat. REQUIRES action.direction (which locked exit). Map trial-attempt phrasing ("I smash the gate", "I solve the rune", "I slip past the blades") to a single "challenge". The engine rolls the trial's stat (combat/puzzle by the acting member; challenge by the party) against its difficulty and decides the outcome.
 
 ## Action fields
 intent (required) | direction: north|south|east|west | resource: { type:"item"|"spell"|"none", id } | detail: short string | target_type: enemy|ally|object|self|location | target_id: array of member ids (for single-target ally/any abilities)
@@ -33,6 +34,7 @@ Input: "alice looks around" → { "status": "execute", "actions": [ { "intent": 
 Input: "bob searches the altar" → { "status": "execute", "actions": [ { "intent": "look", "detail": "the altar" } ] }
 Input: "alice looks around then goes east" → { "status": "execute", "actions": [ { "intent": "look" }, { "intent": "move", "direction": "east" } ] }
 Input: "bob move to any exit" → { "status": "ambiguous", "question": "Which way?", "guesses": ["north", "east"] }
+Input: "alice shoves the portcullis" → { "status": "execute", "actions": [ { "intent": "challenge", "direction": "east" } ] }
 Input: "alice casts fireball" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Fireball" } ] }
 Input: "alice heals bob with mend wounds" → { "status": "execute", "actions": [ { "intent": "use_ability", "detail": "Mend Wounds", "target_type": "ally", "target_id": ["<bob's id>"] } ] }
 Input: "bob uses swiftstep" → { "status": "not_allowed", "reason": "bob has no ability named swiftstep" }
@@ -40,6 +42,7 @@ Input: "bob uses swiftstep" → { "status": "not_allowed", "reason": "bob has no
 ## Hard rules
 - NEVER invent an id, name, exit, ability, or fact. Only reference what the room facts list.
 - move is valid only to a listed exit direction.
+- challenge MUST carry direction and refer to a listed exit that is locked by a trial.
 - use_item MUST carry resource.id taken verbatim from the facts.
 - use_ability MUST carry action.detail taken verbatim from the acting member's listed abilities; never emit an ability nobody has, and never invent a target_id.
 - "Recent exchanges" (if present) are context for references like "it" — they are NOT facts; trust the room facts over anything remembered.
@@ -67,6 +70,9 @@ The event can be one of two shapes:
 - combat     a hostile fight must be overcome by strength or endurance
 - puzzle     a mental riddle, mechanism, or rune must be solved
 - challenge  a physical feat must be passed by agility or dexterity
+
+## Trials
+When the event is a trial attempt (a locked exit being forced/solved/passed), dramatize the obstacle and its outcome — the strain of the effort, the moment it yields or holds. The trial's required stat flavors how it feels (see Stat meanings). Draw on any descriptive detail given but make it your own; do not recite numbers or mechanics (no "rolled 17 + 8").
 
 ## Room types (what each space is and what it holds)
 - normal      an ordinary stretch of the dungeon — rubble, echoes, a passing threat
