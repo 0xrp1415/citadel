@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, character system, the full ability system, and the AI DM (wired into the run loop as judge + narrator) are implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: the shared move economy, combat encounters with enemies, dice/DC resolution, XP/level-up rewards, loot & equipment progression, and the merchant (stasis).
+> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, character system, the full ability system, the AI DM (wired into the run loop as judge + narrator), and trial challenges (dice/DC resolution for locked passages) are implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: the shared move economy, combat encounters with enemies, full dice/DC resolution for combat, XP/level-up rewards, loot & equipment progression, and the merchant (stasis).
 
 
 ## Overview
@@ -25,7 +25,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 
 - **Free-text play** — actions are typed as plain text and structured into a verdict (`execute` / `not_allowed` / `ambiguous`); an `execute` verdict carries up to 6 structured actions (`intent` / `target_type` / `target_id` / `direction` / `resource`)
 - **Shared action economy** — *planned*: the party gets **3 moves per round**, split however they choose; AGI breaks ties, unspent moves are lost, then monsters respond. Not yet built — actions currently resolve one at a time with no move budget.
-- **Deterministic resolution** — *planned*: every roll is `d20 + stat + modifiers` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**. The seeded engine and action resolvers exist, but the dice/DC roll isn't wired in yet.
+- **Deterministic resolution** — every roll is `d20 + stat` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**. The dice/DC roll is wired in for trial challenges (locked passages); combat/encounter rolls are *planned*.
 - **Characters** — STR / DEX / INT / WIS / AGI / HP; every stat starts at base 20, plus **50 bonus points** (max 40 per stat at creation), with race as a cosmetic choice
 - **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; bosses grant bonus points to survivors. XP/level-up and boss bonuses are *planned* — XP is never awarded in a run yet.
 - **Stasis rooms** — *planned*: a rest checkpoint at the start of every dungeon: restore HP, spend stat points, and visit the merchant (buy/sell gear for gold). Not yet built.
@@ -74,9 +74,9 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Secret rooms (new dead-end branches, not converted normals; count by map size)
 - [x] Passage events (combat / puzzle / challenge with stat requirements, depth-scaled)
 - [x] Map serialization and frontend rendering (BFS grid layout, pan/zoom, type coloring)
-- [ ] Dice roll resolution (d20 + stat + modifiers vs DC)
-- [ ] DC calculation system — events carry a `difficulty`/`requiredStat` but the engine never rolls against a DC
-- [x] Action resolution pipeline (move / look / rest / use_item / use_ability resolvers)
+- [x] Dice roll resolution for trial challenges (d20 + stat vs DC) — combat/encounter rolls pending
+- [x] DC calculation for trial challenges (`8 + difficulty × 4`) — events carry `difficulty`/`requiredStat`/`flavor_text` and are resolved via `challenge`
+- [x] Action resolution pipeline (move / look / rest / use_item / use_ability / challenge resolvers)
 
 ### Equipment & gear
 - [x] Data model (weapon / armor slots, consumables, gold)
