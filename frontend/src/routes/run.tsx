@@ -632,8 +632,9 @@ function CurrentRoomCard({ room, onOpenMap }: { room: RoomData; onOpenMap: () =>
   const roomIndex = currentRoom.index
 
   const exits = map?.rooms[roomIndex]?.exits
+  console.log('exits:', exits, 'map:', map)
   const neighbors = exits
-    ? (['left', 'right', 'up', 'down'] as const)
+    ? (['north', 'south', 'east', 'west'] as const)
         .filter((d) => exits[d] !== null)
         .map((d) => {
           const exit = exits[d]!
@@ -693,12 +694,12 @@ interface MapRoom {
 
 function computePositions(map: MapPublicJSON): Map<number, { x: number; y: number }> {
   const offsets: Record<string, { dx: number; dy: number }> = {
-    up:    { dx: 0, dy: -1 },
-    down:  { dx: 0, dy: 1 },
-    left:  { dx: -1, dy: 0 },
-    right: { dx: 1, dy: 0 },
+    north: { dx: 0, dy: -1 },
+    south: { dx: 0, dy: 1 },
+    west:  { dx: -1, dy: 0 },
+    east:  { dx: 1, dy: 0 },
   }
-  const dirs = ['up', 'down', 'left', 'right'] as const
+  const dirs = ['north', 'south', 'east', 'west'] as const
 
   const positions = new Map<number, { x: number; y: number }>()
   positions.set(map.startRoomIndex, { x: 0, y: 0 })
@@ -790,7 +791,7 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
     const roomNode = nodeByIndex.get(i)
     if (!roomNode) continue
     const room = map.rooms[i]!
-    for (const dir of ['left', 'right', 'up', 'down'] as const) {
+    for (const dir of ['north', 'south', 'east', 'west'] as const) {
       const exit = room.exits[dir]
       if (!exit) continue
       const targetIdx = exit.targetRoomId

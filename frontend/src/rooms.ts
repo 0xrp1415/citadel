@@ -90,10 +90,10 @@ export interface RoomPublicJSON {
   isCurrentRoom: boolean
   isVisited: boolean
   exits: {
-    left: ExitPublicJSON | null
-    right: ExitPublicJSON | null
-    up: ExitPublicJSON | null
-    down: ExitPublicJSON | null
+    north: ExitPublicJSON | null
+    south: ExitPublicJSON | null
+    east: ExitPublicJSON | null
+    west: ExitPublicJSON | null
   }
 }
 
