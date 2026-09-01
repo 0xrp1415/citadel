@@ -3,6 +3,8 @@ export class PlayerProgression {
     private experience: number = 0;
     private skill_points: number;
 
+    private levelChangeListeners: Array<(newLevel: number) => void> = [];
+
     constructor(initialSkillPoints: number = 50) {
         this.skill_points = initialSkillPoints;
     }
@@ -23,11 +25,19 @@ export class PlayerProgression {
         while (this.experience >= this.NextLevelExperience) {
             this.experience = this.experience - this.NextLevelExperience;
             this.level += 1;
+            this.levelChangeListeners.forEach(listener => listener(this.level));
             this.skill_points += 3;
         }
         return true;
     }
 
+    public onLevelChange(listener: (newLevel: number) => void): void {
+        this.levelChangeListeners.push(listener);
+    }
+
+    public removeLevelChangeListener(listener: (newLevel: number) => void): void {
+        this.levelChangeListeners = this.levelChangeListeners.filter(l => l !== listener);
+    }
     public get Level(): number {
         return this.level;
     }
