@@ -21,7 +21,6 @@ export async function resolveMove(action: DmAction, actor: Player | undefined, c
     if (!passage.Unlocked) {
         const event = passage.Event;
         if (event) {
-            console.log(`resolveMove: passage to ${action.direction} is locked by event`, event);
             await narrate(`The passage to the ${action.direction} is locked. It is barred by a ${event.type} trial demanding ${event.requiredStat}.`);
             return;
         }

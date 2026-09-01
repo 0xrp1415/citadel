@@ -9,7 +9,6 @@ import { resolveAbility } from "./resolve-ability.js";
 import { resolveChallenge } from "./resolve-challenge.js";
 
 export async function resolveAction(action: DmAction, actor: Player | undefined, context: IGameRoomContext, narrate: (message: string) => Promise<void>): Promise<void> {
-    console.log(`Resolving action: ${action.intent} for actor: ${actor?.Identity.name ?? "unknown"}`);
     switch (action.intent) {
         case "move": await resolveMove(action, actor, context, narrate); break;
         case "rest": await resolveRest(action, actor, context, narrate); break;
