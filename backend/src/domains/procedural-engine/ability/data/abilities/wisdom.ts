@@ -13,7 +13,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Ward",
         flavor_text: "A protective shimmer against harm.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { wisdom: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -22,7 +21,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Heightened Senses",
         flavor_text: "Perception sharpened with speed.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { wisdom: 22, agility: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -31,7 +29,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Nullify",
         flavor_text: "Dispel and dampen hostile magic.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { wisdom: 30 },
         targeting: { kind: "enemy", scope: "single" },
@@ -40,7 +37,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Insightful Eye",
         flavor_text: "A keener instinct for what lies beneath.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { wisdom: 18 },
         targeting: { kind: "self", scope: "self" },
@@ -49,7 +45,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Aegis Ward",
         flavor_text: "Profound spiritual resilience made shield.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -58,7 +53,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Sanctify",
         flavor_text: "Purge poisons, curses, and lingering harm.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { wisdom: 24 },
         targeting: { kind: "ally", scope: "single" },
@@ -67,7 +61,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Mystic Resilience",
         flavor_text: "Genuine insight and perception.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 4,
         minimumStats: { wisdom: 28 },
         targeting: { kind: "self", scope: "self" },
@@ -76,7 +69,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Blind Sight",
         flavor_text: "Perceive even what the eyes miss.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { wisdom: 24, agility: 22 },
         targeting: { kind: "self", scope: "self" },
@@ -85,7 +77,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "True Vision",
         flavor_text: "Pierce the veil to uncover hidden things.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
         targeting: { kind: "any", scope: "self" },
@@ -94,7 +85,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Avatar's Grace",
         flavor_text: "Insight raised to a divine clarity.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 12,
         minimumStats: { wisdom: 55, intelligence: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -103,7 +93,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Runic Shield",
         flavor_text: "A shield woven against magical assaults.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { wisdom: 22 },
         targeting: { kind: "ally", scope: "single" },
@@ -112,7 +101,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Clarity",
         flavor_text: "A calm, unclouded mind.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { wisdom: 16 },
         targeting: { kind: "self", scope: "self" },
@@ -121,7 +109,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Counter-Ward",
         flavor_text: "Turn back hostile enchantments.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
         targeting: { kind: "enemy", scope: "single" },
@@ -130,7 +117,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Mental Fortress",
         flavor_text: "A mind that cannot be broken.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -139,7 +125,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Banish",
         flavor_text: "Sever and suppress a hostile presence.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { wisdom: 44 },
         targeting: { kind: "enemy", scope: "single" },
@@ -148,7 +133,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Serene Focus",
         flavor_text: "Insight steadied by endurance.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { wisdom: 30, dexterity: 24 },
         targeting: { kind: "self", scope: "self" },
@@ -157,7 +141,6 @@ export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Prescience",
         flavor_text: "Glimpse the path ahead and prepare for it.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { wisdom: 50 },
         targeting: { kind: "any", scope: "self" },

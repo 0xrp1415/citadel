@@ -11,7 +11,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Swift Step",
         flavor_text: "Quicker on the feet.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { agility: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -20,7 +19,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Blink",
         flavor_text: "Instant reposition to safety.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { agility: 22 },
         targeting: { kind: "self", scope: "self" },
@@ -29,7 +27,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Wind Dancer",
         flavor_text: "Blinding speed that turns aside blows.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { agility: 32 },
         targeting: { kind: "self", scope: "self" },
@@ -38,7 +35,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Cat's Grace",
         flavor_text: "Genuine swiftness and poise.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { agility: 18 },
         targeting: { kind: "self", scope: "self" },
@@ -47,7 +43,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Phantom Rush",
         flavor_text: "A blur of motion striking like a ghost.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { agility: 40 },
         targeting: { kind: "enemy", scope: "single" },
@@ -56,7 +51,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Dodge",
         flavor_text: "Evade the next incoming blow.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { agility: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -65,7 +59,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Featherlight",
         flavor_text: "Swift and nimble footwork.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { agility: 26, dexterity: 22 },
         targeting: { kind: "self", scope: "self" },
@@ -74,7 +67,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Shadow Walk",
         flavor_text: "Move unseen past hazard or trial.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { agility: 34 },
         targeting: { kind: "any", scope: "self" },
@@ -83,7 +75,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Blur",
         flavor_text: "Genuine swiftness that disorients foes.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { agility: 24 },
         targeting: { kind: "self", scope: "self" },
@@ -92,7 +83,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Zephyr's Edge",
         flavor_text: "The speed of the wind itself made weapon.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 10,
         minimumStats: { agility: 50 },
         targeting: { kind: "enemy", scope: "single" },
@@ -101,7 +91,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Sprint",
         flavor_text: "A burst of haste for travel.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { agility: 16 },
         targeting: { kind: "self", scope: "self" },
@@ -110,7 +99,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Gale Leap",
         flavor_text: "A leap borne on the wind.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { agility: 26 },
         targeting: { kind: "self", scope: "self" },
@@ -119,7 +107,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Momentary Ghost",
         flavor_text: "Become speed itself, slipping past harm.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { agility: 44 },
         targeting: { kind: "self", scope: "self" },
@@ -128,7 +115,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Fleet Foot",
         flavor_text: "A modest edge of quickness.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { agility: 14 },
         targeting: { kind: "self", scope: "self" },
@@ -137,7 +123,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Tumble",
         flavor_text: "Roll and weave through the fight.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { agility: 24 },
         targeting: { kind: "self", scope: "self" },
@@ -146,7 +131,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Storm Reflex",
         flavor_text: "Endurance married to swiftness.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { agility: 34, dexterity: 28 },
         targeting: { kind: "self", scope: "self" },
@@ -155,7 +139,6 @@ export const AGILITY_ABILITIES: IAbility[] = [
     {
         name: "Untouchable",
         flavor_text: "Speed wrapped in resilience.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { agility: 55, hp: 30 },
         targeting: { kind: "self", scope: "self" },

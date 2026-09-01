@@ -12,7 +12,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Vital Spark",
         flavor_text: "A wellspring of extra vitality.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { hp: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -21,7 +20,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Mend Wounds",
         flavor_text: "Knit an ally's wounds back together.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { hp: 20 },
         targeting: { kind: "ally", scope: "single" },
@@ -30,7 +28,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Second Wind",
         flavor_text: "Catch your breath and press on.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { hp: 25 },
         targeting: { kind: "self", scope: "self" },
@@ -39,7 +36,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Heart of Oak",
         flavor_text: "A hearty, well-fleshed body.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { hp: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -48,7 +44,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Regeneration",
         flavor_text: "Persistent, slow recovery.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { hp: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -57,7 +52,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Burst Heal",
         flavor_text: "A powerful surge of healing.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { hp: 25 },
         targeting: { kind: "ally", scope: "single" },
@@ -66,7 +60,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Fortifying Aura",
         flavor_text: "Remarkable vitality that shields the party.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { hp: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -75,7 +68,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Drain Life",
         flavor_text: "Steal life from a foe to mend yourself.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { hp: 30 },
         targeting: { kind: "enemy", scope: "single" },
@@ -84,7 +76,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Lay on Hands",
         flavor_text: "A devoted touch that closes wounds.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { hp: 22 },
         targeting: { kind: "ally", scope: "single" },
@@ -93,7 +84,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Rejuvenate",
         flavor_text: "Restore the vigor of the whole party.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { hp: 35 },
         targeting: { kind: "ally", scope: "all" },
@@ -102,7 +92,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Lifeblood",
         flavor_text: "Titanic staying power.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { hp: 60 },
         targeting: { kind: "self", scope: "self" },
@@ -111,7 +100,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Warding Light",
         flavor_text: "Grant a temporary shield to the party.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { hp: 55 },
         targeting: { kind: "ally", scope: "all" },
@@ -120,7 +108,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Titan Vitality",
         flavor_text: "An almost monstrous pool of health.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { hp: 80 },
         targeting: { kind: "self", scope: "self" },
@@ -129,7 +116,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Divine Aegis",
         flavor_text: "Vitality bound with endurance.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 12,
         minimumStats: { hp: 90, dexterity: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -138,7 +124,6 @@ export const HP_ABILITIES: IAbility[] = [
     {
         name: "Phoenix Renewal",
         flavor_text: "A glorious renewal that mends and revives.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 12,
         minimumStats: { hp: 100 },
         targeting: { kind: "ally", scope: "all" },

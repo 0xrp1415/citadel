@@ -10,7 +10,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Arcane Bolt",
         flavor_text: "A crackling bolt of raw arcane force.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { intelligence: 20 },
         targeting: { kind: "enemy", scope: "single" },
@@ -19,7 +18,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Mage's Focus",
         flavor_text: "Genuine arcane acuity.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "self", scope: "self" },
@@ -28,7 +26,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Fireball",
         flavor_text: "A roaring sphere of fire that erupts on impact.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "enemy", scope: "all" },
@@ -37,7 +34,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Grand Arcana",
         flavor_text: "Profound mastery of the arcane.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { intelligence: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -46,7 +42,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Chain Lightning",
         flavor_text: "Lightning that leaps from foe to foe.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
         targeting: { kind: "enemy", scope: "all" },
@@ -55,7 +50,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Learned Lore",
         flavor_text: "A sharper mind for magic.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { intelligence: 18 },
         targeting: { kind: "self", scope: "self" },
@@ -64,7 +58,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Frost Nova",
         flavor_text: "A burst of chilling frost that clings and slows.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { intelligence: 22 },
         targeting: { kind: "enemy", scope: "all" },
@@ -73,7 +66,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Spell Mastery",
         flavor_text: "Arcane might joined to insight.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 7,
         minimumStats: { intelligence: 36, wisdom: 26 },
         targeting: { kind: "self", scope: "self" },
@@ -82,7 +74,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Arcane Surge",
         flavor_text: "Overcharge your next spell to frightening heights.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -91,7 +82,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Archmage's Wrath",
         flavor_text: "An archmage's mind unleashed.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 10,
         minimumStats: { intelligence: 50 },
         targeting: { kind: "self", scope: "self" },
@@ -100,7 +90,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Eldritch Rupture",
         flavor_text: "A raw tear that ignores all protection.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
         targeting: { kind: "enemy", scope: "single" },
@@ -109,7 +98,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Acute Intellect",
         flavor_text: "A keen and nimble mind.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { intelligence: 16 },
         targeting: { kind: "self", scope: "self" },
@@ -118,7 +106,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Disintegrate",
         flavor_text: "Unmake a foe with a withering ray.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { intelligence: 44 },
         targeting: { kind: "enemy", scope: "single" },
@@ -127,7 +114,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Enchant Weapon",
         flavor_text: "Breathe arcane power into a weapon.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
         targeting: { kind: "ally", scope: "single" },
@@ -136,7 +122,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Spell Echo",
         flavor_text: "Cast the last spell a second time, free.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
         targeting: { kind: "self", scope: "self" },
@@ -145,7 +130,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Transcendent Mind",
         flavor_text: "Raw power tempered by profound insight.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { intelligence: 50, wisdom: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -154,7 +138,6 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Meteorshock",
         flavor_text: "Call destruction from the sky.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 10,
         minimumStats: { intelligence: 46 },
         targeting: { kind: "enemy", scope: "all" },

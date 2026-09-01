@@ -1,9 +1,4 @@
-import { IStats } from "../entity/stats.js";
-
-export interface IAbilityRarity {
-    name: string;
-    rarityLevel: number;
-}
+import { IStats } from "../combat/stats.js";
 
 export type TAbilityTargetKind = "enemy" | "ally" | "self" | "any";
 export type TAbilityTargetScope = "single" | "all" | "self";
@@ -17,7 +12,6 @@ export interface IAbility {
     name: string;
     flavor_text: string;
 
-    rarity: IAbilityRarity;
     minimumLevel: number;
     minimumStats: Partial<Record<keyof IStats, number>>;
 

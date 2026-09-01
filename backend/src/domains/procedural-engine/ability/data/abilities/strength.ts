@@ -12,7 +12,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Crushing Blow",
         flavor_text: "A heavy, bone-crushing strike.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { strength: 20 },
         targeting: { kind: "enemy", scope: "single" },
@@ -21,7 +20,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Berserker's Rage",
         flavor_text: "Fury traded for raw power.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 4,
         minimumStats: { strength: 28 },
         targeting: { kind: "self", scope: "self" },
@@ -30,7 +28,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Mountain Smash",
         flavor_text: "A sweeping blow that hits everyone nearby.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 2,
         minimumStats: { strength: 22 },
         targeting: { kind: "enemy", scope: "all" },
@@ -39,7 +36,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Titan's Grip",
         flavor_text: "Unrelenting brute force.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { strength: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -48,7 +44,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Shieldbreaker",
         flavor_text: "A strike aimed to shatter defenses.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { strength: 24 },
         targeting: { kind: "enemy", scope: "single" },
@@ -57,7 +52,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Iron Thews",
         flavor_text: "Brawn that also thickens the flesh.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { strength: 18 },
         targeting: { kind: "self", scope: "self" },
@@ -66,7 +60,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Skullcrack",
         flavor_text: "A brutal head-strike that can lay low a foe.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { strength: 26 },
         targeting: { kind: "enemy", scope: "single" },
@@ -75,7 +68,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Juggernaut",
         flavor_text: "Power tempered by a sturdy frame.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 7,
         minimumStats: { strength: 36, dexterity: 26 },
         targeting: { kind: "self", scope: "self" },
@@ -84,7 +76,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Siege Breaker",
         flavor_text: "Power built to shatter whatever stands before you.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "enemy", scope: "single" },
@@ -93,7 +84,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Colossus Might",
         flavor_text: "The strength of a giant made manifest.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 10,
         minimumStats: { strength: 50 },
         targeting: { kind: "self", scope: "self" },
@@ -102,7 +92,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Rend",
         flavor_text: "A wound that bleeds long after.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { strength: 22 },
         targeting: { kind: "enemy", scope: "single" },
@@ -111,7 +100,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Boulder Charge",
         flavor_text: "A full-body charge that knocks foes over.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "enemy", scope: "single" },
@@ -120,7 +108,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "War Cry",
         flavor_text: "A bellow that galvanizes the party.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { strength: 32 },
         targeting: { kind: "ally", scope: "all" },
@@ -129,7 +116,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Pulverize",
         flavor_text: "A mountain-crushing blow of pure force.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { strength: 42 },
         targeting: { kind: "enemy", scope: "single" },
@@ -138,7 +124,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Unbreakable",
         flavor_text: "Brawn and bulk in equal measure.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { strength: 52, hp: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -147,7 +132,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Blood Pact",
         flavor_text: "Siphon the enemy's life to fuel your blows.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { strength: 30 },
         targeting: { kind: "enemy", scope: "single" },
@@ -156,7 +140,6 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Grit",
         flavor_text: "A small edge of raw strength.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { strength: 15 },
         targeting: { kind: "self", scope: "self" },

@@ -11,7 +11,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Stoneguard",
         flavor_text: "A firmer, denser body that shrugs off harm.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -20,7 +19,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Taunt & Hold",
         flavor_text: "Draw all eyes and brace against the blow.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
         targeting: { kind: "enemy", scope: "all" },
@@ -29,7 +27,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Fortress Stance",
         flavor_text: "A rock-steady defensive stance.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { dexterity: 30 },
         targeting: { kind: "self", scope: "self" },
@@ -38,7 +35,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Deflect",
         flavor_text: "Turn aside the next incoming blow.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -47,7 +43,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Bulwark",
         flavor_text: "A bulwark of unnatural endurance.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -56,7 +51,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Enduring Body",
         flavor_text: "A hardened, enduring physique.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { dexterity: 24, hp: 20 },
         targeting: { kind: "self", scope: "self" },
@@ -65,7 +59,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Iron Wall",
         flavor_text: "Absorb a furious amount of punishment at once.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 4,
         minimumStats: { dexterity: 28 },
         targeting: { kind: "self", scope: "self" },
@@ -74,7 +67,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Vanguard",
         flavor_text: "Step in harm's way for a companion.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
         targeting: { kind: "ally", scope: "single" },
@@ -83,7 +75,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Sentinel's Fortitude",
         flavor_text: "Vitality bound with endurance.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 11,
         minimumStats: { dexterity: 50, hp: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -92,7 +83,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Counterstrike",
         flavor_text: "A lightning riposte after enduring a hit.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
         targeting: { kind: "enemy", scope: "single" },
@@ -101,7 +91,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Aegis",
         flavor_text: "A mighty shield of pure endurance.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
         targeting: { kind: "self", scope: "self" },
@@ -110,7 +99,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Thick Skin",
         flavor_text: "A body accustomed to hardship.",
-        rarity: { name: "common", rarityLevel: 1 },
         minimumLevel: 1,
         minimumStats: { dexterity: 18 },
         targeting: { kind: "self", scope: "self" },
@@ -119,7 +107,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Hold the Line",
         flavor_text: "Guard the whole party behind a shared bulwark.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { dexterity: 44 },
         targeting: { kind: "ally", scope: "all" },
@@ -128,7 +115,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Immovable",
         flavor_text: "Unbreakable solidity against any assault.",
-        rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
         targeting: { kind: "self", scope: "self" },
@@ -137,7 +123,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Iron Flesh",
         flavor_text: "A dense body that resists harm.",
-        rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { dexterity: 30, hp: 15 },
         targeting: { kind: "self", scope: "self" },
@@ -146,7 +131,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Reckoning",
         flavor_text: "Turn the enemy's own force back upon them.",
-        rarity: { name: "legendary", rarityLevel: 5 },
         minimumLevel: 12,
         minimumStats: { dexterity: 55 },
         targeting: { kind: "enemy", scope: "single" },
@@ -155,7 +139,6 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Bastion's Care",
         flavor_text: "Mend wounds while holding the wall.",
-        rarity: { name: "uncommon", rarityLevel: 2 },
         minimumLevel: 3,
         minimumStats: { dexterity: 24 },
         targeting: { kind: "ally", scope: "single" },
