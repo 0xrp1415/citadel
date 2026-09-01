@@ -1,7 +1,7 @@
 import { GameRoomState } from "../base/index.js";
 import { ActionHandler } from "../../utils/types.js";
 import { playerConnect, playerDisconnect } from "../base/shared-actions.js";
-import { changePlayerStats, confirmPlayerAction, resolvePlayerAction } from "./player-actions.js";
+import { changePlayerStats, confirmPlayerAction, equipItem, resolvePlayerAction, unequipItem, useInventoryItem } from "./player-actions.js";
 import { enterRoom } from "./enter-room.js";
 
 export class InRunState extends GameRoomState {
@@ -11,6 +11,9 @@ export class InRunState extends GameRoomState {
         player_connect:    playerConnect(this.context),
         player_disconnect: playerDisconnect(this.context),
         change_player_stats: changePlayerStats(this.context),
+        equip_item:          equipItem(this.context),
+        unequip_item:        unequipItem(this.context),
+        use_inventory_item:  useInventoryItem(this.context),
         player_play:       resolvePlayerAction(this.context),
         player_confirm:    confirmPlayerAction(this.context),
     };
