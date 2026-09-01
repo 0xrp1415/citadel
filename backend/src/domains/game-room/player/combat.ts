@@ -1,51 +1,31 @@
-import { EntityCombat, IStats, sumStats } from "../../procedural-engine/index.js";
+import { EntityCombat, IStats } from "../../procedural-engine/index.js";
 import { BASE_MAX_PLAYER_BASE_STAT, BASE_PLAYER_HP } from "./defaults.js";
-import { PlayerRunEntityArmors, PlayerRunEntityArmor, PlayerRunEntityWeapon } from "./types.js";
 
 export class PlayerCombat extends EntityCombat {
-    private armors: PlayerRunEntityArmors;
-    private weapon: PlayerRunEntityWeapon;
-    private level: number;
 
+    private readonly initialBaseStats: IStats;
+    
     constructor(
         initialStats: IStats,
-        initialArmorStats: PlayerRunEntityArmors,
-        initialWeaponStats: PlayerRunEntityWeapon,
-        level: number
+        current_level: number,
     ) {
-        super(initialStats, BASE_PLAYER_HP, level);
-        this.armors = initialArmorStats;
-        this.weapon = initialWeaponStats;
-        this.level = level;
+        super(initialStats, BASE_PLAYER_HP, current_level);
+        this.initialBaseStats = { ...initialStats };
     }
 
-    public increaseBaseStatBy(stat: keyof IStats, amount: number, level: number = this.level): boolean {
-        return super.increaseBaseStatBy(stat, amount, this.getMaxBaseStat(level));
+    public onLevelChange(new_level: number): void {
+        this.StatMultiplier = new_level;    
     }
 
-    public setLevel(level: number): void {
-        this.level = level;
-        this.setStatMultiplier(level);
-    }
-
-    public setArmorStatFor(gear: keyof PlayerRunEntityArmors, armorStat: PlayerRunEntityArmor): void {
-        this.armors[gear] = armorStat;
-    }
-
-    public setWeaponStat(weaponStat: PlayerRunEntityWeapon): void {
-        this.weapon = weaponStat;
-    }
-
-    public get ArmorStats(): PlayerRunEntityArmors {
-        return this.armors;
-    }
-
-    public get WeaponStats(): PlayerRunEntityWeapon {
-        return this.weapon;
-    }
-
-    public get StatChangeByArmor(): IStats {
-        return sumStats(Object.values(this.armors).map((armor) => armor.stats));
+    public increaseBaseStatBy(stat: keyof IStats, amount: number, level: number): boolean {
+        if (this.Stats[stat] + amount > this.getMaxBaseStat(level)) {
+            return false;
+        }
+        if (this.Stats[stat] + amount < this.initialBaseStats[stat]) {
+            return false;
+        }
+        super.Stats = { ...this.Stats, [stat]: this.Stats[stat] + amount };
+        return true;
     }
 
     public getMaxBaseStat(level: number): number {

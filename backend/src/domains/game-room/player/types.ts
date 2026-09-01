@@ -1,4 +1,4 @@
-import { IEntityHealthStatGetters, IStats } from "../../procedural-engine/index.js";
+import { IEntityHealthStatGetters, IStats, IRarity, TGearSlot } from "../../procedural-engine/index.js";
 
 export type PlayerStatus =
     | "joined"
@@ -14,6 +14,7 @@ export type PlayerRunEntityArmor = {
     description: string;
     gear_position: "head" | "chest" | "greaves";
     armorName: string;
+    rarity: IRarity;
 };
 
 export type PlayerRunEntityWeapon = {
@@ -21,35 +22,55 @@ export type PlayerRunEntityWeapon = {
     weaponName: string;
     description: string;
     stats: IStats;
+    rarity: IRarity;
 };
 
 export type PlayerRunEntityArmors = {
-    head: PlayerRunEntityArmor;
-    chest: PlayerRunEntityArmor;
-    greaves: PlayerRunEntityArmor;
+    head: PlayerRunEntityArmor | null;
+    chest: PlayerRunEntityArmor | null;
+    greaves: PlayerRunEntityArmor | null;
+};
+
+export type PlayerRunEntityItem = {
+    id: string;
+    name: string;
+    description: string;
+    type: "gear" | "consumable" | "scroll";
+    rarity: IRarity;
+    stackable: boolean;
+    buyPrice: number;
+    slot?: TGearSlot;
+    stats?: IStats;
+    required_stats?: IStats;
+    ability?: string;
+    ability_description?: string;
 };
 
 export type ConsumableType = "health_potion" | "gold_key" | "lockpick";
 export type Consumables = Record<ConsumableType, number>;
 
-export const DefaultConsumablesGenerator = (): Consumables => ({
-    health_potion: 0,
-    gold_key: 0,
-    lockpick: 0
-});
+export type PlayerRunEntityAbility = {
+    name: string;
+    flavor_text: string;
+    description: string;
+    targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self" };
+    minimumLevel: number;
+    minimumStats: Partial<Record<keyof IStats, number>>;
+};
 
 export type PlayerRunEntityJSON = {
     base_stats: IStats;
     stat_modifiers: IStats;
     armor_stats: PlayerRunEntityArmors;
-    weapon_stats: PlayerRunEntityWeapon;
+    weapon_stats: PlayerRunEntityWeapon | null;
     level: number;
     experience: number;
     skill_points: number;
     gold: number;
     consumables: Consumables;
+    items: PlayerRunEntityItem[];
     health: IEntityHealthStatGetters;
-    abilities: string[];
+    abilities: PlayerRunEntityAbility[];
 };
 
 export interface PlayerPublic {

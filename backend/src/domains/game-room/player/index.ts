@@ -1,4 +1,4 @@
-import { DefaultArmourGenerator, DefaultWeaponGenerator, DefaultGold, DefaultSkillPoints } from "./defaults.js";
+import { DefaultGold, DefaultSkillPoints, DefaultStartingInventory, toArmorPiece, toItem, toWeapon } from "./defaults.js";
 import { PlayerAbilities } from "./abilities.js";
 import { PlayerCombat } from "./combat.js";
 import { PlayerIdentity } from "./identity.js";
@@ -11,7 +11,7 @@ import { IAbility } from "../../procedural-engine/index.js";
 
 export class Player {
     public status: PlayerStatus;
-    
+
     private readonly identity: PlayerIdentity;
     private socket: PlayerSocket;
     private combat: PlayerCombat;
@@ -27,12 +27,17 @@ export class Player {
         this.progression = new PlayerProgression(DefaultSkillPoints());
         this.combat = new PlayerCombat(
             { hp: 20, strength: 20, dexterity: 20, intelligence: 20, wisdom: 20, agility: 20 },
-            DefaultArmourGenerator(),
-            DefaultWeaponGenerator(),
             this.progression.Level
         );
+        
+        this.progression.onLevelChange((newLevel) => this.combat.onLevelChange(newLevel));
+        
         this.inventory = new PlayerInventory(DefaultGold());
+        for (const item of DefaultStartingInventory()) {
+            this.inventory.addItem(item);
+        }
         this.abilities = new PlayerAbilities(startingAbilities);
+
     }
 
     public get Socket(): PlayerSocket {
@@ -53,21 +58,28 @@ export class Player {
     public get Abilities(): PlayerAbilities {
         return this.abilities;
     }
-    
+
     // --- JSON ---
     public get JSON(): PlayerRunEntityJSON {
+        const gear = this.inventory.Gear;
+        const weapon = this.inventory.Weapon;
         return {
             base_stats: this.combat.BaseStats,
             stat_modifiers: this.combat.StatModifiers,
-            armor_stats: this.combat.ArmorStats,
-            weapon_stats: this.combat.WeaponStats,
+            armor_stats: {
+                head: gear.head ? toArmorPiece(gear.head, "head") : null,
+                chest: gear.chest ? toArmorPiece(gear.chest, "chest") : null,
+                greaves: gear.greaves ? toArmorPiece(gear.greaves, "greaves") : null,
+            },
+            weapon_stats: weapon ? toWeapon(weapon) : null,
             level: this.progression.Level,
             experience: this.progression.Experience,
             skill_points: this.progression.SkillPoints,
             gold: this.inventory.Gold,
             consumables: this.inventory.Consumables,
+            items: this.inventory.Inventory.map(toItem),
             health: this.combat.Health,
-            abilities: this.abilities.Names,
+            abilities: this.abilities.Details,
         };
     }
 

@@ -1,36 +1,181 @@
-import { ConsumableType, Consumables, DefaultConsumablesGenerator } from "./types.js";
+import { EntityCombat, IStats, IGear, IItem } from "../../procedural-engine/index.js";
+import { PlayerAbilities } from "./abilities.js";
+import { Consumables } from "./types.js";
+
+export const POTION_HEAL = 20;
+
+const GEAR_SLOTS = ["head", "chest", "greaves"] as const;
+export type TGearSlot = "weapon" | "head" | "chest" | "greaves";
 
 export class PlayerInventory {
     private gold: number;
-    private consumables: Consumables;
 
-    constructor(initialGold: number = 200) {
+    private inventory: IItem[];
+
+    private gear: Record<"head" | "chest" | "greaves", IGear | null>;
+    private weapon: IGear | null;
+
+    constructor(initialGold: number = 0) {
         this.gold = initialGold;
-        this.consumables = DefaultConsumablesGenerator();
-    }
-
-    public changeGoldBy(amt: number): boolean {
-        if (this.gold + amt < 0) {
-            return false;
-        }
-        this.gold += amt;
-        return true;
-    }
-
-    public ChangeConsumable(consumable: ConsumableType, quantity: number): boolean {
-        const newCount = this.consumables[consumable] + quantity;
-        if (newCount < 0) {
-            return false;
-        }
-        this.consumables[consumable] = newCount;
-        return true;
+        this.inventory = [];
+        this.gear = { head: null, chest: null, greaves: null };
+        this.weapon = null;
     }
 
     public get Gold(): number {
         return this.gold;
     }
 
+    public get Inventory(): IItem[] {
+        return this.inventory;
+    }
+
+    public get Gear(): Record<"head" | "chest" | "greaves", IGear | null> {
+        return this.gear;
+    }
+
+    public get Weapon(): IGear | null {
+        return this.weapon;
+    }
+
+
+    public addGold(amount: number): void {
+        this.gold += amount;
+    }
+
+    public removeGold(amount: number): boolean {
+        if (this.gold < amount) {
+            return false;
+        }
+        this.gold -= amount;
+        return true;
+    }
+
+
+    public addItem(item: IItem): void {
+        this.inventory.push(item);
+    }
+
+    public removeItem(item: IItem): boolean {
+        const index = this.inventory.indexOf(item);
+        if (index === -1) {
+            return false;
+        }
+        this.inventory.splice(index, 1);
+        return true;
+    }
+
+    public CountOf(id: string): number {
+        let count = 0;
+        for (const item of this.inventory) {
+            if (item.id === id) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public get Consumables(): Consumables {
-        return this.consumables;
+        return {
+            health_potion: this.CountOf("health_potion"),
+            gold_key: this.CountOf("gold_key"),
+            lockpick: this.CountOf("lockpick"),
+        };
+    }
+
+    private EquipGear(gear: IGear, stats: IStats, entity: EntityCombat): boolean {
+        const required = gear.metadata.required_stats;
+        for (const stat of Object.keys(required) as (keyof IStats)[]) {
+            if (stats[stat] < required[stat]) {
+                return false;
+            }
+        }
+
+        if (gear.metadata.slot === "weapon") {
+            const previous = this.weapon;
+            if (previous) {
+                previous.metadata.onUnequip(entity);
+                this.inventory.push(previous);
+            }
+            this.weapon = gear;
+            gear.metadata.onEquip(entity);
+        } else if (GEAR_SLOTS.indexOf(gear.metadata.slot) !== -1) {
+            const slot = gear.metadata.slot;
+            const previous = this.gear[slot];
+            if (previous) {
+                previous.metadata.onUnequip(entity);
+                this.inventory.push(previous);
+            }
+            this.gear[slot] = gear;
+            gear.metadata.onEquip(entity);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    public Equip(stats: IStats, index: number, entity: EntityCombat): boolean {
+        if (index < 0 || index >= this.inventory.length) {
+            return false;
+        }
+        const item = this.inventory[index];
+        if (!item || item.type !== "gear") {
+            return false;
+        }
+        if (!this.EquipGear(item, stats, entity)) {
+            return false;
+        }
+        this.inventory.splice(index, 1);
+        return true;
+    }
+
+    public Unequip(slot: TGearSlot, entity: EntityCombat): boolean {
+        if (slot === "weapon") {
+            if (!this.weapon) {
+                return false;
+            }
+            this.weapon.metadata.onUnequip(entity);
+            this.inventory.push(this.weapon);
+            this.weapon = null;
+            return true;
+        }
+        const piece = this.gear[slot];
+        if (!piece) {
+            return false;
+        }
+        piece.metadata.onUnequip(entity);
+        this.inventory.push(piece);
+        this.gear[slot] = null;
+        return true;
+    }
+
+    public useItem(id: string, entity: EntityCombat, abilities?: PlayerAbilities): boolean {
+        if (id === "health_potion") {
+            const index = this.inventory.findIndex(
+                (item) => item.id === "health_potion" && item.type === "consumable"
+            );
+            if (index === -1) {
+                return false;
+            }
+            this.inventory.splice(index, 1);
+            entity.changeHealthBy(POTION_HEAL);
+            return true;
+        }
+        if (abilities) {
+            const index = this.inventory.findIndex(
+                (item) => item.id === id && item.type === "scroll"
+            );
+            if (index === -1) {
+                return false;
+            }
+            const scroll = this.inventory[index];
+            if (!scroll || scroll.type !== "scroll") {
+                return false;
+            }
+            this.inventory.splice(index, 1);
+            abilities.learn(scroll.metadata.ability);
+            return true;
+        }
+        return this.CountOf(id) > 0;
     }
 }
