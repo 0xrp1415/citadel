@@ -1,4 +1,4 @@
-import { IStats } from "./entity/stats.js";
+import { IStats } from "./combat/stats.js";
 
 export type Direction = "north" | "south" | "east" | "west";
 

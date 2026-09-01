@@ -1,5 +1,5 @@
 import { IAbilityPassiveComponent } from "../../interface.js";
-import { IStats } from "../../../entity/stats.js";
+import { IStats } from "../../../combat/stats.js";
 
 function negate(mods: Partial<IStats>): Partial<IStats> {
     const out: Partial<IStats> = {};

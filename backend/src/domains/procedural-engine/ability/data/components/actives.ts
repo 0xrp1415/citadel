@@ -1,5 +1,5 @@
 import { IAbilityActiveComponent, IAbilityActor, IAbilityActiveContext } from "../../interface.js";
-import { IStats } from "../../../entity/stats.js";
+import { IStats } from "../../../combat/stats.js";
 
 function names(actors: IAbilityActor[]): string {
     return actors.map((a) => a.name).join(", ");

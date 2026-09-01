@@ -1,5 +1,5 @@
 import { MulberryRNG } from "../rng.js";
-import { IStats } from "../entity/stats.js";
+import { IStats } from "../combat/stats.js";
 import { IPassageEvent, Passage, PassageEventType } from "../passage.js";
 import { Room } from "../room.js";
 import {
