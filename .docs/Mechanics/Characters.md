@@ -14,10 +14,10 @@ How a character is built at the staging grounds.
 │  ─ 20 base in every stat ─                   │
 │  ─ +50 bonus points (max 40 per stat) ─      │
 │                                              │
-│  WEAPON     bat (find/buy)                   │
-│  HEAD       wooden helmet (find/buy)         │
-│  CHEST      wooden chestplate (find/buy)     │
-│  GREAVES    wooden greaves (find/buy)        │
+│  WEAPON     — empty (find/buy)               │
+│  HEAD       — empty (find/buy)               │
+│  CHEST      — empty (find/buy)               │
+│  GREAVES    — empty (find/buy)               │
 └──────────────────────────────────────────────┘
 ```
 
@@ -41,7 +41,7 @@ How a character is built at the staging grounds.
 - **Base 20** in every stat — no stat starts below it
 - **50 bonus points** — allocated freely to match playstyle
 - **Cap** — no stat may exceed **40 at creation**; the cap rises +1 per stat per level ([[Mechanics/Leveling]])
-- **Gear** — every character starts with a bat and three armor pieces (wooden helmet, chestplate, greaves) (see [[Mechanics/Equipment]])
+- **Gear** — no gear at start; weapons and armor are found or bought during the run, then equipped from the inventory (see [[Mechanics/Equipment]])
 - **Gold** — every character starts with **200 gold**, spent at the merchant ([[Mechanics/Stasis]])
 
 See also: [[Mechanics/Mechanics]] · [[Mechanics/Resolution]]
