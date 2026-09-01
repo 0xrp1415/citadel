@@ -1,34 +1,8 @@
 import { DmAction } from "../../../../../dungeon-master/schema/actions/action.js";
 import { Player } from "../../../../player/index.js";
 import { IGameRoomContext } from "../../interface/index.js";
-import { getAbilityByName, IAbilityActiveContext, IAbilityRoomGate, Passage } from "../../../../../procedural-engine/index.js";
+import { getAbilityByName, IAbilityActiveContext } from "../../../../../procedural-engine/index.js";
 import { PlayerAbilityActor } from "./ability-actor.js";
-
-function buildGate(context: IGameRoomContext): IAbilityRoomGate | null {
-    const room = context.Map.CurrentRoom;
-    if (!room) return null;
-
-    const directions = ["left", "right", "up", "down"] as const;
-    for (const direction of directions) {
-        const passage: Passage | null = room.exits[direction];
-        if (passage && !passage.Unlocked && passage.Event) {
-            const event = passage.Event;
-            const gate: IAbilityRoomGate = {
-                direction,
-                type: event.type,
-                requiredStat: event.requiredStat,
-                difficulty: event.difficulty,
-                opened: false,
-                open: () => {
-                    passage.unlock();
-                    gate.opened = true;
-                },
-            };
-            return gate;
-        }
-    }
-    return null;
-}
 
 export async function resolveAbility(
     action: DmAction,
@@ -36,8 +10,6 @@ export async function resolveAbility(
     context: IGameRoomContext,
     narrate: (message: string) => Promise<void>,
 ): Promise<void> {
-    console.log("resolveAbility called with action:", action, "actor:", actor?.Identity.name);
-    console.log(action)
     if (!actor) return;
     const name = actor.Identity.name;
     const abilityName = action.detail;
@@ -94,14 +66,11 @@ export async function resolveAbility(
         targets = allies.length > 0 ? allies : [actorHandle];
     }
 
-    const gate = ability.targeting.kind === "enemy" ? buildGate(context) : null;
-
     const abilityContext: IAbilityActiveContext = {
         actor: actorHandle,
         allies,
         targets,
         targeting: ability.targeting,
-        gate,
     };
 
     const reports: string[] = [];

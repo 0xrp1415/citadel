@@ -5,7 +5,7 @@ import {
     Stagger,
     Damage,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const DEXTERITY_ABILITIES: IAbility[] = [
     {

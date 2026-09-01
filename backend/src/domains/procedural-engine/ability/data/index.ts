@@ -1,2 +1,2 @@
 export * from "./abilities/index.js";
-export * from "./ability/components/index.js";
+export * from "./components/index.js";

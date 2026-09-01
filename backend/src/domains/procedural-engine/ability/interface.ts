@@ -13,15 +13,6 @@ export interface IAbilityTargeting {
     scope: TAbilityTargetScope;
 }
 
-export interface IAbilityRoomGate {
-    direction: string;
-    type: "combat" | "puzzle" | "challenge" | null;
-    requiredStat: keyof IStats | null;
-    difficulty: number;
-    opened: boolean;
-    open(): void;
-}
-
 export interface IAbility {
     name: string;
     flavor_text: string;
@@ -60,7 +51,6 @@ export interface IAbilityActiveContext {
     allies: IAbilityActor[];
     targets: IAbilityActor[];
     targeting: IAbilityTargeting;
-    gate: IAbilityRoomGate | null;
 }
 
 export interface IAbilityPassiveContext {

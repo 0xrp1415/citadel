@@ -7,7 +7,7 @@ import {
     RevealSecret,
     ArcaneDamage,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const WISDOM_ABILITIES: IAbility[] = [
     {

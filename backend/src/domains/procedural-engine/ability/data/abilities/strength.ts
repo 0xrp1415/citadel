@@ -4,10 +4,9 @@ import {
     BuffStrength,
     Stagger,
     Stun,
-    UnlockGate,
     DrainLife,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const STRENGTH_ABILITIES: IAbility[] = [
     {
@@ -84,12 +83,12 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Siege Breaker",
-        flavor_text: "Power built to tear open gates.",
+        flavor_text: "Power built to shatter whatever stands before you.",
         rarity: { name: "rare", rarityLevel: 3 },
         minimumLevel: 5,
         minimumStats: { strength: 30 },
-        targeting: { kind: "any", scope: "self" },
-        components: [UnlockGate()],
+        targeting: { kind: "enemy", scope: "single" },
+        components: [Damage(26)],
     },
     {
         name: "Colossus Might",

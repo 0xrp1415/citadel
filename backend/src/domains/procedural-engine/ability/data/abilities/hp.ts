@@ -6,7 +6,7 @@ import {
     Revive,
     Cleanse,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const HP_ABILITIES: IAbility[] = [
     {

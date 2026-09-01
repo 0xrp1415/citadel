@@ -4,7 +4,7 @@ import {
     Heal,
     BuffIntelligence,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {

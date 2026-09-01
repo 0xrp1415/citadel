@@ -4,9 +4,8 @@ import {
     Damage,
     BuffAgility,
     RevealSecret,
-    UnlockGate,
     statBonus,
-} from "../ability/components/index.js";
+} from "../components/index.js";
 
 export const AGILITY_ABILITIES: IAbility[] = [
     {
@@ -119,12 +118,12 @@ export const AGILITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Momentary Ghost",
-        flavor_text: "Phase through a locked gate, briefly.",
+        flavor_text: "Become speed itself, slipping past harm.",
         rarity: { name: "epic", rarityLevel: 4 },
         minimumLevel: 9,
         minimumStats: { agility: 44 },
-        targeting: { kind: "any", scope: "self" },
-        components: [UnlockGate()],
+        targeting: { kind: "self", scope: "self" },
+        components: [BuffAgility(12)],
     },
     {
         name: "Fleet Foot",
