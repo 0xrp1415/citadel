@@ -2,7 +2,7 @@ import { DmAction } from "../../../../../dungeon-master/schema/actions/action.js
 import { Player } from "../../../../player/index.js";
 import { IGameRoomContext } from "../../interface/index.js";
 import { getAbilityByName, IAbilityActiveContext } from "../../../../../procedural-engine/index.js";
-import { PlayerAbilityActor } from "./ability-actor.js";
+import { PlayerAbilityActor } from "../../helpers/ability/actor.js";
 
 export async function resolveAbility(
     action: DmAction,
