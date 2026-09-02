@@ -24,7 +24,7 @@ export function Damage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Strikes the target with overwhelming force.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.level);
+            const amount = scaled(basePower, ctx.actor.scale_factor);
             const hit = ctx.targets.length ? names(ctx.targets) : ctx.actor.name;
             ctx.targets.forEach((t) => t.TakeDamage(amount));
             return `dealt ${amount} damage to ${hit}`;
@@ -37,7 +37,7 @@ export function ArcaneDamage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Unleashes crackling magical force.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.level) + 4;
+            const amount = scaled(basePower, ctx.actor.scale_factor) + 4;
             ctx.targets.forEach((t) => t.TakeDamage(amount));
             return `arcane blast seared ${names(ctx.targets)} for ${amount} damage`;
         },
@@ -49,7 +49,7 @@ export function Heal(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Mends wounds and restores vigor.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.level);
+            const amount = scaled(basePower, ctx.actor.scale_factor);
             const actual = recipients(ctx);
             actual.forEach((a) => a.Heal(amount));
             return `healed ${names(actual)} for ${amount}`;
@@ -157,7 +157,7 @@ export function DrainLife(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Steals life from a foe to mend the caster.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.level);
+            const amount = scaled(basePower, ctx.actor.scale_factor);
             ctx.targets.forEach((t) => t.TakeDamage(amount));
             ctx.targets.forEach(() => ctx.actor.Heal(Math.floor(amount * 0.5)));
             return `drained ${amount} life from ${names(ctx.targets)}, recovering health`;

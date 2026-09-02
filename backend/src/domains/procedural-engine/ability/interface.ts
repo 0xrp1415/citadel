@@ -29,7 +29,7 @@ export interface IAbilityComponentBase {
 
 export interface IAbilityActor {
     name: string;
-    level: number;
+    scale_factor: number;
     alive: boolean;
     stats: IStats;
     modifiers: IStats;

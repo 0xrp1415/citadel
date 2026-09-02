@@ -12,7 +12,7 @@ export class PlayerAbilityActor implements IAbilityActor {
         return this.player.Identity.name;
     }
 
-    public get level(): number {
+    public get scale_factor(): number {
         return this.player.Progression.Level;
     }
 
