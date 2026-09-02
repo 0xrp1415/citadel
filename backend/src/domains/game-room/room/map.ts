@@ -10,6 +10,12 @@ const ROOM_COUNT_PRESET = {
     large: { min: 35, max: 40, secrets: 4 },
 }
 
+const DIFFICULTY_RANK = {
+    easy: 1,
+    medium: 2,
+    hard: 3,
+} as const;
+
 export class GameRoomMap implements IGameRoomMapContext {
     private rng: MulberryRNG | null = null;
     private map: IMap | null = null;
@@ -21,7 +27,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         if (!this.rng)
             this.rng = MulberryRNG.fromSeed(config.seed);
 
-        this.map = generateMap(this.rng, this.RoomConfigToMapConfig(config));
+        this.map = generateMap(this.rng, this.RoomConfigToMapConfig(config), this.floor);
         this.currentRoomIndex = this.map.startRoomIndex;
     }
 
@@ -75,6 +81,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         return {
             maxRoomCount: room_count.max,
             minRoomCount: room_count.min,
+            dificulty: DIFFICULTY_RANK[config.difficulty],
             secretCount: room_count.secrets,
         };
     }

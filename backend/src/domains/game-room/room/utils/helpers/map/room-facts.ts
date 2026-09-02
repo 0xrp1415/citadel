@@ -38,6 +38,16 @@ export function buildRoomFactContext(
         `room: a "${currentRoom.type}" chamber${visited ? " that the party has seen before (visited: true)" : ""}.`
     );
 
+    const enemies = currentRoom.encounters?.enemies ?? [];
+    if (enemies.length > 0) {
+        lines.push("enemies:");
+        for (const enemy of enemies) {
+            lines.push(
+                `- ${enemy.name} (threat ${enemy.threatLevel}, ${enemy.currentHealth}/${enemy.maxHealth} hp): ${enemy.description}`
+            );
+        }
+    }
+
     const exits = deriveRoomExits(currentRoom.id, currentRoom.exits);
     const exitLines: string[] = [];
     for (const d of DIRS) {

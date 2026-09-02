@@ -8,12 +8,23 @@ export interface IExitPublicJSON {
     unlocked: boolean;
 }
 
+export interface IEnemyPublicJSON {
+    id: string;
+    name: string;
+    threatLevel: number;
+    currentHealth: number;
+    maxHealth: number;
+    alive: boolean;
+    description: string;
+}
+
 export interface IRoomPublicJSON {
     type: string;
     baseDifficulty: number;
     distanceBonus: number;
     isCurrentRoom: boolean;
     isVisited: boolean;
+    enemies: IEnemyPublicJSON[];
     exits: {
         north: IExitPublicJSON | null;
         south: IExitPublicJSON | null;

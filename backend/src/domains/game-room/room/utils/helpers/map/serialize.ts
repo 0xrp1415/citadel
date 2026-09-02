@@ -13,6 +13,15 @@ export function serializeMap(map: IMap, currentRoomIndex: number, visitedRooms: 
             distanceBonus: meta.distanceBonus,
             isCurrentRoom: roomId === currentRoomIndex,
             isVisited: visitedRooms.has(roomId),
+            enemies: (meta.encounters?.enemies ?? []).map((enemy) => ({
+                id: enemy.id,
+                name: enemy.name,
+                threatLevel: enemy.threatLevel,
+                currentHealth: enemy.currentHealth,
+                maxHealth: enemy.maxHealth,
+                alive: enemy.alive,
+                description: enemy.description,
+            })),
             exits: deriveRoomExits(roomId, meta.exits),
         };
     });
