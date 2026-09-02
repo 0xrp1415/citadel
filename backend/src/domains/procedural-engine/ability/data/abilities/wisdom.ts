@@ -12,6 +12,7 @@ import {
 export const WISDOM_ABILITIES: IAbility[] = [
     {
         name: "Ward",
+        id: "ward",
         flavor_text: "A protective shimmer against harm.",
         minimumLevel: 1,
         minimumStats: { wisdom: 20 },
@@ -20,6 +21,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Heightened Senses",
+        id: "heightened_senses",
         flavor_text: "Perception sharpened with speed.",
         minimumLevel: 2,
         minimumStats: { wisdom: 22, agility: 20 },
@@ -28,6 +30,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Nullify",
+        id: "nullify",
         flavor_text: "Dispel and dampen hostile magic.",
         minimumLevel: 5,
         minimumStats: { wisdom: 30 },
@@ -36,6 +39,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Insightful Eye",
+        id: "insightful_eye",
         flavor_text: "A keener instinct for what lies beneath.",
         minimumLevel: 1,
         minimumStats: { wisdom: 18 },
@@ -44,6 +48,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Aegis Ward",
+        id: "aegis_ward",
         flavor_text: "Profound spiritual resilience made shield.",
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
@@ -52,6 +57,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Sanctify",
+        id: "sanctify",
         flavor_text: "Purge poisons, curses, and lingering harm.",
         minimumLevel: 3,
         minimumStats: { wisdom: 24 },
@@ -60,6 +66,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Mystic Resilience",
+        id: "mystic_resilience",
         flavor_text: "Genuine insight and perception.",
         minimumLevel: 4,
         minimumStats: { wisdom: 28 },
@@ -68,6 +75,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Blind Sight",
+        id: "blind_sight",
         flavor_text: "Perceive even what the eyes miss.",
         minimumLevel: 3,
         minimumStats: { wisdom: 24, agility: 22 },
@@ -76,6 +84,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "True Vision",
+        id: "true_vision",
         flavor_text: "Pierce the veil to uncover hidden things.",
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
@@ -84,6 +93,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Avatar's Grace",
+        id: "avatars_grace",
         flavor_text: "Insight raised to a divine clarity.",
         minimumLevel: 12,
         minimumStats: { wisdom: 55, intelligence: 30 },
@@ -92,6 +102,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Runic Shield",
+        id: "runic_shield",
         flavor_text: "A shield woven against magical assaults.",
         minimumLevel: 2,
         minimumStats: { wisdom: 22 },
@@ -100,6 +111,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Clarity",
+        id: "clarity",
         flavor_text: "A calm, unclouded mind.",
         minimumLevel: 1,
         minimumStats: { wisdom: 16 },
@@ -108,6 +120,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Counter-Ward",
+        id: "counter_ward",
         flavor_text: "Turn back hostile enchantments.",
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
@@ -116,6 +129,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Mental Fortress",
+        id: "mental_fortress",
         flavor_text: "A mind that cannot be broken.",
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
@@ -124,6 +138,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Banish",
+        id: "banish",
         flavor_text: "Sever and suppress a hostile presence.",
         minimumLevel: 9,
         minimumStats: { wisdom: 44 },
@@ -132,6 +147,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Serene Focus",
+        id: "serene_focus",
         flavor_text: "Insight steadied by endurance.",
         minimumLevel: 5,
         minimumStats: { wisdom: 30, dexterity: 24 },
@@ -140,6 +156,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
     },
     {
         name: "Prescience",
+        id: "prescience",
         flavor_text: "Glimpse the path ahead and prepare for it.",
         minimumLevel: 11,
         minimumStats: { wisdom: 50 },

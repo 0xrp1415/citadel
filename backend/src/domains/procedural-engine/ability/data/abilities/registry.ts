@@ -17,10 +17,17 @@ const ABILITY_CATALOG: IAbility[] = [
     ...HP_ABILITIES,
 ];
 
+const ABILITY_BY_ID = new Map<string, IAbility>(
+    ABILITY_CATALOG.map((ability) => [ability.id, ability]),
+);
+
 const ABILITY_BY_NAME = new Map<string, IAbility>(
     ABILITY_CATALOG.map((ability) => [ability.name, ability]),
 );
 
+export function getAbilityById(id: string): IAbility | undefined {
+    return ABILITY_BY_ID.get(id);
+}
 
 export function getAbilityByName(name: string): IAbility | undefined {
     return ABILITY_BY_NAME.get(name);

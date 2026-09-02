@@ -9,6 +9,7 @@ export interface IAbilityTargeting {
 }
 
 export interface IAbility {
+    id: string;
     name: string;
     flavor_text: string;
 

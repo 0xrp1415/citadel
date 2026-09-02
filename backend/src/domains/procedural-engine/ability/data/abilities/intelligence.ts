@@ -9,6 +9,7 @@ import {
 export const INTELLIGENCE_ABILITIES: IAbility[] = [
     {
         name: "Arcane Bolt",
+        id: "arcane_bolt",
         flavor_text: "A crackling bolt of raw arcane force.",
         minimumLevel: 1,
         minimumStats: { intelligence: 20 },
@@ -17,6 +18,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Mage's Focus",
+        id: "mages_focus",
         flavor_text: "Genuine arcane acuity.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
@@ -25,6 +27,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Fireball",
+        id: "fireball",
         flavor_text: "A roaring sphere of fire that erupts on impact.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
@@ -33,6 +36,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Grand Arcana",
+        id: "grand_arcana",
         flavor_text: "Profound mastery of the arcane.",
         minimumLevel: 8,
         minimumStats: { intelligence: 40 },
@@ -41,6 +45,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Chain Lightning",
+        id: "chain_lightning",
         flavor_text: "Lightning that leaps from foe to foe.",
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
@@ -49,6 +54,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Learned Lore",
+        id: "learned_lore",
         flavor_text: "A sharper mind for magic.",
         minimumLevel: 1,
         minimumStats: { intelligence: 18 },
@@ -57,6 +63,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Frost Nova",
+        id: "frost_nova",
         flavor_text: "A burst of chilling frost that clings and slows.",
         minimumLevel: 2,
         minimumStats: { intelligence: 22 },
@@ -65,6 +72,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Spell Mastery",
+        id: "spell_mastery",
         flavor_text: "Arcane might joined to insight.",
         minimumLevel: 7,
         minimumStats: { intelligence: 36, wisdom: 26 },
@@ -73,6 +81,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Arcane Surge",
+        id: "arcane_surge",
         flavor_text: "Overcharge your next spell to frightening heights.",
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
@@ -81,6 +90,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Archmage's Wrath",
+        id: "archmages_wrath",
         flavor_text: "An archmage's mind unleashed.",
         minimumLevel: 10,
         minimumStats: { intelligence: 50 },
@@ -89,6 +99,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Eldritch Rupture",
+        id: "eldritch_rupture",
         flavor_text: "A raw tear that ignores all protection.",
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
@@ -97,6 +108,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Acute Intellect",
+        id: "acute_intellect",
         flavor_text: "A keen and nimble mind.",
         minimumLevel: 1,
         minimumStats: { intelligence: 16 },
@@ -105,6 +117,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Disintegrate",
+        id: "disintegrate",
         flavor_text: "Unmake a foe with a withering ray.",
         minimumLevel: 9,
         minimumStats: { intelligence: 44 },
@@ -113,6 +126,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Enchant Weapon",
+        id: "enchant_weapon",
         flavor_text: "Breathe arcane power into a weapon.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
@@ -121,6 +135,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Spell Echo",
+        id: "spell_echo",
         flavor_text: "Cast the last spell a second time, free.",
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
@@ -129,6 +144,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Transcendent Mind",
+        id: "transcendent_mind",
         flavor_text: "Raw power tempered by profound insight.",
         minimumLevel: 11,
         minimumStats: { intelligence: 50, wisdom: 30 },
@@ -137,6 +153,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
     },
     {
         name: "Meteorshock",
+        id: "meteorshock",
         flavor_text: "Call destruction from the sky.",
         minimumLevel: 10,
         minimumStats: { intelligence: 46 },

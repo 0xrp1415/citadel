@@ -11,6 +11,7 @@ import {
 export const HP_ABILITIES: IAbility[] = [
     {
         name: "Vital Spark",
+        id: "vital_spark",
         flavor_text: "A wellspring of extra vitality.",
         minimumLevel: 1,
         minimumStats: { hp: 20 },
@@ -19,6 +20,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Mend Wounds",
+        id: "mend_wounds",
         flavor_text: "Knit an ally's wounds back together.",
         minimumLevel: 1,
         minimumStats: { hp: 20 },
@@ -27,6 +29,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Second Wind",
+        id: "second_wind",
         flavor_text: "Catch your breath and press on.",
         minimumLevel: 2,
         minimumStats: { hp: 25 },
@@ -35,6 +38,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Heart of Oak",
+        id: "heart_of_oak",
         flavor_text: "A hearty, well-fleshed body.",
         minimumLevel: 3,
         minimumStats: { hp: 40 },
@@ -43,6 +47,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Regeneration",
+        id: "regeneration",
         flavor_text: "Persistent, slow recovery.",
         minimumLevel: 5,
         minimumStats: { hp: 30 },
@@ -51,6 +56,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Burst Heal",
+        id: "burst_heal",
         flavor_text: "A powerful surge of healing.",
         minimumLevel: 3,
         minimumStats: { hp: 25 },
@@ -59,6 +65,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Fortifying Aura",
+        id: "fortifying_aura",
         flavor_text: "Remarkable vitality that shields the party.",
         minimumLevel: 6,
         minimumStats: { hp: 40 },
@@ -67,6 +74,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Drain Life",
+        id: "drain_life",
         flavor_text: "Steal life from a foe to mend yourself.",
         minimumLevel: 5,
         minimumStats: { hp: 30 },
@@ -75,6 +83,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Lay on Hands",
+        id: "lay_on_hands",
         flavor_text: "A devoted touch that closes wounds.",
         minimumLevel: 2,
         minimumStats: { hp: 22 },
@@ -83,6 +92,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Rejuvenate",
+        id: "rejuvenate",
         flavor_text: "Restore the vigor of the whole party.",
         minimumLevel: 6,
         minimumStats: { hp: 35 },
@@ -91,6 +101,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Lifeblood",
+        id: "lifeblood",
         flavor_text: "Titanic staying power.",
         minimumLevel: 8,
         minimumStats: { hp: 60 },
@@ -99,6 +110,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Warding Light",
+        id: "warding_light",
         flavor_text: "Grant a temporary shield to the party.",
         minimumLevel: 9,
         minimumStats: { hp: 55 },
@@ -107,6 +119,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Titan Vitality",
+        id: "titan_vitality",
         flavor_text: "An almost monstrous pool of health.",
         minimumLevel: 11,
         minimumStats: { hp: 80 },
@@ -115,6 +128,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Divine Aegis",
+        id: "divine_aegis",
         flavor_text: "Vitality bound with endurance.",
         minimumLevel: 12,
         minimumStats: { hp: 90, dexterity: 30 },
@@ -123,6 +137,7 @@ export const HP_ABILITIES: IAbility[] = [
     },
     {
         name: "Phoenix Renewal",
+        id: "phoenix_renewal",
         flavor_text: "A glorious renewal that mends and revives.",
         minimumLevel: 12,
         minimumStats: { hp: 100 },

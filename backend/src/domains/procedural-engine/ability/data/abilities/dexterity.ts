@@ -10,6 +10,7 @@ import {
 export const DEXTERITY_ABILITIES: IAbility[] = [
     {
         name: "Stoneguard",
+        id: "stoneguard",
         flavor_text: "A firmer, denser body that shrugs off harm.",
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
@@ -18,6 +19,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Taunt & Hold",
+        id: "taunt_hold",
         flavor_text: "Draw all eyes and brace against the blow.",
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
@@ -26,6 +28,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Fortress Stance",
+        id: "fortress_stance",
         flavor_text: "A rock-steady defensive stance.",
         minimumLevel: 5,
         minimumStats: { dexterity: 30 },
@@ -34,6 +37,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Deflect",
+        id: "deflect",
         flavor_text: "Turn aside the next incoming blow.",
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
@@ -42,6 +46,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Bulwark",
+        id: "bulwark",
         flavor_text: "A bulwark of unnatural endurance.",
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
@@ -50,6 +55,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Enduring Body",
+        id: "enduring_body",
         flavor_text: "A hardened, enduring physique.",
         minimumLevel: 3,
         minimumStats: { dexterity: 24, hp: 20 },
@@ -58,6 +64,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Iron Wall",
+        id: "iron_wall",
         flavor_text: "Absorb a furious amount of punishment at once.",
         minimumLevel: 4,
         minimumStats: { dexterity: 28 },
@@ -66,6 +73,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Vanguard",
+        id: "vanguard",
         flavor_text: "Step in harm's way for a companion.",
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
@@ -74,6 +82,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Sentinel's Fortitude",
+        id: "sentinels_fortitude",
         flavor_text: "Vitality bound with endurance.",
         minimumLevel: 11,
         minimumStats: { dexterity: 50, hp: 40 },
@@ -82,6 +91,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Counterstrike",
+        id: "counterstrike",
         flavor_text: "A lightning riposte after enduring a hit.",
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
@@ -90,6 +100,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Aegis",
+        id: "aegis",
         flavor_text: "A mighty shield of pure endurance.",
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
@@ -98,6 +109,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Thick Skin",
+        id: "thick_skin",
         flavor_text: "A body accustomed to hardship.",
         minimumLevel: 1,
         minimumStats: { dexterity: 18 },
@@ -106,6 +118,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Hold the Line",
+        id: "hold_the_line",
         flavor_text: "Guard the whole party behind a shared bulwark.",
         minimumLevel: 9,
         minimumStats: { dexterity: 44 },
@@ -114,6 +127,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Immovable",
+        id: "immovable",
         flavor_text: "Unbreakable solidity against any assault.",
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
@@ -122,6 +136,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Iron Flesh",
+        id: "iron_flesh",
         flavor_text: "A dense body that resists harm.",
         minimumLevel: 5,
         minimumStats: { dexterity: 30, hp: 15 },
@@ -130,6 +145,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Reckoning",
+        id: "reckoning",
         flavor_text: "Turn the enemy's own force back upon them.",
         minimumLevel: 12,
         minimumStats: { dexterity: 55 },
@@ -138,6 +154,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
     },
     {
         name: "Bastion's Care",
+        id: "bastions_care",
         flavor_text: "Mend wounds while holding the wall.",
         minimumLevel: 3,
         minimumStats: { dexterity: 24 },

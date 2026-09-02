@@ -11,6 +11,7 @@ import {
 export const STRENGTH_ABILITIES: IAbility[] = [
     {
         name: "Crushing Blow",
+        id: "crushing_blow",
         flavor_text: "A heavy, bone-crushing strike.",
         minimumLevel: 1,
         minimumStats: { strength: 20 },
@@ -19,6 +20,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Berserker's Rage",
+        id: "berserkers_rage",
         flavor_text: "Fury traded for raw power.",
         minimumLevel: 4,
         minimumStats: { strength: 28 },
@@ -27,6 +29,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Mountain Smash",
+        id: "mountain_smash",
         flavor_text: "A sweeping blow that hits everyone nearby.",
         minimumLevel: 2,
         minimumStats: { strength: 22 },
@@ -35,6 +38,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Titan's Grip",
+        id: "titans_grip",
         flavor_text: "Unrelenting brute force.",
         minimumLevel: 8,
         minimumStats: { strength: 40 },
@@ -43,6 +47,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Shieldbreaker",
+        id: "shieldbreaker",
         flavor_text: "A strike aimed to shatter defenses.",
         minimumLevel: 3,
         minimumStats: { strength: 24 },
@@ -51,6 +56,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Iron Thews",
+        id: "iron_thews",
         flavor_text: "Brawn that also thickens the flesh.",
         minimumLevel: 1,
         minimumStats: { strength: 18 },
@@ -59,6 +65,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Skullcrack",
+        id: "skullcrack",
         flavor_text: "A brutal head-strike that can lay low a foe.",
         minimumLevel: 3,
         minimumStats: { strength: 26 },
@@ -67,6 +74,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Juggernaut",
+        id: "juggernaut",
         flavor_text: "Power tempered by a sturdy frame.",
         minimumLevel: 7,
         minimumStats: { strength: 36, dexterity: 26 },
@@ -75,6 +83,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Siege Breaker",
+        id: "siege_breaker",
         flavor_text: "Power built to shatter whatever stands before you.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
@@ -83,6 +92,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Colossus Might",
+        id: "colossus_might",
         flavor_text: "The strength of a giant made manifest.",
         minimumLevel: 10,
         minimumStats: { strength: 50 },
@@ -91,6 +101,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Rend",
+        id: "rend",
         flavor_text: "A wound that bleeds long after.",
         minimumLevel: 2,
         minimumStats: { strength: 22 },
@@ -99,6 +110,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Boulder Charge",
+        id: "boulder_charge",
         flavor_text: "A full-body charge that knocks foes over.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
@@ -107,6 +119,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "War Cry",
+        id: "war_cry",
         flavor_text: "A bellow that galvanizes the party.",
         minimumLevel: 6,
         minimumStats: { strength: 32 },
@@ -115,6 +128,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Pulverize",
+        id: "pulverize",
         flavor_text: "A mountain-crushing blow of pure force.",
         minimumLevel: 8,
         minimumStats: { strength: 42 },
@@ -123,6 +137,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Unbreakable",
+        id: "unbreakable",
         flavor_text: "Brawn and bulk in equal measure.",
         minimumLevel: 11,
         minimumStats: { strength: 52, hp: 40 },
@@ -131,6 +146,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Blood Pact",
+        id: "blood_pact",
         flavor_text: "Siphon the enemy's life to fuel your blows.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
@@ -139,6 +155,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
     },
     {
         name: "Grit",
+        id: "grit",
         flavor_text: "A small edge of raw strength.",
         minimumLevel: 1,
         minimumStats: { strength: 15 },
