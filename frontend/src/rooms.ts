@@ -74,6 +74,7 @@ export type Ability = {
 export interface PlayerRunEntity {
   base_stats: Stats
   stat_modifiers: Stats
+  temp_stat_modifiers: Stats
   armor_stats: ArmorSlots
   weapon_stats: WeaponPiece | null
   level: number

@@ -2134,6 +2134,14 @@
   color: var(--color-teal);
 }
 
+.filecard__mod--buff {
+  color: var(--color-rust);
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .filecard__note {
   font-family: var(--font-body);
   font-style: italic;

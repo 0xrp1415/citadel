@@ -63,6 +63,7 @@ export type PlayerRunEntityAbility = {
 export type PlayerRunEntityJSON = {
     base_stats: IStats;
     stat_modifiers: IStats;
+    temp_stat_modifiers: IStats;
     armor_stats: PlayerRunEntityArmors;
     weapon_stats: PlayerRunEntityWeapon | null;
     level: number;

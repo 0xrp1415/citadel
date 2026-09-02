@@ -1556,13 +1556,14 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionE
   const [activePocket, setActivePocket] = useState<PocketId>('consumables')
 
   const stats = player.stats
+  const temp = stats.temp_stat_modifiers
   const effectiveStats: Stats = {
-    hp: stats.base_stats.hp + stats.stat_modifiers.hp,
-    strength: stats.base_stats.strength + stats.stat_modifiers.strength,
-    dexterity: stats.base_stats.dexterity + stats.stat_modifiers.dexterity,
-    intelligence: stats.base_stats.intelligence + stats.stat_modifiers.intelligence,
-    wisdom: stats.base_stats.wisdom + stats.stat_modifiers.wisdom,
-    agility: stats.base_stats.agility + stats.stat_modifiers.agility,
+    hp: stats.base_stats.hp + stats.stat_modifiers.hp + temp.hp,
+    strength: stats.base_stats.strength + stats.stat_modifiers.strength + temp.strength,
+    dexterity: stats.base_stats.dexterity + stats.stat_modifiers.dexterity + temp.dexterity,
+    intelligence: stats.base_stats.intelligence + stats.stat_modifiers.intelligence + temp.intelligence,
+    wisdom: stats.base_stats.wisdom + stats.stat_modifiers.wisdom + temp.wisdom,
+    agility: stats.base_stats.agility + stats.stat_modifiers.agility + temp.agility,
   }
   const carried = stats.items ?? []
   const consumables = carried.filter((item) => item.type === 'consumable')
@@ -2716,6 +2717,7 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                   {SHEET_STATS.map(({ key, label }) => {
                     const base = stats.base_stats[key]
                     const mod = stats.stat_modifiers[key]
+                    const buff = stats.temp_stat_modifiers[key]
                     return (
                       <li className="sheet__row" key={key}>
                         <span className="sheet__row-k">{label}</span>
@@ -2725,6 +2727,9 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                             <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
                               {mod > 0 ? `+${mod}` : mod}
                             </span>
+                          )}
+                          {buff > 0 && (
+                            <span className="filecard__mod filecard__mod--buff">+{buff} active</span>
                           )}
                         </span>
                         <span className="sheet__row-steppers">
@@ -2760,7 +2765,8 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                   {DOSSIER_FIELDS.map((field) => {
                     const base = stats.base_stats[field.key]
                     const mod = stats.stat_modifiers[field.key]
-                    const total = base + mod
+                    const buff = stats.temp_stat_modifiers[field.key]
+                    const total = base + mod + buff
                     return (
                       <div className="filecard__stat" key={field.key}>
                         <dt className="filecard__k">{field.label}</dt>
@@ -2770,6 +2776,9 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                             <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
                               {mod > 0 ? `+${mod}` : mod}
                             </span>
+                          )}
+                          {buff > 0 && (
+                            <span className="filecard__mod filecard__mod--buff">+{buff} active</span>
                           )}
                         </dd>
                       </div>

@@ -26,7 +26,7 @@ export abstract class EntityCombat {
     }
 
     private resolveMaxHealth(): number {
-        const hpDelta = this.BaseStats.hp + this.StatModifiers.hp - this.baseStatsHp;
+        const hpDelta = this.BaseStats.hp + this.StatModifiers.hp + this.tempStatModifiers.hp - this.baseStatsHp;
         return this.baseMaxHealth + Math.floor(hpDelta);
     }
 
@@ -50,11 +50,15 @@ export abstract class EntityCombat {
     }
 
     public get EffectiveStats(): IStats {
-        const combined = sumStats([this.stats.Stats, this.statModifiers]);
+        const combined = sumStats([this.stats.Stats, this.statModifiers, this.tempStatModifiers]);
         for (const stat of Object.keys(combined) as (keyof IStats)[]) {
             combined[stat] = Math.floor(combined[stat] * this.statMultiplier);
         }
         return combined;
+    }
+
+    public get TempStatModifiers(): IStats {
+        return { ...this.tempStatModifiers };
     }
 
     public get Health(): IEntityHealthStatGetters {
@@ -87,20 +91,12 @@ export abstract class EntityCombat {
     }
 
     public applyTemporaryStatModifierBy(stat: keyof IStats, amount: number): void {
-        this.statModifiers = { ...this.statModifiers, [stat]: this.statModifiers[stat] + amount };
         this.tempStatModifiers = { ...this.tempStatModifiers, [stat]: this.tempStatModifiers[stat] + amount };
     }
 
     public clearTemporaryStatModifiers(): boolean {
-        const keys = Object.keys(this.tempStatModifiers) as (keyof IStats)[];
-        let cleared = false;
-        for (const stat of keys) {
-            const amount = this.tempStatModifiers[stat];
-            if (amount === 0) continue;
-            this.statModifiers = { ...this.statModifiers, [stat]: this.statModifiers[stat] - amount };
-            cleared = true;
-        }
-        if (cleared) this.tempStatModifiers = { ...NULL_STATS };
+        const cleared = Object.values(this.tempStatModifiers).some((amount) => amount !== 0);
+        this.tempStatModifiers = { ...NULL_STATS };
         return cleared;
     }
 }

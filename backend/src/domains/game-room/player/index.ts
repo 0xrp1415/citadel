@@ -66,6 +66,7 @@ export class Player {
         return {
             base_stats: this.combat.BaseStats,
             stat_modifiers: this.combat.StatModifiers,
+            temp_stat_modifiers: this.combat.TempStatModifiers,
             armor_stats: {
                 head: gear.head ? toArmorPiece(gear.head, "head") : null,
                 chest: gear.chest ? toArmorPiece(gear.chest, "chest") : null,
