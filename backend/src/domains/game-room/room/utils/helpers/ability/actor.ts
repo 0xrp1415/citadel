@@ -52,4 +52,13 @@ export class PlayerAbilityActor implements IAbilityActor {
             }
         }
     }
+
+    public ApplyTemporaryStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void {
+        for (const stat of Object.keys(modifiers) as (keyof IStats)[]) {
+            const value = modifiers[stat];
+            if (value !== undefined) {
+                this.player.Combat.applyTemporaryStatModifierBy(stat, value);
+            }
+        }
+    }
 }

@@ -8,10 +8,11 @@ export async function enterRoom(
     transition?: string,
 ): Promise<string> {
     ctx.Map.EnterRoom(targetRoomIndex);
+    const faded = ctx.Party.Players.some((p) => p.Combat.clearTemporaryStatModifiers());
     ctx.Broadcaster.RoomUpdate();
 
     const description = buildRoomFactContext(ctx.Map.Map, ctx.Map.CurrentRoom, ctx.Map.VisitedRooms, ctx.Party.Players, {
-        transition,
+        transition: faded && transition ? `${transition} — the surge of power fades with the crossing.` : transition,
     });
 
     if (narrate) {

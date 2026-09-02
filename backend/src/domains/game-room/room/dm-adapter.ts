@@ -1,6 +1,8 @@
 import { CreateDungeonMaster, IDungeonMaster, TRoomViewGenerator } from "../../dungeon-master/index.js";
 import { DmVerdict } from "../../dungeon-master/types.js";
+import { getAbilityById } from "../../procedural-engine/index.js";
 import { deriveRoomExits } from "./utils/helpers/map/exits.js";
+import { resolveAbilityTokens } from "./utils/helpers/ability-tokens.js";
 import { resolveMentions } from "./utils/helpers/mentions.js";
 import { IGameRoomDungeonMasterAdapter } from "./utils/interface/dm-adapter.js";
 import { IGameRoomContext } from "./utils/interface/index.js";
@@ -57,8 +59,11 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
     }
 
     public async Resolve(from: string, text: string): Promise<DmVerdict> {
-        const { stored, forDm } = resolveMentions(text, (id) =>
+        const { forDm: mentionsResolved } = resolveMentions(text, (id) =>
             this.context.Party.getPlayerByPublicId(id)?.Identity.name
+        );
+        const { forDm } = resolveAbilityTokens(mentionsResolved, (id) =>
+            getAbilityById(id)?.name
         );
         let result = await this.dungeonMaster.Resolve(forDm, this.speakerName(from));
         return result;
