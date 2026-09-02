@@ -2,7 +2,7 @@ import { EntityHealthStatImpl, IEntityHealthStatGetters } from "./health.js";
 import { EntityStats, IStats, NULL_STATS, sumStats } from "../stats.js";
 
 export abstract class EntityCombat {
-    private stats: EntityStats;
+    private base_stats: EntityStats;
     private health: EntityHealthStatImpl;
 
     private statModifiers: IStats;
@@ -16,7 +16,7 @@ export abstract class EntityCombat {
 
     constructor(base_stats: IStats, base_health: number, stat_multiplier: number = 1, armor_stats: IStats = NULL_STATS, weapon_stats: IStats = NULL_STATS, ability_stats: IStats = NULL_STATS) {
 
-        this.stats = new EntityStats(base_stats);
+        this.base_stats = new EntityStats(base_stats);
         this.baseMaxHealth = base_health;
         this.baseStatsHp = base_stats.hp;
         this.health = new EntityHealthStatImpl(base_health, undefined, () => this.resolveMaxHealth());
@@ -34,7 +34,7 @@ export abstract class EntityCombat {
     // Getters 
 
     public get Stats(): IStats {
-        return this.stats.Stats;
+        return this.base_stats.Stats;
     }
 
     public get StatMultiplier(): number {
@@ -42,7 +42,7 @@ export abstract class EntityCombat {
     }
 
     public get BaseStats(): IStats {
-        return this.stats.Stats;
+        return this.base_stats.Stats;
     }
 
     public get StatModifiers(): IStats {
@@ -50,7 +50,7 @@ export abstract class EntityCombat {
     }
 
     public get EffectiveStats(): IStats {
-        const combined = sumStats([this.stats.Stats, this.statModifiers, this.tempStatModifiers]);
+        const combined = sumStats([this.base_stats.Stats, this.statModifiers, this.tempStatModifiers]);
         for (const stat of Object.keys(combined) as (keyof IStats)[]) {
             combined[stat] = Math.floor(combined[stat] * this.statMultiplier);
         }
@@ -73,7 +73,7 @@ export abstract class EntityCombat {
     }
 
     protected set Stats(stats: IStats) {
-        this.stats.setStats(stats);
+        this.base_stats.setStats(stats);
     }
 
     protected set StatModifiers(stats: IStats) {
