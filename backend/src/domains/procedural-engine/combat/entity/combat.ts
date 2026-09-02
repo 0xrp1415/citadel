@@ -7,6 +7,8 @@ export abstract class EntityCombat {
 
     private statModifiers: IStats;
 
+    private tempStatModifiers: IStats = { ...NULL_STATS };
+
     private statMultiplier: number = 1;
 
     private readonly baseMaxHealth: number;
@@ -82,5 +84,23 @@ export abstract class EntityCombat {
 
     public increaseStatModifierBy(stat: keyof IStats, amount: number): void {
         this.statModifiers = { ...this.statModifiers, [stat]: this.statModifiers[stat] + amount };
+    }
+
+    public applyTemporaryStatModifierBy(stat: keyof IStats, amount: number): void {
+        this.statModifiers = { ...this.statModifiers, [stat]: this.statModifiers[stat] + amount };
+        this.tempStatModifiers = { ...this.tempStatModifiers, [stat]: this.tempStatModifiers[stat] + amount };
+    }
+
+    public clearTemporaryStatModifiers(): boolean {
+        const keys = Object.keys(this.tempStatModifiers) as (keyof IStats)[];
+        let cleared = false;
+        for (const stat of keys) {
+            const amount = this.tempStatModifiers[stat];
+            if (amount === 0) continue;
+            this.statModifiers = { ...this.statModifiers, [stat]: this.statModifiers[stat] - amount };
+            cleared = true;
+        }
+        if (cleared) this.tempStatModifiers = { ...NULL_STATS };
+        return cleared;
     }
 }

@@ -108,7 +108,7 @@ function Buff(stat: keyof IStats, amount: number): IAbilityActiveComponent {
         flavor_text: `Enhances the target's ${label}.`,
         onExecute: (ctx) => {
             const actual = recipients(ctx);
-            actual.forEach((a) => a.ApplyStatModifiers(modifiers));
+            actual.forEach((a) => a.ApplyTemporaryStatModifiers(modifiers));
             return `granted +${amount} ${label} to ${names(actual)}`;
         },
     };

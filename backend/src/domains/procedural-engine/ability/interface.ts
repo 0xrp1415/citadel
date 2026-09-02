@@ -39,6 +39,7 @@ export interface IAbilityActor {
     Heal(amount: number): void;
     TakeDamage(amount: number): void;
     ApplyStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void;
+    ApplyTemporaryStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void;
 }
 
 export interface IAbilityActiveContext {
