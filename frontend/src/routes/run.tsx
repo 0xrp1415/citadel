@@ -777,6 +777,7 @@ function Run() {
             onOpenGear={() => setGearOpen(true)}
           />
         )}
+        {room && <EnemiesCard room={room} />}
       </aside>
 
       {openPlayer && (
@@ -949,6 +950,52 @@ const ROOM_LABELS: Record<string, string> = {
   miniboss: 'Miniboss',
   treasure: 'Treasure',
   secret: 'Secret',
+}
+
+function EnemiesCard({ room }: { room: RoomData }) {
+  const enemies = room.map?.rooms[room.currentRoom.index]?.enemies ?? []
+
+  return (
+    <section className="board enemiespanel" aria-label="Enemies present">
+      <div className="board__head">
+        <span className="board__title">Enemies</span>
+        <span className="board__sub board__sub--muted">
+          {enemies.length === 0 ? 'none present' : `${enemies.length} present`}
+        </span>
+      </div>
+      {enemies.length === 0 ? (
+        <div className="enemiespanel__empty">The chamber is clear of foes.</div>
+      ) : (
+        <ul className="enemiespanel__list">
+          {enemies.map((enemy) => {
+            const pct =
+              enemy.maxHealth > 0 ? Math.round((enemy.currentHealth / enemy.maxHealth) * 100) : 0
+            return (
+              <li className="enemiespanel__enemy" key={enemy.id}>
+                <div className="enemiespanel__top">
+                  <span className="enemiespanel__name" title={enemy.description}>
+                    {enemy.name}
+                  </span>
+                  <span className="enemiespanel__tier">T{enemy.threatLevel}</span>
+                </div>
+                <div className="enemiespanel__hp">
+                  <span
+                    className={`enemiespanel__fill${
+                      !enemy.alive ? ' enemiespanel__fill--down' : ''
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="enemiespanel__hpnum">
+                  {enemy.alive ? `${enemy.currentHealth}/${enemy.maxHealth}` : 'down'}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
 }
 
 interface CurrentRoomCardProps {

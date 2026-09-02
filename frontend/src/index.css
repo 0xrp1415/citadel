@@ -2257,6 +2257,112 @@
   color: var(--color-ink);
 }
 
+.enemiespanel {
+  border-top: 0;
+  box-shadow: none;
+  background:
+    linear-gradient(var(--color-rust), var(--color-rust)) top / 100% 2px
+      no-repeat,
+    var(--color-paper);
+}
+
+.enemiespanel .board__head {
+  padding: 0.9rem 1.2rem 0.65rem;
+  border-bottom-color: rgba(196, 84, 42, 0.18);
+}
+
+.enemiespanel .board__title {
+  font-size: 1.15rem;
+  color: var(--color-rust);
+}
+
+.enemiespanel .board__sub {
+  color: var(--color-rust);
+  opacity: 0.55;
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+}
+
+.enemiespanel__empty {
+  padding: 0.9rem 1.2rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  color: var(--color-mist);
+}
+
+.enemiespanel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.enemiespanel__enemy {
+  padding: 0.65rem 1.2rem;
+  border-bottom: 1px solid rgba(90, 74, 52, 0.1);
+}
+
+.enemiespanel__enemy:last-child {
+  border-bottom: 0;
+}
+
+.enemiespanel__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.enemiespanel__name {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enemiespanel__tier {
+  font-family: var(--font-data);
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-rust);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.enemiespanel__hp {
+  margin-top: 0.35rem;
+  height: 0.3rem;
+  background: rgba(90, 74, 52, 0.12);
+  border-radius: 0;
+}
+
+.enemiespanel__fill {
+  display: block;
+  height: 100%;
+  background: var(--color-rust);
+}
+
+.enemiespanel__fill--down {
+  background: var(--color-mist);
+}
+
+.enemiespanel__hpnum {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--font-data);
+  font-size: 0.48rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--color-mist);
+}
+
 .currentroom__actions {
   display: flex;
   flex-direction: column;

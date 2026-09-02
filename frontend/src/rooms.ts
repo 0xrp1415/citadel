@@ -128,12 +128,23 @@ export interface RoomPublicJSON {
   distanceBonus: number
   isCurrentRoom: boolean
   isVisited: boolean
+  enemies: EnemyPublicJSON[]
   exits: {
     north: ExitPublicJSON | null
     south: ExitPublicJSON | null
     east: ExitPublicJSON | null
     west: ExitPublicJSON | null
   }
+}
+
+export interface EnemyPublicJSON {
+  id: string
+  name: string
+  threatLevel: number
+  currentHealth: number
+  maxHealth: number
+  alive: boolean
+  description: string
 }
 
 export interface MapPublicJSON {
