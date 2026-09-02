@@ -5,7 +5,7 @@ import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
 import type { Ability, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats } from '../rooms'
-import { changePlayerStatsBy, equipItem, sendAction, unequipItem, useInventoryItem as requestUseItem } from '../rooms'
+import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
@@ -198,6 +198,19 @@ function Run() {
       await unequipItem(roomToken, slot)
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'unequip failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken])
+
+  const handleSetActiveAbility = useCallback(async (id: string, slot: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    setActionError(null)
+    try {
+      await requestSetActiveAbility(roomToken, id, slot)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'assign failed')
     } finally {
       setBusy(false)
     }
@@ -585,6 +598,7 @@ function Run() {
           onClose={() => setGearOpen(false)}
           onUnequip={handleUnequipItem}
           actionError={actionError}
+          onSetActive={handleSetActiveAbility}
           onOpenInventory={() => {
             setGearOpen(false)
             setInventoryOpen(true)
@@ -1660,7 +1674,7 @@ function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ab
       {abilities.map((ability) => {
         const reqEntries = Object.entries(ability.minimumStats ?? {}).filter(([, v]) => v !== 0)
         return (
-          <li className="filecard__ability" key={ability.name}>
+          <li className="filecard__ability" key={ability.id}>
             <span className="filecard__ability-head">
               <span className="filecard__ability-name">{ability.name}</span>
               <span className="filecard__ability-target">
@@ -1679,6 +1693,212 @@ function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ab
           </li>
         )
       })}
+    </ul>
+  )
+}
+
+const ACTIVE_SLOT_COUNT = 4
+
+interface ActiveAbilityBarProps {
+  abilities: Ability[]
+  activeAbilities: { slot: number; id: string }[]
+  busy: boolean
+  onAssign: (id: string, slot: number) => void
+}
+
+function ActiveAbilityBar({ abilities, activeAbilities, busy, onAssign }: ActiveAbilityBarProps) {
+  const [pickingSlot, setPickingSlot] = useState<number | null>(null)
+  const slotRefs = useRef<Record<number, HTMLButtonElement | null>>({})
+  const [pickerPos, setPickerPos] = useState<{ left: number; top: number; width: number } | null>(null)
+
+  const pickingSlotRef = useRef<number | null>(null)
+  pickingSlotRef.current = pickingSlot
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && pickingSlotRef.current !== null) {
+        setPickingSlot(null)
+        setPickerPos(null)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  const activeAbilitiesOnly = abilities.filter((a) => a.active)
+
+  const assignedBySlot = new Map<number, Ability>()
+  for (const entry of activeAbilities) {
+    const ability = abilities.find((a) => a.id === entry.id)
+    if (ability) assignedBySlot.set(entry.slot, ability)
+  }
+
+  const slots = Array.from({ length: ACTIVE_SLOT_COUNT }, (_, i) => {
+    const ability = assignedBySlot.get(i)
+    return { slot: i, ability }
+  })
+
+  const openPicker = (slot: number) => {
+    if (pickingSlot === slot) {
+      setPickingSlot(null)
+      setPickerPos(null)
+      return
+    }
+    const el = slotRefs.current[slot]
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const gutter = 8
+    const width = Math.max(rect.width, 224)
+    const left = Math.max(gutter, Math.min(rect.left, window.innerWidth - width - gutter))
+    let top = rect.bottom + 4
+    if (top + 208 > window.innerHeight - gutter) top = Math.max(gutter, rect.top - 208 - 4)
+    setPickerPos({ left, top, width })
+    setPickingSlot(slot)
+  }
+
+  const choose = (slot: number, abilityId: string) => {
+    setPickerPos(null)
+    setPickingSlot(null)
+    onAssign(abilityId, slot)
+  }
+
+  const picking = pickingSlot !== null && pickerPos !== null
+    ? slots.find((s) => s.slot === pickingSlot) ?? null
+    : null
+  const pickerAbility = picking?.ability ?? null
+
+  return (
+    <section className="activebar">
+      <div className="activebar__head">
+        <span className="filecard__sub-heading">active abilities</span>
+        <span className="activebar__sub">at your fingertips · {activeAbilities.length}/{ACTIVE_SLOT_COUNT} bound</span>
+      </div>
+      <div className="activebar__slots">
+        {slots.map(({ slot, ability }) => {
+          const open = pickingSlot === slot
+          return (
+            <div className="activebar__slot" key={slot}>
+              <div className="activebar__cell-head">
+                <span className="activebar__num">slot {slot + 1}</span>
+                {ability && (
+                  <button
+                    type="button"
+                    className="activebar__clear"
+                    disabled={busy}
+                    onClick={() => choose(slot, '')}
+                    aria-label={`Unbind ${ability.name} from slot ${slot + 1}`}
+                    title="unbind"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <button
+                ref={(node) => {
+                  slotRefs.current[slot] = node
+                }}
+                type="button"
+                className={`activebar__cell${ability ? ' activebar__cell--bound' : ''}${open ? ' activebar__cell--open' : ''}`}
+                disabled={busy}
+                onClick={() => openPicker(slot)}
+                aria-expanded={open}
+                aria-haspopup="listbox"
+                aria-label={`Assign ability to slot ${slot + 1}`}
+              >
+                <span className="activebar__cell-name">
+                  {ability ? ability.name : 'unbound'}
+                </span>
+                <span className="activebar__cell-target">
+                  {ability ? `${ability.targeting.kind}/${ability.targeting.scope}` : '—'}
+                </span>
+              </button>
+            </div>
+          )
+        })}
+      </div>
+      <p className="activebar__hint">
+        bind your active abilities to these slots. each slot holds one ability.
+      </p>
+
+      {pickingSlot !== null && picking && pickerPos && createPortal(
+        <ul
+          className="activebar__pick"
+          role="listbox"
+          aria-label={`Pick ability for slot ${pickingSlot + 1}`}
+          style={{ position: 'fixed', left: pickerPos.left, top: pickerPos.top, width: pickerPos.width }}
+        >
+          <li
+            role="option"
+            aria-selected={pickerAbility === undefined}
+            className="activebar__pick-item activebar__pick-item--empty"
+            onMouseDown={(event) => {
+              event.preventDefault()
+              if (pickerAbility) choose(pickingSlot, '')
+            }}
+          >
+            clear this slot
+          </li>
+          {activeAbilitiesOnly.map((a) => {
+            const boundElsewhere = [...assignedBySlot.entries()].some(
+              ([otherSlot, assigned]) => otherSlot !== pickingSlot && assigned.id === a.id,
+            )
+            if (boundElsewhere) return null
+            return (
+              <li
+                role="option"
+                aria-selected={pickerAbility?.id === a.id}
+                key={a.id}
+                className={`activebar__pick-item${pickerAbility?.id === a.id ? ' activebar__pick-item--active' : ''}`}
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  choose(pickingSlot, a.id)
+                }}
+              >
+                <span className="activebar__pick-name">{a.name}</span>
+                <span className="activebar__pick-target">
+                  {a.targeting.kind}/{a.targeting.scope}
+                </span>
+              </li>
+            )
+          })}
+          {activeAbilitiesOnly.length === 0 && (
+            <li className="activebar__pick-item activebar__pick-item--empty">
+              no active abilities mastered yet
+            </li>
+          )}
+        </ul>,
+        document.body,
+      )}
+    </section>
+  )
+}
+
+interface ActiveAbilityListProps {
+  abilities: Ability[]
+  activeAbilities: { slot: number; id: string }[]
+}
+
+function ActiveAbilityList({ abilities, activeAbilities }: ActiveAbilityListProps) {
+  const byId = new Map<string, Ability>(abilities.map((a) => [a.id, a]))
+  const assigned = activeAbilities
+    .map(({ slot, id }) => ({ slot, ability: byId.get(id) }))
+    .filter((entry): entry is { slot: number; ability: Ability } => entry.ability !== undefined)
+    .sort((a, b) => a.slot - b.slot)
+
+  return (
+    <ul className="activebar__list">
+      {assigned.map(({ slot, ability }) => (
+        <li className="activebar__list-row" key={ability.id}>
+          <span className="activebar__num">slot {slot + 1}</span>
+          <span className="activebar__list-name">{ability.name}</span>
+          <span className="activebar__cell-target">
+            {ability.targeting.kind}/{ability.targeting.scope}
+          </span>
+        </li>
+      ))}
+      {assigned.length === 0 && (
+        <li className="filecard__empty">no active abilities bound</li>
+      )}
     </ul>
   )
 }
@@ -1786,6 +2006,7 @@ interface GearModalProps {
   busy: boolean
   onClose: () => void
   onUnequip: (slot: GearSlot) => void
+  onSetActive: (id: string, slot: number) => void
   onOpenInventory: () => void
   actionError: string | null
 }
@@ -1796,6 +2017,7 @@ function GearModal({
   busy,
   onClose,
   onUnequip,
+  onSetActive,
   onOpenInventory,
   actionError,
 }: GearModalProps) {
@@ -1804,7 +2026,7 @@ function GearModal({
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  const [activeSection, setActiveSection] = useState<'gear' | 'abilities'>('gear')
+  const [activeSection, setActiveSection] = useState<'gear' | 'active' | 'ability'>('gear')
 
   const stats = player.stats
 
@@ -1927,7 +2149,8 @@ function GearModal({
             {(
               [
                 { id: 'gear', label: 'Gear' },
-                { id: 'abilities', label: 'Abilities' },
+                { id: 'active', label: 'Active' },
+                { id: 'ability', label: 'Abilities' },
               ] as const
             ).map((tab) => (
               <button
@@ -2026,7 +2249,27 @@ function GearModal({
               )
             })()}
 
-            {activeSection === 'abilities' && (() => {
+            {activeSection === 'active' && (() => {
+              return (
+                <>
+                  {isSelf ? (
+                    <ActiveAbilityBar
+                      abilities={stats.abilities}
+                      activeAbilities={stats.activeAbilities ?? []}
+                      busy={busy}
+                      onAssign={onSetActive}
+                    />
+                  ) : (
+                    <ActiveAbilityList
+                      abilities={stats.abilities}
+                      activeAbilities={stats.activeAbilities ?? []}
+                    />
+                  )}
+                </>
+              )
+            })()}
+
+            {activeSection === 'ability' && (() => {
               return (
                 <>
                   <h3 className="filecard__sub-heading">
@@ -2094,7 +2337,7 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
 
   const xpPct = stats.level > 0 ? Math.round((stats.experience / (stats.level * 100)) * 100) : 0
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'gear' | 'abilities'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'gear' | 'active' | 'ability'>('stats')
 
   const canModifyStats =
     player.playerId === selfPlayerId && currentRoomType === "grace"
@@ -2231,7 +2474,8 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
               [
                 { id: 'stats', label: 'Stats' },
                 { id: 'gear', label: 'Gear' },
-                { id: 'abilities', label: 'Abilities' },
+                { id: 'active', label: 'Active' },
+                { id: 'ability', label: 'Abilities' },
               ] as const
             ).map((tab) => (
               <button
@@ -2360,7 +2604,14 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
               )
             })()}
 
-            {activeTab === 'abilities' && <AbilityList abilities={stats.abilities} />}
+            {activeTab === 'active' && (
+              <ActiveAbilityList
+                abilities={stats.abilities}
+                activeAbilities={stats.activeAbilities ?? []}
+              />
+            )}
+
+            {activeTab === 'ability' && <AbilityList abilities={stats.abilities} />}
           </div>
 
           <footer className="filecard__foot">

@@ -3362,3 +3362,187 @@
 .bag__main > .filecard__list {
   margin-top: 0.4rem;
 }
+
+.activebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  padding: 0.7rem 0.7rem 0.6rem;
+  border: 1px solid rgba(90, 74, 52, 0.18);
+  background: rgba(250, 245, 232, 0.55);
+}
+.activebar__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.activebar__head .filecard__sub-heading {
+  margin: 0;
+}
+.activebar__sub {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+.activebar__slots {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+.activebar__slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.activebar__cell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 1rem;
+}
+.activebar__num {
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+.activebar__clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-mist);
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.activebar__clear:hover {
+  color: var(--color-ink);
+}
+.activebar__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+  padding: 0.45rem 0.55rem;
+  border: 1px dashed rgba(31, 110, 96, 0.4);
+  background: rgba(241, 236, 224, 0.4);
+  text-align: left;
+  cursor: pointer;
+}
+.activebar__cell--bound {
+  border-style: solid;
+  border-left: 3px solid var(--color-teal);
+}
+.activebar__cell--open {
+  outline: 2px solid var(--color-teal);
+  border-color: var(--color-teal);
+}
+.activebar__cell:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+.activebar__cell-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.activebar__cell--bound .activebar__cell-name {
+  color: var(--color-teal);
+}
+.activebar__cell-target {
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+.activebar__pick {
+  z-index: 80;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  max-height: 13rem;
+  overflow-y: auto;
+  border: 1px solid rgba(60, 49, 40, 0.35);
+  background: var(--color-chalk);
+  box-shadow: 0 6px 18px rgba(60, 49, 40, 0.18);
+}
+.activebar__pick-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.68rem;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.activebar__pick-item--active {
+  background: rgba(31, 110, 96, 0.12);
+}
+.activebar__pick-item--empty {
+  justify-content: space-between;
+  font-style: italic;
+  color: var(--color-mist);
+  cursor: pointer;
+}
+.activebar__pick-item:hover {
+  background: rgba(31, 110, 96, 0.08);
+}
+.activebar__pick-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.activebar__pick-target {
+  font-family: var(--font-data);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  flex: none;
+}
+
+.activebar__pick-flag {
+  font-family: var(--font-data);
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+  flex: none;
+}
+.activebar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  list-style: none;
+}
+.activebar__list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(90, 74, 52, 0.18);
+  border-left: 3px solid var(--color-teal);
+  background: rgba(241, 236, 224, 0.4);
+}
+.activebar__list-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.activebar__hint {
+  margin: 0;
+  font-size: 0.58rem;
+  line-height: 1.4;
+  color: var(--color-mist);
+}

@@ -61,7 +61,9 @@ export type ConsumableType = 'health_potion' | 'gold_key' | 'lockpick'
 export type Consumables = Record<ConsumableType, number>
 
 export type Ability = {
+  id: string
   name: string
+  active: boolean
   flavor_text: string
   description: string
   targeting: { kind: 'enemy' | 'ally' | 'self' | 'any'; scope: 'single' | 'all' | 'self' }
@@ -82,6 +84,7 @@ export interface PlayerRunEntity {
   items: RunItem[]
   health: { MaxHealth: number; CurrentHealth: number }
   abilities: Ability[]
+  activeAbilities: { slot: number; id: string }[]
 }
 
 export interface PlayerPublic {
@@ -253,6 +256,14 @@ export async function useInventoryItem(roomToken: string, id: string): Promise<v
 
 export async function unequipItem(roomToken: string, slot: GearSlot): Promise<void> {
   await sendAction(roomToken, 'unequip_item', { slot })
+}
+
+export async function setActiveAbility(
+  roomToken: string,
+  id: string,
+  slot: number,
+): Promise<void> {
+  await sendAction(roomToken, 'set_active_ability', { id, slot })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {
