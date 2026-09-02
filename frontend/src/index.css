@@ -2557,6 +2557,12 @@
   font-weight: 400;
 }
 
+.record__mention--ability {
+  color: var(--color-rust);
+  background: color-mix(in srgb, var(--color-rust) 10%, transparent);
+  cursor: help;
+}
+
 .record__row--self {
   flex-direction: row-reverse;
   align-items: center;
@@ -2628,6 +2634,46 @@
 .composer__pick-item:hover {
   background: color-mix(in srgb, var(--color-teal) 12%, transparent);
   color: var(--color-teal);
+}
+
+.composer__pick-name {
+  color: var(--color-rust);
+  font-weight: 700;
+}
+
+.composer__pick-item--active .composer__pick-name {
+  color: var(--color-teal);
+}
+
+.composer__pick-target {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.record__ability-target {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  flex: none;
+}
+
+.record__ability-desc {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--color-ink);
+}
+
+.record__ability-req {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  font-size: 0.7rem;
+  color: var(--color-mist);
 }
 
 .composer__input {

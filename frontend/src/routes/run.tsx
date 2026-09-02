@@ -21,6 +21,7 @@ interface RecordLine {
   name?: string
   isSelf?: boolean
   indent?: boolean
+  abilities?: Ability[]
 }
 
 const OPENING_LINE: RecordLine = {
@@ -33,6 +34,7 @@ function linesFromMessages(
   messages: RoomMessage[],
   playerNames: Map<string, string>,
   selfPublicId: string | null,
+  players: PlayerPublic[],
 ): RecordLine[] {
   return messages.map((msg, i) => {
     if (msg.from.startsWith('player:')) {
@@ -44,6 +46,7 @@ function linesFromMessages(
         text: msg.message,
         name,
         isSelf: selfPublicId !== null && id === selfPublicId,
+        abilities: players.find((p) => p.playerPublicId === id)?.stats.abilities,
       }
     }
     if (msg.from === 'dungeon_master') {
@@ -71,10 +74,114 @@ function findPendingMention(text: string, caret: number): { start: number; query
   return null
 }
 
-function MentionText({ text, names }: { text: string; names: Map<string, string> }) {
+function findPendingAbility(text: string, caret: number): { start: number; query: string } | null {
+  if (caret <= 0) return null
+  let i = caret
+  while (i > 0) {
+    const ch = text[i - 1]
+    if (WHITESPACE.test(ch)) return null
+    if (ch === '#') {
+      const before = text[i - 2]
+      const atBoundary = before === undefined || WHITESPACE.test(before)
+      return atBoundary ? { start: i - 1, query: text.slice(i, caret) } : null
+    }
+    i--
+  }
+  return null
+}
+
+const RECORD_TOKENS = /(<@[A-Za-z0-9_-]+>|<#[A-Za-z0-9_]+>)/
+
+function AbilityTooltip({ ability, rect }: { ability: Ability; rect: DOMRect }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const { innerWidth, innerHeight } = window
+    const gutter = 12
+    const W = el.offsetWidth
+    const H = el.offsetHeight
+    let left = rect.right + gutter
+    if (left + W > innerWidth - gutter) left = rect.left - gutter - W
+    left = Math.max(gutter, left)
+    let top = rect.top
+    if (top + H > innerHeight - gutter) top = innerHeight - gutter - H
+    top = Math.max(gutter, top)
+    setPos({ left, top })
+  }, [rect])
+
+  const reqEntries = Object.entries(ability.minimumStats ?? {}).filter(([, v]) => v !== 0)
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="filecard__tooltip filecard__tooltip--fixed"
+      role="tooltip"
+      style={pos ? { left: pos.left, top: pos.top } : { left: -9999, top: -9999 }}
+    >
+      <span className="filecard__tooltip-head">
+        <span className="filecard__tooltip-name">{ability.name}</span>
+        <span className="record__ability-target">
+          {ability.targeting.kind}/{ability.targeting.scope}
+        </span>
+      </span>
+      {ability.flavor_text && <span className="filecard__tooltip-desc">{ability.flavor_text}</span>}
+      {ability.description && (
+        <span className="filecard__tooltip-block">
+          <span className="filecard__tooltip-label">effect</span>
+          <span className="record__ability-desc">{ability.description}</span>
+        </span>
+      )}
+      {(ability.minimumLevel > 0 || reqEntries.length > 0) && (
+        <span className="filecard__tooltip-block">
+          <span className="filecard__tooltip-label">requires</span>
+          <span className="record__ability-req">
+            <span>lvl {ability.minimumLevel}</span>
+            {reqEntries.map(([k, v]) => (
+              <span className="field__req-chip" key={k}>
+                <span className="field__req-k">{k}</span>
+                <span className="field__req-v">{v}</span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+    </div>,
+    document.body,
+  )
+}
+
+function RecordAbilityChip({ ability, text }: { ability: Ability; text: string }) {
+  const [rect, setRect] = useState<DOMRect | null>(null)
   return (
     <>
-      {text.split(/(<@[A-Za-z0-9_-]+>)/).map((part, i) => {
+      <span
+        className="record__mention record__mention--ability"
+        onMouseEnter={(event) => setRect(event.currentTarget.getBoundingClientRect())}
+        onMouseLeave={() => setRect(null)}
+      >
+        {text}
+      </span>
+      {rect && <AbilityTooltip ability={ability} rect={rect} />}
+    </>
+  )
+}
+
+function RecordText({
+  text,
+  names,
+  abilities,
+}: {
+  text: string
+  names: Map<string, string>
+  abilities: Ability[]
+}) {
+  const abilityById = new Map<string, Ability>(abilities.map((a) => [a.id, a]))
+  return (
+    <>
+      {text.split(RECORD_TOKENS).map((part, i) => {
         const m = /^<@([A-Za-z0-9_-]+)>$/.exec(part)
         if (m) {
           const name = names.get(m[1])
@@ -82,6 +189,17 @@ function MentionText({ text, names }: { text: string; names: Map<string, string>
             <span key={i} className="record__mention">
               @{name}
             </span>
+          ) : (
+            <span key={i} className="record__mention record__mention--ghost">
+              {part}
+            </span>
+          )
+        }
+        const a = /^<#([A-Za-z0-9_]+)>$/.exec(part)
+        if (a) {
+          const ability = abilityById.get(a[1])
+          return ability ? (
+            <RecordAbilityChip key={i} ability={ability} text={`#${ability.name}`} />
           ) : (
             <span key={i} className="record__mention record__mention--ghost">
               {part}
@@ -151,6 +269,7 @@ function Run() {
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const caretRef = useRef(0)
   const [mentionIndex, setMentionIndex] = useState(0)
+  const [abilityIndex, setAbilityIndex] = useState(0)
 
   const handleChangeStat = useCallback(async (stat: keyof Stats, amount: number) => {
     if (!roomToken) return
@@ -237,6 +356,15 @@ function Run() {
       const re = new RegExp(`@${escapeRegExp(name)}(?=\\s|$)`, 'g')
       text = text.replace(re, `<@${id}>`)
     }
+    const abilityIdByName = new Map<string, string>(
+      ((room?.players ?? []).find((p) => p.playerId === selfPlayerId)?.stats.abilities ?? []).map(
+        (a) => [a.name, a.id],
+      ),
+    )
+    for (const [name, id] of abilityIdByName) {
+      const re = new RegExp(`#${escapeRegExp(name)}(?=\\s|$)`, 'g')
+      text = text.replace(re, `<#${id}>`)
+    }
     setComposerBusy(true)
     setPlayError(null)
     try {
@@ -248,7 +376,7 @@ function Run() {
     } finally {
       setComposerBusy(false)
     }
-  }, [draft, room, roomToken, resetComposer])
+  }, [draft, room, roomToken, resetComposer, selfPlayerId])
 
   const handleConfirm = useCallback(
     async (accept: boolean) => {
@@ -360,7 +488,10 @@ function Run() {
   const playerNameById = new Map<string, string>(
     (room?.players ?? []).map((p) => [p.playerPublicId, p.name]),
   )
-  const lines = [OPENING_LINE, ...linesFromMessages(room?.message ?? [], playerNameById, selfPublicId)]
+  const lines = [
+    OPENING_LINE,
+    ...linesFromMessages(room?.message ?? [], playerNameById, selfPublicId, room?.players ?? []),
+  ]
 
   const pendingMention = findPendingMention(draft, caretRef.current)
   const mentionQuery = (pendingMention?.query ?? '').toLowerCase()
@@ -370,6 +501,34 @@ function Run() {
       : (room?.players ?? []).filter(
           (p) => p.playerPublicId !== selfPublicId && p.name.toLowerCase().includes(mentionQuery),
         )
+
+  const pendingAbility = findPendingAbility(draft, caretRef.current)
+  const abilityRawQuery = (pendingAbility?.query ?? '').toLowerCase()
+  const abilityQuery = abilityRawQuery.startsWith('a:') ? abilityRawQuery.slice(2) : abilityRawQuery
+  const pickableAbilities =
+    pendingAbility === null
+      ? []
+      : (selfPlayer?.stats.abilities ?? []).filter((a) =>
+          a.name.toLowerCase().includes(abilityQuery),
+        )
+
+  const acceptAbility = (abilityId: string) => {
+    const el = composerRef.current
+    const m = findPendingAbility(draft, caretRef.current)
+    if (!m || !el) return
+    const ability = (selfPlayer?.stats.abilities ?? []).find((a) => a.id === abilityId)
+    if (!ability) return
+    const token = `#${ability.name} `
+    const next = draft.slice(0, m.start) + token + draft.slice(caretRef.current)
+    setDraft(next)
+    const newCaret = m.start + token.length
+    caretRef.current = newCaret
+    requestAnimationFrame(() => {
+      el.focus()
+      el.setSelectionRange(newCaret, newCaret)
+      autoGrowComposer()
+    })
+  }
 
   const acceptMention = (playerPublicId: string) => {
     const el = composerRef.current
@@ -444,7 +603,7 @@ function Run() {
                     {line.speaker === 'player' && line.name && !line.isSelf && (
                       <span className="record__who">{line.name} › </span>
                     )}
-                    <MentionText text={line.text} names={playerNameById} />
+                    <RecordText text={line.text} names={playerNameById} abilities={line.abilities ?? []} />
                   </span>
                 </span>
               ))}
@@ -482,6 +641,30 @@ function Run() {
                   ))}
                 </ul>
               )}
+              {pickableAbilities.length > 0 && (
+                <ul className="composer__pick" role="listbox" aria-label="Reference an ability">
+                  {pickableAbilities.map((a, i) => (
+                    <li
+                      key={a.id}
+                      role="option"
+                      aria-selected={i === abilityIndex}
+                      className={`composer__pick-item${
+                        i === abilityIndex ? ' composer__pick-item--active' : ''
+                      }`}
+                      onMouseDown={(event) => {
+                        event.preventDefault()
+                        acceptAbility(a.id)
+                      }}
+                      onMouseEnter={() => setAbilityIndex(i)}
+                    >
+                      <span className="composer__pick-name">#{a.name}</span>
+                      <span className="composer__pick-target">
+                        {a.targeting.kind}/{a.targeting.scope}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <textarea
                 ref={composerRef}
                 className="composer__input"
@@ -490,6 +673,7 @@ function Run() {
                 onChange={(event) => {
                   caretRef.current = event.target.selectionStart
                   setMentionIndex(0)
+                  setAbilityIndex(0)
                   setDraft(event.target.value)
                   autoGrowComposer()
                 }}
@@ -513,6 +697,41 @@ function Run() {
                     if (event.key === 'Escape') {
                       event.preventDefault()
                       const m = findPendingMention(draft, caretRef.current)
+                      if (m) {
+                        const next = draft.slice(0, m.start)
+                        setDraft(next)
+                        caretRef.current = m.start
+                        const el = composerRef.current
+                        if (el) {
+                          el.focus()
+                          el.setSelectionRange(m.start, m.start)
+                          autoGrowComposer()
+                        }
+                      }
+                      return
+                    }
+                  }
+                  if (pickableAbilities.length > 0) {
+                    if (event.key === 'ArrowDown') {
+                      event.preventDefault()
+                      setAbilityIndex((i) => (i + 1) % pickableAbilities.length)
+                      return
+                    }
+                    if (event.key === 'ArrowUp') {
+                      event.preventDefault()
+                      setAbilityIndex(
+                        (i) => (i - 1 + pickableAbilities.length) % pickableAbilities.length,
+                      )
+                      return
+                    }
+                    if (event.key === 'Enter' && pickableAbilities[abilityIndex]) {
+                      event.preventDefault()
+                      acceptAbility(pickableAbilities[abilityIndex].id)
+                      return
+                    }
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      const m = findPendingAbility(draft, caretRef.current)
                       if (m) {
                         const next = draft.slice(0, m.start)
                         setDraft(next)
