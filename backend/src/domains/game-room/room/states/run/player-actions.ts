@@ -78,6 +78,31 @@ export function useInventoryItem(ctx: IGameRoomContext): ActionHandler {
 
 const UNEQUIP_SLOTS: TGearSlot[] = ["weapon", "head", "chest", "greaves"];
 
+export function setActiveAbility(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+
+        const { id, slot } = (payload ?? {}) as { id?: string; slot?: number };
+        if (typeof slot !== "number" || slot < 0) {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        const success =
+            typeof id === "string" && id.length > 0
+                ? player.Abilities.setActiveAbilityById(id, slot)
+                : player.Abilities.clearActiveAbilitySlot(slot);
+        if (!success) {
+            return { ok: false, status: 400, error: "Could not assign that ability" };
+        }
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
+
 export function unequipItem(ctx: IGameRoomContext): ActionHandler {
     return (playerId, payload) => {
         const player = ctx.Party.getPlayer(playerId);

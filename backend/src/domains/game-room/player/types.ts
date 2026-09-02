@@ -50,7 +50,9 @@ export type ConsumableType = "health_potion" | "gold_key" | "lockpick";
 export type Consumables = Record<ConsumableType, number>;
 
 export type PlayerRunEntityAbility = {
+    id: string;
     name: string;
+    active: boolean;
     flavor_text: string;
     description: string;
     targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self" };
@@ -71,6 +73,7 @@ export type PlayerRunEntityJSON = {
     items: PlayerRunEntityItem[];
     health: IEntityHealthStatGetters;
     abilities: PlayerRunEntityAbility[];
+    activeAbilities: { slot: number; id: string }[];
 };
 
 export interface PlayerPublic {

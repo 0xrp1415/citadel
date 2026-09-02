@@ -1,7 +1,9 @@
 import { IAbility } from "../../procedural-engine/index.js";
 
 export type PlayerAbilityDetail = {
+    id: string;
     name: string;
+    active: boolean;
     flavor_text: string;
     description: string;
     targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self" };
@@ -11,6 +13,10 @@ export type PlayerAbilityDetail = {
 
 export class PlayerAbilities {
     private abilities: IAbility[] = [];
+
+    private static readonly SLOT_COUNT = 4;
+
+    private readonly activeAbilitySlots = new Map<number, string>();
 
     constructor(abilities: IAbility[] = []) {
         this.abilities = abilities;
@@ -26,7 +32,9 @@ export class PlayerAbilities {
 
     public get Details(): PlayerAbilityDetail[] {
         return this.abilities.map((a) => ({
+            id: a.id,
             name: a.name,
+            active: this.checkAbilityActive(a),
             flavor_text: a.flavor_text,
             description:
                 a.components
@@ -38,19 +46,98 @@ export class PlayerAbilities {
             minimumStats: a.minimumStats,
         }));
     }
-    
+
+    public get ActiveAbilitySlots(): { slot: number; id: string }[] {
+        return [...this.activeAbilitySlots.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([slot, id]) => ({ slot, id }));
+    }
+
+    public get Slots(): number[] {
+        return [...this.activeAbilitySlots.keys()].sort((a, b) => a - b);
+    }
+
+    public get ActiveAbilityIds(): string[] {
+        return [...this.activeAbilitySlots.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([, id]) => id);
+    }
+
+    public get isFull(): boolean {
+        return this.activeAbilitySlots.size >= PlayerAbilities.SLOT_COUNT;
+    }
 
     public has(abilityName: string): boolean {
         return this.abilities.some((a) => a.name === abilityName);
     }
 
+    public hasId(abilityId: string): boolean {
+        return this.abilities.some((a) => a.id === abilityId);
+    }
+
     public learn(ability: IAbility): void {
-        if (!this.has(ability.name)) {
+        if (!this.hasId(ability.id)) {
             this.abilities.push(ability);
         }
     }
 
-    public removeAbilityByIndex(abilityName: string): void {
-        this.abilities = this.abilities.filter(a => a.name !== abilityName);
+    public getAbilityById(abilityId: string): IAbility | undefined {
+        return this.abilities.find((a) => a.id === abilityId);
+    }
+
+    public setActiveAbilityById(abilityId: string, slot: number): boolean {
+        if (slot < 0 || slot >= PlayerAbilities.SLOT_COUNT) {
+            return false;
+        }
+        const ability = this.getAbilityById(abilityId);
+        if (!ability) {
+            return false;
+        }
+        if (!this.checkAbilityActive(ability)) {
+            return false;
+        }
+        if (this.activeAbilitySlots.get(slot) === abilityId) {
+            return false;
+        }
+        for (const [existingSlot, existingId] of this.activeAbilitySlots) {
+            if (existingSlot !== slot && existingId === abilityId) {
+                return false;
+            }
+        }
+
+        this.activeAbilitySlots.set(slot, abilityId);
+        return true;
+    }
+
+    public clearActiveAbilitySlot(slot: number): boolean {
+        if (slot < 0 || slot >= PlayerAbilities.SLOT_COUNT) {
+            return false;
+        }
+        return this.activeAbilitySlots.delete(slot);
+    }
+
+    public getActiveAbility(slot: number): IAbility | undefined {
+        const abilityId = this.activeAbilitySlots.get(slot);
+        if (!abilityId) {
+            return undefined;
+        }
+        return this.getAbilityById(abilityId);
+    }
+
+    public getActiveAbilityId(slot: number): string | undefined {
+        return this.activeAbilitySlots.get(slot);
+    }
+
+    public removeAbility(abilityId: string): void {
+        this.abilities = this.abilities.filter((a) => a.id !== abilityId);
+        for (const [slot, id] of this.activeAbilitySlots) {
+            if (id === abilityId) {
+                this.activeAbilitySlots.delete(slot);
+            }
+        }
+    }
+
+    private checkAbilityActive(ability: IAbility): boolean {
+        return ability.components.some((c) => c.type === "active");
     }
 }

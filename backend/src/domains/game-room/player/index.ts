@@ -80,6 +80,7 @@ export class Player {
             items: this.inventory.Inventory.map(toItem),
             health: this.combat.Health,
             abilities: this.abilities.Details,
+            activeAbilities: this.abilities.ActiveAbilitySlots,
         };
     }
 
