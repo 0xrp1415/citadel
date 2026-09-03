@@ -9,6 +9,8 @@ export interface IGameRoomMapContext {
     Travel(direction: "north" | "south" | "east" | "west"): number | null;
     EnterRoom(targetRoomIndex: number): void;
     UnlockEventless(): void;
+    MarkRoomCleared(targetRoomIndex?: number): void;
+    IsRoomCleared(targetRoomIndex: number): boolean;
     readonly Floor: number;
     readonly CurrentRoomIndex: number;
     readonly CurrentRoom: IRoomMetadata | null;

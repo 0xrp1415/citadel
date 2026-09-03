@@ -7,6 +7,7 @@ import { IGameRoomStateMachineContext } from "./state-machine.js";
 import { IGameRoomResolver } from "./resolver.js";
 import { IGameRoomBroadcaster } from "./broadcaster.js";
 import { IGameRoomConfirmationContext } from "./confirmation.js";
+import { IGameRoomEncounterContext } from "./encounter.js";
 
 export type { IGameRoomIdentityContext } from "./identity.js";
 export type { IGameRoomPartyContext } from "./party.js";
@@ -16,6 +17,7 @@ export type { IGameRoomStateMachineContext } from "./state-machine.js";
 export type { IGameRoomDungeonMasterAdapter } from "./dm-adapter.js";
 export type { IGameRoomBroadcaster } from "./broadcaster.js";
 export type { IGameRoomConfirmationContext } from "./confirmation.js";
+export type { IGameRoomEncounterContext } from "./encounter.js";
 export type { RoomEventType, MessageUpdatePayload, ConfirmationUpdatePayload, ConfirmationType } from "./broadcaster.js";
 
 export interface IGameRoomContext {
@@ -28,4 +30,5 @@ export interface IGameRoomContext {
     readonly Resolver: IGameRoomResolver;
     readonly Broadcaster: IGameRoomBroadcaster;
     readonly Confirmation: IGameRoomConfirmationContext;
+    readonly Encounter: IGameRoomEncounterContext;
 }

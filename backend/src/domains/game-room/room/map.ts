@@ -22,6 +22,7 @@ export class GameRoomMap implements IGameRoomMapContext {
     private floor: number = 1;
     private currentRoomIndex: number = 0;
     private visitedRooms: Set<number> = new Set();
+    private clearedRooms: Set<number> = new Set();
 
     public GenerateMap(config: IGameRoomConfig): void {
         if (!this.rng)
@@ -37,6 +38,7 @@ export class GameRoomMap implements IGameRoomMapContext {
         this.floor = 1;
         this.currentRoomIndex = 0;
         this.visitedRooms = new Set();
+        this.clearedRooms = new Set();
     }
 
     public NextFloor(config: IGameRoomConfig): void {
@@ -62,6 +64,14 @@ export class GameRoomMap implements IGameRoomMapContext {
         this.currentRoomIndex = targetRoomIndex;
         this.visitedRooms.add(targetRoomIndex);
         this.UnlockEventless();
+    }
+
+    public MarkRoomCleared(targetRoomIndex?: number): void {
+        this.clearedRooms.add(targetRoomIndex ?? this.currentRoomIndex);
+    }
+
+    public IsRoomCleared(targetRoomIndex: number): boolean {
+        return this.clearedRooms.has(targetRoomIndex);
     }
 
     public UnlockEventless(): void {

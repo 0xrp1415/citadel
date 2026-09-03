@@ -2,6 +2,7 @@ import { IStats } from "../../../../procedural-engine/index.js";
 import { TGearSlot } from "../../../../procedural-engine/gear/interface.js";
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { ActionHandler } from "../../utils/types.js";
+import { CombatAction, CombatTarget } from "../../utils/helpers/encounter/types.js";
 import { enterRoom } from "./enter-room.js";
 
 export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
@@ -151,6 +152,9 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         if (ctx.Resolver.IsBusy) {
             return { ok: false, status: 403, error: "Dungeon Master is not idle" };
         }
+        if (ctx.Encounter.Active) {
+            return { ok: false, status: 409, error: "During an encounter, act through the battle commands — the Dungeon Master cannot be called upon." };
+        }
         const currentRoom = ctx.Map.CurrentRoom;
         if (!currentRoom) {
             return { ok: false, status: 409, error: "No current room" };
@@ -166,4 +170,101 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         await ctx.Resolver.HandlePlayerAction(payload, `player:${player.Identity.playerPublicId}`);
         return { ok: true, value: null };
     }
+}
+
+export function combatVote(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        if (!ctx.Encounter.Active) {
+            return { ok: false, status: 409, error: "No encounter is active" };
+        }
+
+        const { accept } = (payload ?? {}) as { accept?: boolean };
+        if (typeof accept !== "boolean") {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        if (!ctx.Encounter.SubmitVote(player, accept)) {
+            return { ok: false, status: 409, error: "No approach vote is open" };
+        }
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
+
+export function combatSelectAction(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        if (!ctx.Encounter.Active) {
+            return { ok: false, status: 409, error: "No encounter is active" };
+        }
+
+        const raw = (payload ?? {}) as { type?: string; abilityId?: string };
+        const action: CombatAction | null = parseCombatAction(raw);
+        if (!action) {
+            return { ok: false, status: 400, error: "Invalid combat action" };
+        }
+
+        if (!ctx.Encounter.SubmitAction(player, action)) {
+            return { ok: false, status: 400, error: "Not your turn, or invalid action" };
+        }
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
+
+export function combatSelectTarget(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        if (!ctx.Encounter.Active) {
+            return { ok: false, status: 409, error: "No encounter is active" };
+        }
+
+        const target = parseCombatTarget(payload);
+        if (!target) {
+            return { ok: false, status: 400, error: "Invalid target" };
+        }
+
+        if (!ctx.Encounter.SubmitTarget(player, target)) {
+            return { ok: false, status: 400, error: "Not your turn, or invalid target" };
+        }
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
+
+function parseCombatAction(raw: { type?: string; abilityId?: string }): CombatAction | null {
+    if (raw.type === "attack") {
+        return { type: "attack" };
+    }
+    if (raw.type === "defend") {
+        return { type: "defend" };
+    }
+    if (raw.type === "ability" && typeof raw.abilityId === "string" && raw.abilityId.length > 0) {
+        return { type: "ability", abilityId: raw.abilityId };
+    }
+    return null;
+}
+
+function parseCombatTarget(payload: unknown): CombatTarget | null {
+    const raw = (payload ?? {}) as { kind?: string; id?: string };
+    if (raw.kind === "self") {
+        return { kind: "self" };
+    }
+    if ((raw.kind === "enemy" || raw.kind === "ally") && typeof raw.id === "string" && raw.id.length > 0) {
+        return { kind: raw.kind, id: raw.id } as CombatTarget;
+    }
+    return null;
 }

@@ -60,6 +60,7 @@ export class GameRoomBroadcaster implements IGameRoomBroadcaster {
                 : { type: "room", index: this.context.Map.CurrentRoomIndex },
             map: this.context.Map.Map ? this.context.Map.JSON : null,
             hostPublicId: this.context.Party.LeaderPublicId,
+            encounter: this.context.Encounter.State,
         };
     }
 }

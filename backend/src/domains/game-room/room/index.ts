@@ -11,6 +11,7 @@ import { GameRoomDMAdapter } from "./dm-adapter.js";
 import { GameRoomResolver } from "./resolver.js";
 import { GameRoomBroadcaster } from "./broadcaster.js";
 import { GameRoomConfirmationManager } from "./confirmation.js";
+import { GameRoomEncounterManager } from "./encounter.js";
 
 
 
@@ -24,17 +25,20 @@ export class GameRoom implements IGameRoomContext {
     public readonly Resolver: GameRoomResolver;
     public readonly Broadcaster: GameRoomBroadcaster;
     public readonly Confirmation: GameRoomConfirmationManager;
+    public readonly Encounter: GameRoomEncounterManager;
 
     constructor(identity: IGameRoomIdentity, emit: (type: RoomEventType, data: unknown) => void) {
         this.Identity = new GameRoomIdentity(identity);
         this.Party = new GameRoomParty();
         this.Socket = new GameRoomSocket(this.Party, (playerId) => {
             this.Party.removePlayer(playerId);
+            this.Encounter.OnPlayerDisconnect(playerId);
             this.Broadcaster.RoomUpdate();
         });
         this.Map = new GameRoomMap();
         this.Broadcaster = new GameRoomBroadcaster(this, emit);
         this.Confirmation = new GameRoomConfirmationManager(this);
+        this.Encounter = new GameRoomEncounterManager(this);
         this.StateMachine = new GameRoomStateMachine(new LobbyState(this));
         this.DMAdapter = new GameRoomDMAdapter(this);
         this.Resolver = new GameRoomResolver(this);
@@ -58,6 +62,7 @@ export class GameRoom implements IGameRoomContext {
                 : { type: "room", index: this.Map.CurrentRoomIndex },
             map: this.Map.Map ? this.Map.JSON : null,
             hostPublicId: this.Party.LeaderPublicId,
+            encounter: this.Encounter.State,
         };
     }
 

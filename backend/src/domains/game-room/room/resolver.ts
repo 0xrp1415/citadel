@@ -77,6 +77,19 @@ export class GameRoomResolver implements IGameRoomResolver {
         await this.NarrateOutcomes(description);
     }
 
+    public async NarrateEncounterOutcome(message: string, opts: { enemiesDead: boolean }): Promise<void> {
+        const context = opts.enemiesDead
+            ? `${message} Every foe is already down.`
+            : `${message} Foes yet stand in the room.`;
+        await this.NarrateOutcomes(context);
+    }
+
+    public async NarrateEndOfRun(): Promise<void> {
+        await this.NarrateOutcomes(
+            "The dungeon has claimed the last of you. There is no one left to press on — the expedition is over, and the run ends here.",
+        );
+    }
+
 
     get DungeonMasterMessages(): { from: string; message: string; }[] {
         return this.dungeonMasterMessages;
