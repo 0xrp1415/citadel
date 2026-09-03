@@ -1,4 +1,4 @@
-import { IMap } from "../../../../../procedural-engine/index.js";
+import { IMap, CombatManager } from "../../../../../procedural-engine/index.js";
 import { IMapPublicJSON, IRoomPublicJSON } from "../../../types.js";
 import { deriveRoomExits } from "./exits.js";
 
@@ -17,9 +17,9 @@ export function serializeMap(map: IMap, currentRoomIndex: number, visitedRooms: 
                 id: enemy.id,
                 name: enemy.name,
                 threatLevel: enemy.threatLevel,
-                currentHealth: enemy.currentHealth,
-                maxHealth: enemy.maxHealth,
-                alive: enemy.alive,
+                currentHealth: enemy.Health.CurrentHealth,
+                maxHealth: enemy.Health.MaxHealth,
+                alive: CombatManager.IsAlive(enemy),
                 description: enemy.description,
             })),
             exits: deriveRoomExits(roomId, meta.exits),

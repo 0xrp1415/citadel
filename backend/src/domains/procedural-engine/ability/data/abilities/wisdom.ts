@@ -16,7 +16,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "A protective shimmer against harm.",
         minimumLevel: 1,
         minimumStats: { wisdom: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [Ward()],
     },
     {
@@ -25,7 +25,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Perception sharpened with speed.",
         minimumLevel: 2,
         minimumStats: { wisdom: 22, agility: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 6, agility: 4 })],
     },
     {
@@ -34,7 +34,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Dispel and dampen hostile magic.",
         minimumLevel: 5,
         minimumStats: { wisdom: 30 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [Cleanse()],
     },
     {
@@ -43,7 +43,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "A keener instinct for what lies beneath.",
         minimumLevel: 1,
         minimumStats: { wisdom: 18 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 3 })],
     },
     {
@@ -52,7 +52,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Profound spiritual resilience made shield.",
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 14 })],
     },
     {
@@ -61,7 +61,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Purge poisons, curses, and lingering harm.",
         minimumLevel: 3,
         minimumStats: { wisdom: 24 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [Cleanse()],
     },
     {
@@ -70,7 +70,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Genuine insight and perception.",
         minimumLevel: 4,
         minimumStats: { wisdom: 28 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 8 })],
     },
     {
@@ -79,7 +79,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Perceive even what the eyes miss.",
         minimumLevel: 3,
         minimumStats: { wisdom: 24, agility: 22 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 6, agility: 4 })],
     },
     {
@@ -88,7 +88,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Pierce the veil to uncover hidden things.",
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
-        targeting: { kind: "any", scope: "self" },
+        targeting: { kind: "any", scope: "self", type: "magical" },
         components: [RevealSecret()],
     },
     {
@@ -97,7 +97,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Insight raised to a divine clarity.",
         minimumLevel: 12,
         minimumStats: { wisdom: 55, intelligence: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 20, intelligence: 10 })],
     },
     {
@@ -106,7 +106,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "A shield woven against magical assaults.",
         minimumLevel: 2,
         minimumStats: { wisdom: 22 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [Ward()],
     },
     {
@@ -115,7 +115,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "A calm, unclouded mind.",
         minimumLevel: 1,
         minimumStats: { wisdom: 16 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 3 })],
     },
     {
@@ -124,7 +124,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Turn back hostile enchantments.",
         minimumLevel: 6,
         minimumStats: { wisdom: 32 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [Cleanse()],
     },
     {
@@ -133,7 +133,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "A mind that cannot be broken.",
         minimumLevel: 8,
         minimumStats: { wisdom: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 14 })],
     },
     {
@@ -142,7 +142,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Sever and suppress a hostile presence.",
         minimumLevel: 9,
         minimumStats: { wisdom: 44 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [ArcaneDamage(12)],
     },
     {
@@ -151,7 +151,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Insight steadied by endurance.",
         minimumLevel: 5,
         minimumStats: { wisdom: 30, dexterity: 24 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ wisdom: 8, dexterity: 6 })],
     },
     {
@@ -160,7 +160,7 @@ export const WISDOM_ABILITIES: IAbility[] = [
         flavor_text: "Glimpse the path ahead and prepare for it.",
         minimumLevel: 11,
         minimumStats: { wisdom: 50 },
-        targeting: { kind: "any", scope: "self" },
+        targeting: { kind: "any", scope: "self", type: "magical" },
         components: [BuffWisdom(10)],
     },
 ];

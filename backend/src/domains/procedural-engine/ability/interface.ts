@@ -1,4 +1,5 @@
 import { IStats } from "../combat/stats.js";
+import { EntityCombat } from "../combat/entity/combat.js";
 
 export type TAbilityTargetKind = "enemy" | "ally" | "self" | "any";
 export type TAbilityTargetScope = "single" | "all" | "self";
@@ -6,6 +7,7 @@ export type TAbilityTargetScope = "single" | "all" | "self";
 export interface IAbilityTargeting {
     kind: TAbilityTargetKind;
     scope: TAbilityTargetScope;
+    type: "physical" | "magical";
 }
 
 export interface IAbility {
@@ -28,18 +30,9 @@ export interface IAbilityComponentBase {
 
 
 export interface IAbilityActor {
+    readonly combat: EntityCombat;
     name: string;
     scale_factor: number;
-    alive: boolean;
-    stats: IStats;
-    modifiers: IStats;
-    maxHealth: number;
-    currentHealth: number;
-
-    Heal(amount: number): void;
-    TakeDamage(amount: number): void;
-    ApplyStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void;
-    ApplyTemporaryStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void;
 }
 
 export interface IAbilityActiveContext {

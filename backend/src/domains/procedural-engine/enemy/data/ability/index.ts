@@ -9,7 +9,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A sharp, stabbing peck that draws blood.",
         minimumLevel: 1,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [EnemyDamage(4)],
     },
     {
@@ -18,7 +18,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A burst of frantic, evasive speed.",
         minimumLevel: 1,
         minimumStats: {},
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [SelfBuff("agility", 2)],
     },
     {
@@ -27,7 +27,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A spray of burning acid that eats at the flesh.",
         minimumLevel: 1,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [EnemyDamage(5), Debuff("dexterity", 1)],
     },
 
@@ -38,7 +38,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A bone-rattling roar that weakens all who hear it.",
         minimumLevel: 2,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "physical" },
         components: [Debuff("strength", 2)],
     },
     {
@@ -47,7 +47,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Rends flesh and consumes it to restore vigor.",
         minimumLevel: 2,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [DrainLife(8)],
     },
     {
@@ -56,7 +56,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A devastating body slam that shakes the ground.",
         minimumLevel: 2,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [EnemyDamage(14)],
     },
     {
@@ -65,7 +65,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Fangs inject paralyzing venom into the wound.",
         minimumLevel: 2,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [EnemyDamage(8), Debuff("agility", 2)],
     },
 
@@ -76,7 +76,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "The ground splits and heaves beneath all foes.",
         minimumLevel: 3,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [EnemyAoeDamage(16)],
     },
     {
@@ -85,7 +85,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A crimson rage surges through the veins.",
         minimumLevel: 3,
         minimumStats: {},
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [SelfBuff("strength", 3)],
     },
     {
@@ -94,7 +94,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Eyes lock with an unblinking stare that freezes the limbs.",
         minimumLevel: 3,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [Debuff("dexterity", 3)],
     },
     {
@@ -103,7 +103,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Rips the spirit from the body to feed the caster.",
         minimumLevel: 3,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [DrainLife(14)],
     },
 
@@ -114,7 +114,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Reality itself tears apart in a wave of destruction.",
         minimumLevel: 4,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [EnemyAoeDamage(24)],
     },
     {
@@ -123,7 +123,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "A beam of annihilating void that erodes all strength.",
         minimumLevel: 4,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [EnemyDamage(28), Debuff("strength", 3)],
     },
     {
@@ -132,7 +132,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "Engulfs everything in searing, inescapable flame.",
         minimumLevel: 4,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [EnemyAoeDamage(20), Debuff("dexterity", 2)],
     },
     {
@@ -141,7 +141,7 @@ export const ENEMY_ABILITIES: IAbility[] = [
         flavor_text: "An unstoppable, devastating charge fueled by pure rage.",
         minimumLevel: 4,
         minimumStats: {},
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [EnemyDamage(24), SelfBuff("strength", 4)],
     },
 ];

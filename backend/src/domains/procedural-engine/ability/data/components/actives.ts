@@ -1,5 +1,6 @@
-import { IAbilityActiveComponent, IAbilityActor, IAbilityActiveContext } from "../../interface.js";
+import { IAbilityActiveComponent, IAbilityActor, IAbilityActiveContext, IAbilityTargeting } from "../../interface.js";
 import { IStats } from "../../../combat/stats.js";
+import { CombatManager } from "../../../combat/manager.js";
 
 function names(actors: IAbilityActor[]): string {
     return actors.map((a) => a.name).join(", ");
@@ -10,7 +11,7 @@ function scaled(basePower: number, level: number): number {
 }
 
 function recipients(ctx: {
-    targeting: { kind: "self" | "ally" | "enemy" | "any"; scope: string };
+    targeting: IAbilityTargeting;
     actor: IAbilityActor;
     allies: IAbilityActor[];
     targets: IAbilityActor[];
@@ -24,10 +25,12 @@ export function Damage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Strikes the target with overwhelming force.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor);
             const hit = ctx.targets.length ? names(ctx.targets) : ctx.actor.name;
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            return `dealt ${amount} damage to ${hit}`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            return `dealt ${dealt} damage to ${hit}`;
         },
     };
 }
@@ -37,9 +40,11 @@ export function ArcaneDamage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Unleashes crackling magical force.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor) + 4;
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            return `arcane blast seared ${names(ctx.targets)} for ${amount} damage`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            return `arcane blast seared ${names(ctx.targets)} for ${dealt} damage`;
         },
     };
 }
@@ -51,7 +56,7 @@ export function Heal(basePower: number): IAbilityActiveComponent {
         onExecute: (ctx) => {
             const amount = scaled(basePower, ctx.actor.scale_factor);
             const actual = recipients(ctx);
-            actual.forEach((a) => a.Heal(amount));
+            actual.forEach((a) => CombatManager.Heal(a.combat, amount));
             return `healed ${names(actual)} for ${amount}`;
         },
     };
@@ -64,8 +69,8 @@ export function MaxHealthHeal(percent: number): IAbilityActiveComponent {
         onExecute: (ctx) => {
             const actual = recipients(ctx);
             const amounts = actual.map((a) => {
-                const amount = Math.round(a.maxHealth * percent);
-                a.Heal(amount);
+                const amount = Math.round(a.combat.Health.MaxHealth * percent);
+                CombatManager.Heal(a.combat, amount);
                 return { name: a.name, amount };
             });
             return `healed ${amounts.map((a) => `${a.name} for ${a.amount}`).join(", ")}`;
@@ -80,8 +85,8 @@ export function CurrentHealthDamage(percent: number): IAbilityActiveComponent {
         onExecute: (ctx) => {
             const hit = ctx.targets.length ? names(ctx.targets) : ctx.actor.name;
             const amounts = ctx.targets.map((t) => {
-                const amount = Math.round(t.currentHealth * percent);
-                t.TakeDamage(amount);
+                const amount = Math.round(t.combat.Health.CurrentHealth * percent);
+                CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, amount);
                 return { name: t.name, amount };
             });
             return `struck ${hit} for ${amounts.map((a) => `${a.amount}`).join(", ")} damage`;
@@ -108,7 +113,7 @@ function Buff(stat: keyof IStats, amount: number): IAbilityActiveComponent {
         flavor_text: `Enhances the target's ${label}.`,
         onExecute: (ctx) => {
             const actual = recipients(ctx);
-            actual.forEach((a) => a.ApplyTemporaryStatModifiers(modifiers));
+            actual.forEach((a) => CombatManager.ApplyTemporaryModifiers(a.combat, modifiers));
             return `granted +${amount} ${label} to ${names(actual)}`;
         },
     };
@@ -157,10 +162,12 @@ export function DrainLife(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Steals life from a foe to mend the caster.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor);
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            ctx.targets.forEach(() => ctx.actor.Heal(Math.floor(amount * 0.5)));
-            return `drained ${amount} life from ${names(ctx.targets)}, recovering health`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            ctx.targets.forEach((t) => CombatManager.Heal(ctx.actor.combat, Math.floor(dealt * 0.5)));
+            return `drained ${dealt} life from ${names(ctx.targets)}, recovering health`;
         },
     };
 }

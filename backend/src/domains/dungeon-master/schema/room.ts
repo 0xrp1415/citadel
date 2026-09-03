@@ -18,6 +18,7 @@ export const ZDMPartyMemberAbilitySnapshot = z.object({
     targeting: z.object({
         kind: z.enum(["enemy", "ally", "self", "any"]),
         scope: z.enum(["single", "all", "self"]),
+        type: z.enum(["physical", "magical"]),
     })
 });
 export const ZDmPartyMemberSnapshot = z.object({

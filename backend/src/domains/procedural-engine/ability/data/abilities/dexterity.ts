@@ -14,7 +14,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A firmer, denser body that shrugs off harm.",
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 4, hp: 8 })],
     },
     {
@@ -23,7 +23,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Draw all eyes and brace against the blow.",
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "physical" },
         components: [Stagger(), Ward()],
     },
     {
@@ -32,7 +32,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A rock-steady defensive stance.",
         minimumLevel: 5,
         minimumStats: { dexterity: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 14 })],
     },
     {
@@ -41,7 +41,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Turn aside the next incoming blow.",
         minimumLevel: 1,
         minimumStats: { dexterity: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [Ward()],
     },
     {
@@ -50,7 +50,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A bulwark of unnatural endurance.",
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 16 })],
     },
     {
@@ -59,7 +59,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A hardened, enduring physique.",
         minimumLevel: 3,
         minimumStats: { dexterity: 24, hp: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 6, hp: 15 })],
     },
     {
@@ -68,7 +68,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Absorb a furious amount of punishment at once.",
         minimumLevel: 4,
         minimumStats: { dexterity: 28 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [Ward()],
     },
     {
@@ -77,7 +77,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Step in harm's way for a companion.",
         minimumLevel: 2,
         minimumStats: { dexterity: 22 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "physical" },
         components: [Ward()],
     },
     {
@@ -86,7 +86,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Vitality bound with endurance.",
         minimumLevel: 11,
         minimumStats: { dexterity: 50, hp: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ hp: 80, dexterity: 10 })],
     },
     {
@@ -95,7 +95,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A lightning riposte after enduring a hit.",
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(12)],
     },
     {
@@ -104,7 +104,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A mighty shield of pure endurance.",
         minimumLevel: 6,
         minimumStats: { dexterity: 32 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 14 })],
     },
     {
@@ -113,7 +113,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A body accustomed to hardship.",
         minimumLevel: 1,
         minimumStats: { dexterity: 18 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 4, hp: 8 })],
     },
     {
@@ -122,7 +122,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Guard the whole party behind a shared bulwark.",
         minimumLevel: 9,
         minimumStats: { dexterity: 44 },
-        targeting: { kind: "ally", scope: "all" },
+        targeting: { kind: "ally", scope: "all", type: "physical" },
         components: [Ward()],
     },
     {
@@ -131,7 +131,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Unbreakable solidity against any assault.",
         minimumLevel: 8,
         minimumStats: { dexterity: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 16 })],
     },
     {
@@ -140,7 +140,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "A dense body that resists harm.",
         minimumLevel: 5,
         minimumStats: { dexterity: 30, hp: 15 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ dexterity: 6, hp: 15 })],
     },
     {
@@ -149,7 +149,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Turn the enemy's own force back upon them.",
         minimumLevel: 12,
         minimumStats: { dexterity: 55 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(14)],
     },
     {
@@ -158,7 +158,7 @@ export const DEXTERITY_ABILITIES: IAbility[] = [
         flavor_text: "Mend wounds while holding the wall.",
         minimumLevel: 3,
         minimumStats: { dexterity: 24 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "physical" },
         components: [Heal(12)],
     },
 ];

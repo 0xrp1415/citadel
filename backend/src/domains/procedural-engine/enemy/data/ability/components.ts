@@ -1,12 +1,9 @@
 import { IAbilityActiveComponent, IAbilityActor } from "../../../ability/interface.js";
 import { IStats } from "../../../combat/stats.js";
+import { CombatManager } from "../../../combat/manager.js";
 
 function names(actors: IAbilityActor[]): string {
     return actors.map((a) => a.name).join(", ");
-}
-
-function scaled(basePower: number, level: number): number {
-    return basePower + Math.floor(level * 1.5);
 }
 
 export function EnemyDamage(basePower: number): IAbilityActiveComponent {
@@ -14,9 +11,11 @@ export function EnemyDamage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Strikes the target with beastly ferocity.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor);
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            return `dealt ${amount} damage to ${names(ctx.targets)}`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            return `dealt ${dealt} damage to ${names(ctx.targets)}`;
         },
     };
 }
@@ -26,9 +25,11 @@ export function EnemyAoeDamage(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Unleashes a devastating attack upon all foes.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor);
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            return `devastated ${names(ctx.targets)} for ${amount} damage`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            return `devastated ${names(ctx.targets)} for ${dealt} damage`;
         },
     };
 }
@@ -40,7 +41,7 @@ export function Debuff(stat: keyof IStats, amount: number): IAbilityActiveCompon
         type: "active",
         flavor_text: `Weakens the target's ${label}.`,
         onExecute: (ctx) => {
-            ctx.targets.forEach((t) => t.ApplyTemporaryStatModifiers(modifiers));
+            ctx.targets.forEach((t) => CombatManager.ApplyTemporaryModifiers(t.combat, modifiers));
             return `reduced ${names(ctx.targets)}'s ${label} by ${amount}`;
         },
     };
@@ -53,7 +54,7 @@ export function SelfBuff(stat: keyof IStats, amount: number): IAbilityActiveComp
         type: "active",
         flavor_text: `Unleashes a surge of inner power.`,
         onExecute: (ctx) => {
-            ctx.actor.ApplyTemporaryStatModifiers(modifiers);
+            CombatManager.ApplyTemporaryModifiers(ctx.actor.combat, modifiers);
             return `${ctx.actor.name} gained +${amount} ${label}`;
         },
     };
@@ -64,10 +65,12 @@ export function DrainLife(basePower: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "Steals life from a foe to mend the caster.",
         onExecute: (ctx) => {
-            const amount = scaled(basePower, ctx.actor.scale_factor);
-            ctx.targets.forEach((t) => t.TakeDamage(amount));
-            ctx.targets.forEach(() => ctx.actor.Heal(Math.floor(amount * 0.5)));
-            return `drained ${amount} life from ${names(ctx.targets)}, recovering health`;
+            let dealt = 0;
+            ctx.targets.forEach((t) => {
+                dealt += CombatManager.DealDamage(ctx.actor.combat, t.combat, ctx.targeting.type, basePower);
+            });
+            ctx.targets.forEach((t) => CombatManager.Heal(ctx.actor.combat, Math.floor(dealt * 0.5)));
+            return `drained ${dealt} life from ${names(ctx.targets)}, recovering health`;
         },
     };
 }
@@ -78,7 +81,7 @@ export function CorrodeAll(amount: number): IAbilityActiveComponent {
         type: "active",
         flavor_text: "A corrosive aura that eats away at resilience.",
         onExecute: (ctx) => {
-            ctx.targets.forEach((t) => t.ApplyTemporaryStatModifiers(modifiers));
+            ctx.targets.forEach((t) => CombatManager.ApplyTemporaryModifiers(t.combat, modifiers));
             return `corroded ${names(ctx.targets)}, reducing strength and dexterity by ${amount}`;
         },
     };

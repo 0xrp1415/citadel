@@ -1,5 +1,6 @@
 import { IAbilityPassiveComponent } from "../../interface.js";
 import { IStats } from "../../../combat/stats.js";
+import { CombatManager } from "../../../combat/manager.js";
 
 function negate(mods: Partial<IStats>): Partial<IStats> {
     const out: Partial<IStats> = {};
@@ -14,10 +15,10 @@ export function statBonus(mods: Partial<IStats>): IAbilityPassiveComponent {
         type: "passive",
         flavor_text: "A permanent enhancement to the body's capacities.",
         onActivate: (ctx) => {
-            ctx.actor.ApplyStatModifiers(mods);
+            CombatManager.ApplyPermanentModifiers(ctx.actor.combat, mods);
         },
         onDeactivate: (ctx) => {
-            ctx.actor.ApplyStatModifiers(negate(mods));
+            CombatManager.ApplyPermanentModifiers(ctx.actor.combat, negate(mods));
         },
     };
 }
@@ -27,7 +28,7 @@ export function vitalityBonus(amount: number): IAbilityPassiveComponent {
         type: "passive",
         flavor_text: "A surge of vitality upon acquiring this boon.",
         onActivate: (ctx) => {
-            ctx.actor.Heal(amount);
+            CombatManager.Heal(ctx.actor.combat, amount);
         },
         onDeactivate: () => {},
     };

@@ -13,7 +13,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A crackling bolt of raw arcane force.",
         minimumLevel: 1,
         minimumStats: { intelligence: 20 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [ArcaneDamage(10)],
     },
     {
@@ -22,7 +22,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Genuine arcane acuity.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 8 })],
     },
     {
@@ -31,7 +31,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A roaring sphere of fire that erupts on impact.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [ArcaneDamage(11)],
     },
     {
@@ -40,7 +40,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Profound mastery of the arcane.",
         minimumLevel: 8,
         minimumStats: { intelligence: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 15 })],
     },
     {
@@ -49,7 +49,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Lightning that leaps from foe to foe.",
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [ArcaneDamage(11)],
     },
     {
@@ -58,7 +58,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A sharper mind for magic.",
         minimumLevel: 1,
         minimumStats: { intelligence: 18 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 4 })],
     },
     {
@@ -67,7 +67,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A burst of chilling frost that clings and slows.",
         minimumLevel: 2,
         minimumStats: { intelligence: 22 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [ArcaneDamage(9)],
     },
     {
@@ -76,7 +76,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Arcane might joined to insight.",
         minimumLevel: 7,
         minimumStats: { intelligence: 36, wisdom: 26 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 12, wisdom: 6 })],
     },
     {
@@ -85,7 +85,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Overcharge your next spell to frightening heights.",
         minimumLevel: 5,
         minimumStats: { intelligence: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [BuffIntelligence(10)],
     },
     {
@@ -94,7 +94,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "An archmage's mind unleashed.",
         minimumLevel: 10,
         minimumStats: { intelligence: 50 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 25 })],
     },
     {
@@ -103,7 +103,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A raw tear that ignores all protection.",
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [ArcaneDamage(13)],
     },
     {
@@ -112,7 +112,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "A keen and nimble mind.",
         minimumLevel: 1,
         minimumStats: { intelligence: 16 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 4 })],
     },
     {
@@ -121,7 +121,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Unmake a foe with a withering ray.",
         minimumLevel: 9,
         minimumStats: { intelligence: 44 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [ArcaneDamage(14)],
     },
     {
@@ -130,7 +130,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Breathe arcane power into a weapon.",
         minimumLevel: 3,
         minimumStats: { intelligence: 24 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [BuffIntelligence(8)],
     },
     {
@@ -139,7 +139,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Cast the last spell a second time, free.",
         minimumLevel: 6,
         minimumStats: { intelligence: 32 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [ArcaneDamage(12)],
     },
     {
@@ -148,7 +148,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Raw power tempered by profound insight.",
         minimumLevel: 11,
         minimumStats: { intelligence: 50, wisdom: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ intelligence: 12, wisdom: 6 })],
     },
     {
@@ -157,7 +157,7 @@ export const INTELLIGENCE_ABILITIES: IAbility[] = [
         flavor_text: "Call destruction from the sky.",
         minimumLevel: 10,
         minimumStats: { intelligence: 46 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "magical" },
         components: [ArcaneDamage(13)],
     },
 ];

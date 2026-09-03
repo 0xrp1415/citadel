@@ -1,4 +1,4 @@
-import { EntityCombat, IStats } from "../combat/index.js";
+import { EntityCombat } from "../combat/index.js";
 import { IAbility, IAbilityActor } from "../index.js";
 import { IEnemyData } from "./interface.js";
 
@@ -20,27 +20,11 @@ export class EnemyEntity extends EntityCombat implements IAbilityActor {
 
     get level(): number { return this.threatLevel; }
 
-    Heal(amount: number): void { this.changeHealthBy(amount); }
-    TakeDamage(amount: number): void { this.changeHealthBy(-amount); }
+    get combat(): EntityCombat { return this; }
 
-    ApplyStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void {
-        for (const stat of Object.keys(modifiers) as (keyof IStats)[]) {
-            const value = modifiers[stat];
-            if (value !== undefined) this.increaseStatModifierBy(stat, value);
-        }
-    }
-
-    ApplyTemporaryStatModifiers(modifiers: Partial<Record<keyof IStats, number>>): void {
-        for (const stat of Object.keys(modifiers) as (keyof IStats)[]) {
-            const value = modifiers[stat];
-            if (value !== undefined) this.applyTemporaryStatModifierBy(stat, value);
-        }
+    ResetHealth(): void {
+        this.changeHealthBy(this.Health.MaxHealth);
     }
 
     get scale_factor(): number { return this.StatMultiplier; }
-    get alive(): boolean { return this.Health.CurrentHealth > 0; }
-    get stats(): IStats { return this.BaseStats; }
-    get modifiers(): IStats { return this.StatModifiers; }
-    get maxHealth(): number { return this.Health.MaxHealth; }
-    get currentHealth(): number { return this.Health.CurrentHealth; }
 }

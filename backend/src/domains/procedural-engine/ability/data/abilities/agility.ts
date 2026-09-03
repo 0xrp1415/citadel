@@ -14,7 +14,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Quicker on the feet.",
         minimumLevel: 1,
         minimumStats: { agility: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 3 })],
     },
     {
@@ -23,7 +23,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Instant reposition to safety.",
         minimumLevel: 2,
         minimumStats: { agility: 22 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [Ward()],
     },
     {
@@ -32,7 +32,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Blinding speed that turns aside blows.",
         minimumLevel: 5,
         minimumStats: { agility: 32 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 12 })],
     },
     {
@@ -41,7 +41,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Genuine swiftness and poise.",
         minimumLevel: 1,
         minimumStats: { agility: 18 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 7 })],
     },
     {
@@ -50,7 +50,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "A blur of motion striking like a ghost.",
         minimumLevel: 8,
         minimumStats: { agility: 40 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(13)],
     },
     {
@@ -59,7 +59,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Evade the next incoming blow.",
         minimumLevel: 1,
         minimumStats: { agility: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [Ward()],
     },
     {
@@ -68,7 +68,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Swift and nimble footwork.",
         minimumLevel: 3,
         minimumStats: { agility: 26, dexterity: 22 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 6, dexterity: 4 })],
     },
     {
@@ -77,7 +77,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Move unseen past hazard or trial.",
         minimumLevel: 6,
         minimumStats: { agility: 34 },
-        targeting: { kind: "any", scope: "self" },
+        targeting: { kind: "any", scope: "self", type: "physical" },
         components: [RevealSecret()],
     },
     {
@@ -86,7 +86,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Genuine swiftness that disorients foes.",
         minimumLevel: 2,
         minimumStats: { agility: 24 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 7 })],
     },
     {
@@ -95,7 +95,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "The speed of the wind itself made weapon.",
         minimumLevel: 10,
         minimumStats: { agility: 50 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(14)],
     },
     {
@@ -104,7 +104,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "A burst of haste for travel.",
         minimumLevel: 1,
         minimumStats: { agility: 16 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [BuffAgility(10)],
     },
     {
@@ -113,7 +113,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "A leap borne on the wind.",
         minimumLevel: 3,
         minimumStats: { agility: 26 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 7 })],
     },
     {
@@ -122,7 +122,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Become speed itself, slipping past harm.",
         minimumLevel: 9,
         minimumStats: { agility: 44 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [BuffAgility(12)],
     },
     {
@@ -131,7 +131,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "A modest edge of quickness.",
         minimumLevel: 1,
         minimumStats: { agility: 14 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 3 })],
     },
     {
@@ -140,7 +140,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Roll and weave through the fight.",
         minimumLevel: 2,
         minimumStats: { agility: 24 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 7 })],
     },
     {
@@ -149,7 +149,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Endurance married to swiftness.",
         minimumLevel: 5,
         minimumStats: { agility: 34, dexterity: 28 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 10, dexterity: 6 })],
     },
     {
@@ -158,7 +158,7 @@ export const AGILITY_ABILITIES: IAbility[] = [
         flavor_text: "Speed wrapped in resilience.",
         minimumLevel: 11,
         minimumStats: { agility: 55, hp: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ agility: 20, hp: 10 })],
     },
 ];

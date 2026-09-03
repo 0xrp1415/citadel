@@ -15,7 +15,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A heavy, bone-crushing strike.",
         minimumLevel: 1,
         minimumStats: { strength: 20 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(10)],
     },
     {
@@ -24,7 +24,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Fury traded for raw power.",
         minimumLevel: 4,
         minimumStats: { strength: 28 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 5 })],
     },
     {
@@ -33,7 +33,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A sweeping blow that hits everyone nearby.",
         minimumLevel: 2,
         minimumStats: { strength: 22 },
-        targeting: { kind: "enemy", scope: "all" },
+        targeting: { kind: "enemy", scope: "all", type: "physical" },
         components: [Damage(9), Stagger()],
     },
     {
@@ -42,7 +42,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Unrelenting brute force.",
         minimumLevel: 8,
         minimumStats: { strength: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 15 })],
     },
     {
@@ -51,7 +51,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A strike aimed to shatter defenses.",
         minimumLevel: 3,
         minimumStats: { strength: 24 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(12)],
     },
     {
@@ -60,7 +60,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Brawn that also thickens the flesh.",
         minimumLevel: 1,
         minimumStats: { strength: 18 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 4, hp: 10 })],
     },
     {
@@ -69,7 +69,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A brutal head-strike that can lay low a foe.",
         minimumLevel: 3,
         minimumStats: { strength: 26 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(11), Stun()],
     },
     {
@@ -78,7 +78,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Power tempered by a sturdy frame.",
         minimumLevel: 7,
         minimumStats: { strength: 36, dexterity: 26 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 10, dexterity: 6 })],
     },
     {
@@ -87,7 +87,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Power built to shatter whatever stands before you.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(26)],
     },
     {
@@ -96,7 +96,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "The strength of a giant made manifest.",
         minimumLevel: 10,
         minimumStats: { strength: 50 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 25 })],
     },
     {
@@ -105,7 +105,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A wound that bleeds long after.",
         minimumLevel: 2,
         minimumStats: { strength: 22 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(10)],
     },
     {
@@ -114,7 +114,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A full-body charge that knocks foes over.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(12), Stagger()],
     },
     {
@@ -123,7 +123,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A bellow that galvanizes the party.",
         minimumLevel: 6,
         minimumStats: { strength: 32 },
-        targeting: { kind: "ally", scope: "all" },
+        targeting: { kind: "ally", scope: "all", type: "physical" },
         components: [BuffStrength(10)],
     },
     {
@@ -132,7 +132,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A mountain-crushing blow of pure force.",
         minimumLevel: 8,
         minimumStats: { strength: 42 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [Damage(14)],
     },
     {
@@ -141,7 +141,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Brawn and bulk in equal measure.",
         minimumLevel: 11,
         minimumStats: { strength: 52, hp: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 20, hp: 30 })],
     },
     {
@@ -150,7 +150,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "Siphon the enemy's life to fuel your blows.",
         minimumLevel: 5,
         minimumStats: { strength: 30 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "physical" },
         components: [DrainLife(10)],
     },
     {
@@ -159,7 +159,7 @@ export const STRENGTH_ABILITIES: IAbility[] = [
         flavor_text: "A small edge of raw strength.",
         minimumLevel: 1,
         minimumStats: { strength: 15 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "physical" },
         components: [statBonus({ strength: 5 })],
     },
 ];

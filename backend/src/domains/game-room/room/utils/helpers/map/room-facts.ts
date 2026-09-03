@@ -43,7 +43,7 @@ export function buildRoomFactContext(
         lines.push("enemies:");
         for (const enemy of enemies) {
             lines.push(
-                `- ${enemy.name} (threat ${enemy.threatLevel}, ${enemy.currentHealth}/${enemy.maxHealth} hp): ${enemy.description}`
+                `- ${enemy.name} (threat ${enemy.threatLevel}, ${enemy.Health.CurrentHealth}/${enemy.Health.MaxHealth} hp): ${enemy.description}`
             );
         }
     }

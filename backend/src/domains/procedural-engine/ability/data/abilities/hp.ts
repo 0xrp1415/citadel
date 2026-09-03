@@ -15,7 +15,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "A wellspring of extra vitality.",
         minimumLevel: 1,
         minimumStats: { hp: 20 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 20 })],
     },
     {
@@ -24,7 +24,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Knit an ally's wounds back together.",
         minimumLevel: 1,
         minimumStats: { hp: 20 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [Heal(12)],
     },
     {
@@ -33,7 +33,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Catch your breath and press on.",
         minimumLevel: 2,
         minimumStats: { hp: 25 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [Heal(12)],
     },
     {
@@ -42,7 +42,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "A hearty, well-fleshed body.",
         minimumLevel: 3,
         minimumStats: { hp: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 40 })],
     },
     {
@@ -51,7 +51,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Persistent, slow recovery.",
         minimumLevel: 5,
         minimumStats: { hp: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 40 })],
     },
     {
@@ -60,7 +60,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "A powerful surge of healing.",
         minimumLevel: 3,
         minimumStats: { hp: 25 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [Heal(14)],
     },
     {
@@ -69,7 +69,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Remarkable vitality that shields the party.",
         minimumLevel: 6,
         minimumStats: { hp: 40 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 75 })],
     },
     {
@@ -78,7 +78,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Steal life from a foe to mend yourself.",
         minimumLevel: 5,
         minimumStats: { hp: 30 },
-        targeting: { kind: "enemy", scope: "single" },
+        targeting: { kind: "enemy", scope: "single", type: "magical" },
         components: [DrainLife(10)],
     },
     {
@@ -87,7 +87,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "A devoted touch that closes wounds.",
         minimumLevel: 2,
         minimumStats: { hp: 22 },
-        targeting: { kind: "ally", scope: "single" },
+        targeting: { kind: "ally", scope: "single", type: "magical" },
         components: [Heal(12)],
     },
     {
@@ -96,7 +96,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Restore the vigor of the whole party.",
         minimumLevel: 6,
         minimumStats: { hp: 35 },
-        targeting: { kind: "ally", scope: "all" },
+        targeting: { kind: "ally", scope: "all", type: "magical" },
         components: [Heal(11)],
     },
     {
@@ -105,7 +105,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Titanic staying power.",
         minimumLevel: 8,
         minimumStats: { hp: 60 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 120 })],
     },
     {
@@ -114,7 +114,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Grant a temporary shield to the party.",
         minimumLevel: 9,
         minimumStats: { hp: 55 },
-        targeting: { kind: "ally", scope: "all" },
+        targeting: { kind: "ally", scope: "all", type: "magical" },
         components: [Ward()],
     },
     {
@@ -123,7 +123,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "An almost monstrous pool of health.",
         minimumLevel: 11,
         minimumStats: { hp: 80 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 120 })],
     },
     {
@@ -132,7 +132,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "Vitality bound with endurance.",
         minimumLevel: 12,
         minimumStats: { hp: 90, dexterity: 30 },
-        targeting: { kind: "self", scope: "self" },
+        targeting: { kind: "self", scope: "self", type: "magical" },
         components: [statBonus({ hp: 80, dexterity: 10 })],
     },
     {
@@ -141,7 +141,7 @@ export const HP_ABILITIES: IAbility[] = [
         flavor_text: "A glorious renewal that mends and revives.",
         minimumLevel: 12,
         minimumStats: { hp: 100 },
-        targeting: { kind: "ally", scope: "all" },
+        targeting: { kind: "ally", scope: "all", type: "magical" },
         components: [Heal(14), Revive(), Cleanse()],
     },
 ];

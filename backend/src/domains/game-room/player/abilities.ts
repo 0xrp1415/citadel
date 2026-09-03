@@ -6,7 +6,7 @@ export type PlayerAbilityDetail = {
     active: boolean;
     flavor_text: string;
     description: string;
-    targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self" };
+    targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self"; type: "physical" | "magical" };
     minimumLevel: number;
     minimumStats: Partial<Record<string, number>>;
 };

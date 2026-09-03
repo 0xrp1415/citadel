@@ -6,7 +6,8 @@ export type PlayerStatus =
     | "ready"
     | "disconnected"
     | "left"
-    | "in-run";
+    | "in-run"
+    | "ended";
 
 export type PlayerRunEntityArmor = {
     armorId: string;
@@ -55,7 +56,7 @@ export type PlayerRunEntityAbility = {
     active: boolean;
     flavor_text: string;
     description: string;
-    targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self" };
+    targeting: { kind: "enemy" | "ally" | "self" | "any"; scope: "single" | "all" | "self"; type: "physical" | "magical" };
     minimumLevel: number;
     minimumStats: Partial<Record<keyof IStats, number>>;
 };
