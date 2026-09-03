@@ -21,6 +21,8 @@ const COUNT_BY_ROOM_TYPE: Record<ERoomType, [number, number]> = {
     [ERoomType.PUZZLE]: [0, 0],
 };
 
+const MAX_TIER_BY_FLOOR = (floor: number): number => 1 + Math.floor((floor - 1) / 4);
+
 export function selectEnemiesForRoom(room: Room, floor: number, rng: MulberryRNG): EnemyEntity[] {
     const allowed = TIER_BY_ROOM_TYPE[room.Type];
     if (!allowed || allowed.length === 0) return [];
@@ -29,7 +31,8 @@ export function selectEnemiesForRoom(room: Room, floor: number, rng: MulberryRNG
     if (baseTier === undefined) return [];
     const tier = Math.min(
         allowed[allowed.length - 1] ?? baseTier,
-        Math.min(baseTier + Math.max(0, floor - 1), 4),
+        baseTier,
+        MAX_TIER_BY_FLOOR(floor),
     );
 
     let band = getEnemiesByThreat(tier);
@@ -45,7 +48,8 @@ export function selectEnemiesForRoom(room: Room, floor: number, rng: MulberryRNG
     if (count <= 0) return [];
 
     const picked = pickDistinct(band.map((e) => e.id), count, rng);
-    const scale = threatMultiplier(tier) * (1 + 0.1 * Math.max(0, floor - 1));
+    const positionScale = 0.75 + 0.05 * room.DistanceBonus + 0.1 * Math.max(0, floor - 1);
+    const scale = (threatMultiplier(tier) * positionScale) / Math.max(1, count);
     return picked
         .map((id) => getEnemyById(id))
         .filter((e): e is NonNullable<typeof e> => e !== undefined)
