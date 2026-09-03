@@ -4,8 +4,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
-import type { Ability, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats } from '../rooms'
-import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem } from '../rooms'
+import type { Ability, CombatAction, CombatTarget, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats } from '../rooms'
+import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, selectCombatVote } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
@@ -244,6 +244,8 @@ function statusLabel(status: PlayerPublic['status']): string {
       return 'off trail'
     case 'in-run':
       return 'descending'
+    case 'ended':
+      return 'fallen'
     default:
       return status
   }
@@ -403,7 +405,7 @@ function Run() {
       navigate({ to: '/lobby' })
       return
     }
-    if (room && room.status !== 'in-run') {
+    if (room && room.status === 'lobby') {
       setStage(1)
       navigate({ to: '/lobby' })
     }
@@ -431,6 +433,13 @@ function Run() {
     const onKeyDown = (event: KeyboardEvent) => {
       const tag = (event.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+
+      if (event.key === '/') {
+        if (openPlayerId || mapOpen || inventoryOpen || gearOpen) return
+        event.preventDefault()
+        composerRef.current?.focus()
+        return
+      }
 
       if (event.key === 'm' || event.key === 'M') {
         if (openPlayerId || inventoryOpen || gearOpen) return
@@ -472,16 +481,20 @@ function Run() {
   }, [room, selfPlayerId, openPlayerId, mapOpen, inventoryOpen, gearOpen])
 
   const dmActive = composerBusy || room?.dungeonMasterState === 'active'
+  const encounterActive = (room?.encounter?.phase ?? '') !== ''
+  const runEnded = room?.status === 'end'
 
   const officer = socketError
     ? socketError
-    : room?.status === 'in-run'
-      ? connected
-        ? dmActive
-          ? 'The officer deliberates. The record is continuous.'
-          : 'The descent is live. The record is continuous.'
-        : 'The line is down — retrying the connection…'
-      : "The register opens. Await the officer\u2019s word."
+    : room?.status === 'end'
+      ? 'The descent is over. The expedition has fallen.'
+      : room?.status === 'in-run'
+        ? connected
+          ? dmActive
+            ? 'The officer deliberates. The record is continuous.'
+            : 'The descent is live. The record is continuous.'
+          : 'The line is down — retrying the connection…'
+        : "The register opens. Await the officer\u2019s word."
 
   const selfPlayer = room?.players.find((p) => p.playerId === selfPlayerId) ?? null
   const selfPublicId = selfPlayer?.playerPublicId ?? null
@@ -573,6 +586,18 @@ function Run() {
           title="The Descent"
           officer={officer}
         />
+
+        {runEnded && (
+          <div className="run-end" role="status" aria-live="polite">
+            <p className="run-end__title">The expedition is over.</p>
+            <p className="run-end__sub">
+              The last of you has fallen to the depths. The descent ends here.
+            </p>
+            <a className="btn run-end__back" href="/lobby">
+              Return to the register
+            </a>
+          </div>
+        )}
 
         <section className="panel" aria-label="Field log">
           <div className="panel__head">
@@ -751,8 +776,8 @@ function Run() {
                     void handlePlay()
                   }
                 }}
-                placeholder="Say what you do…"
-                disabled={dmActive}
+                placeholder={encounterActive ? 'The battle commands govern — use the fray.' : runEnded ? 'The descent has ended.' : 'Say what you do…'}
+                disabled={dmActive || encounterActive || runEnded}
                 aria-label="Your next action"
               />
             </div>
@@ -760,9 +785,9 @@ function Run() {
               type="button"
               className="btn btn--primary composer__send"
               onClick={() => void handlePlay()}
-              disabled={dmActive || !draft.trim()}
+              disabled={dmActive || encounterActive || runEnded || !draft.trim()}
             >
-              {dmActive ? 'judging…' : 'speak'}
+              {encounterActive ? 'in battle' : dmActive ? 'judging…' : runEnded ? 'ended' : 'speak'}
             </button>
           </div>
         </section>
@@ -777,8 +802,17 @@ function Run() {
             onOpenGear={() => setGearOpen(true)}
           />
         )}
-        {room && <EnemiesCard room={room} />}
+        {room && room.encounter?.phase === '' && <EnemiesCard room={room} />}
       </aside>
+
+      {(room?.encounter?.phase === 'vote' || room?.encounter?.phase === 'combat') && (
+        <CombatModal
+          room={room}
+          roomToken={roomToken}
+          selfPublicId={selfPublicId}
+          playerNameById={playerNameById}
+        />
+      )}
 
       {openPlayer && (
         <DossierCard
@@ -952,8 +986,24 @@ const ROOM_LABELS: Record<string, string> = {
   secret: 'Secret',
 }
 
+type DisplayEnemy = {
+  id: string
+  name: string
+  threatLevel: number
+  currentHealth: number
+  maxHealth: number
+  alive: boolean
+  description?: string
+}
+
 function EnemiesCard({ room }: { room: RoomData }) {
-  const enemies = room.map?.rooms[room.currentRoom.index]?.enemies ?? []
+  const enc = room.encounter
+  const currentTurnEnemyId =
+    enc?.phase === 'combat' && enc.currentTurnKind === 'enemy' ? enc.currentTurnId : null
+  const enemies: DisplayEnemy[] =
+    enc?.phase === 'combat'
+      ? enc.enemies
+      : (room.map?.rooms[room.currentRoom.index]?.enemies ?? [])
 
   return (
     <section className="board enemiespanel" aria-label="Enemies present">
@@ -971,7 +1021,12 @@ function EnemiesCard({ room }: { room: RoomData }) {
             const pct =
               enemy.maxHealth > 0 ? Math.round((enemy.currentHealth / enemy.maxHealth) * 100) : 0
             return (
-              <li className="enemiespanel__enemy" key={enemy.id}>
+              <li
+                className={`enemiespanel__enemy${
+                  enemy.id === currentTurnEnemyId ? ' enemiespanel__enemy--turn' : ''
+                }`}
+                key={enemy.id}
+              >
                 <div className="enemiespanel__top">
                   <span className="enemiespanel__name" title={enemy.description}>
                     {enemy.name}
@@ -995,6 +1050,394 @@ function EnemiesCard({ room }: { room: RoomData }) {
         </ul>
       )}
     </section>
+  )
+}
+
+function abilityNeedsTarget(a: Ability): boolean {
+  return (a.targeting.kind === 'enemy' || a.targeting.kind === 'ally') && a.targeting.scope === 'single'
+}
+
+function numberKeyIndex(key: string): number {
+  if (key >= '1' && key <= '9') return key.charCodeAt(0) - 49
+  if (key === '0') return 9
+  return -1
+}
+
+function CombatModal({
+  room,
+  roomToken,
+  selfPublicId,
+  playerNameById,
+}: {
+  room: RoomData
+  roomToken: string | null
+  selfPublicId: string | null
+  playerNameById: Map<string, string>
+}) {
+  const encounter = room.encounter
+  const [pending, setPending] = useState<CombatAction | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  const voteActive = encounter?.phase === 'vote' && (encounter.vote?.active ?? false)
+  const voteDeadlineAt = encounter?.vote?.deadlineAt ?? 0
+
+  useEffect(() => {
+    if (!voteActive || voteDeadlineAt === 0) return
+    const tick = () => setNow(Date.now())
+    const id = window.setInterval(tick, 250)
+    return () => window.clearInterval(id)
+  }, [voteActive, voteDeadlineAt])
+
+  const keyboardRef = useRef<((event: KeyboardEvent) => void) | null>(null)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => keyboardRef.current?.(event)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  if (!encounter || (encounter.phase !== 'vote' && encounter.phase !== 'combat')) return null
+
+  const isVote = encounter.phase === 'vote'
+
+  const selfPlayer = room.players.find((p) => p.playerPublicId === selfPublicId) ?? null
+  const isMyTurn =
+    encounter.currentTurnKind === 'player' && encounter.currentTurnId === selfPublicId
+
+  const myVote = selfPublicId !== null ? encounter.vote.votes[selfPublicId] : undefined
+  const voteRemainingMs = Math.max(0, encounter.vote.deadlineAt - now)
+  const voteRemainingSec = Math.ceil(voteRemainingMs / 1000)
+  const voteYes = Object.entries(encounter.vote.votes).filter(([, v]) => v).length
+  const voteNo = Object.entries(encounter.vote.votes).filter(([, v]) => !v).length
+
+  const activeAbilities: (Ability & { slot: number })[] = (
+    selfPlayer?.stats.activeAbilities ?? []
+  )
+    .map((slot) => selfPlayer?.stats.abilities.find((a) => a.id === slot.id))
+    .filter((a): a is Ability => !!a)
+    .map((a, i) => ({ ...a, slot: i }))
+
+  const enemies = encounter.enemies.filter((e) => e.alive)
+  const allies = room.players.filter(
+    (p) =>
+      p.playerPublicId !== selfPublicId &&
+      p.status !== 'disconnected' &&
+      p.status !== 'left' &&
+      p.stats.health.CurrentHealth > 0,
+  )
+
+  const pendingAbility = pending && pending.type === 'ability' ? pending : null
+  const needsTarget =
+    pending?.type === 'attack' ||
+    (pendingAbility !== null &&
+      (() => {
+        const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
+        return ability ? abilityNeedsTarget(ability) : false
+      })())
+
+  const pendingTargetKind: 'enemy' | 'ally' | null = (() => {
+    if (pending?.type === 'attack') return 'enemy'
+    if (pendingAbility) {
+      const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
+      if (ability && abilityNeedsTarget(ability)) {
+        return ability.targeting.kind === 'ally' ? 'ally' : 'enemy'
+      }
+    }
+    return null
+  })()
+
+  const sendAction = async (action: CombatAction) => {
+    if (!roomToken) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await selectCombatAction(roomToken, action)
+      setPending(action)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'failed to act')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sendTarget = async (target: CombatTarget) => {
+    if (!roomToken) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await selectCombatTarget(roomToken, target)
+      setPending(null)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'failed to target')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const pickEnemy = (id: string) => void sendTarget({ kind: 'enemy', id })
+  const pickAlly = (id: string) => void sendTarget({ kind: 'ally', id })
+
+  const sendVote = async (accept: boolean) => {
+    if (!roomToken) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await selectCombatVote(roomToken, accept)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'failed to vote')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const turnName = playerNameById.get(encounter.currentTurnId ?? '') ?? 'the next actor'
+
+  const actionList: { label: string; title?: string; invoke: () => void }[] = [
+    { label: 'attack', invoke: () => void sendAction({ type: 'attack' }) },
+    ...activeAbilities.map((a) => ({
+      label: a.name,
+      title: a.flavor_text,
+      invoke: () => void sendAction({ type: 'ability', abilityId: a.id }),
+    })),
+    { label: 'defend', invoke: () => void sendAction({ type: 'defend' }) },
+  ]
+
+  keyboardRef.current = (event: KeyboardEvent) => {
+    const tag = (event.target as HTMLElement).tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (isVote) {
+      if (event.key === '1') {
+        event.preventDefault()
+        void sendVote(true)
+      } else if (event.key === '2') {
+        event.preventDefault()
+        void sendVote(false)
+      }
+      return
+    }
+
+    if (!isMyTurn) return
+
+    if (needsTarget) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setPending(null)
+        return
+      }
+      const idx = numberKeyIndex(event.key)
+      if (idx === -1) return
+      if (pendingTargetKind === 'ally') {
+        if (idx < allies.length) {
+          event.preventDefault()
+          pickAlly(allies[idx].playerPublicId)
+        }
+      } else if (idx < enemies.length) {
+        event.preventDefault()
+        pickEnemy(enemies[idx].id)
+      }
+      return
+    }
+
+    const idx = numberKeyIndex(event.key)
+    if (idx >= 0 && idx < actionList.length) {
+      event.preventDefault()
+      actionList[idx].invoke()
+    }
+  }
+
+  return (
+    <div className="combatmodal__scrim">
+      <div
+        className="combatmodal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Combat"
+      >
+        <header className="combatmodal__head">
+          <span className="combatmodal__eyebrow">
+            {isVote ? `the party decides · ${voteRemainingSec}s` : `combat · round ${encounter.round}`}
+          </span>
+          <h2 className="combatmodal__title">{isVote ? 'Foes Bar the Way' : 'The Fray'}</h2>
+          <span className="combatmodal__turn">
+            {isVote ? 'battle or ambush?' : isMyTurn ? 'your turn' : `awaiting ${turnName}`}
+          </span>
+        </header>
+
+        <div className="combatmodal__body">
+          <section className="combatmodal__foe" aria-label="Enemies">
+            <div className="combatmodal__sectitle">
+              <span>foes</span>
+              <span className="combatmodal__sectitle-note">{enemies.length} standing</span>
+            </div>
+            {enemies.length === 0 ? (
+              <div className="combatmodal__empty">None remain.</div>
+            ) : (
+              <ul className="combatmodal__foelist">
+                {enemies.map((e) => {
+                  const pct = e.maxHealth > 0 ? Math.round((e.currentHealth / e.maxHealth) * 100) : 0
+                  const acting = isMyTurn && pendingTargetKind === 'enemy'
+                  return (
+                    <li
+                      key={e.id}
+                      className={`combatmodal__foe${acting ? ' combatmodal__foe--acting' : ''}`}
+                    >
+                      <div className="combatmodal__foe-top">
+                        <span className="combatmodal__foe-name">{e.name}</span>
+                        <span className="combatmodal__foe-tier">T{e.threatLevel}</span>
+                      </div>
+                      <div className="combatmodal__foe-hp">
+                        <span
+                          className={`combatmodal__foe-fill${!e.alive ? ' combatmodal__foe-fill--down' : ''}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="combatmodal__foe-num">
+                        {e.alive ? `${e.currentHealth}/${e.maxHealth}` : 'down'}
+                      </span>
+                      {acting && (
+                        <button
+                          type="button"
+                          className="combatmodal__foe-target"
+                          disabled={busy}
+                          onClick={() => pickEnemy(e.id)}
+                        >
+                          engage
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
+
+          <section className="combatmodal__record" aria-label="Combat record">
+            <div className="combatmodal__sectitle">
+              <span>record</span>
+              <span className="combatmodal__sectitle-note">mechanical</span>
+            </div>
+            <ul className="combatmodal__log">
+              {encounter.log.map((line, i) => (
+                <li className="combatmodal__logline" key={i}>
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <footer className="combatmodal__controls">
+          {err && (
+            <p className="composer__error" role="alert">
+              {err}
+            </p>
+          )}
+
+          {isVote ? (
+            <div className="combat__vote">
+              <p className="combat__vote-rule">
+                Choose the party&apos;s course — a majority decides. {voteYes} for battle, {voteNo} for
+                the ambush.
+              </p>
+              <div className="combat__vote-actions">
+                <button
+                  type="button"
+                  className="btn combat__act"
+                  disabled={busy}
+                  aria-pressed={myVote === true}
+                  onClick={() => void sendVote(true)}
+                >
+                  <span className="combat__key">1</span>
+                  battle{myVote === true ? ' · chosen' : ''}
+                </button>
+                <button
+                  type="button"
+                  className="btn combat__act"
+                  disabled={busy}
+                  aria-pressed={myVote === false}
+                  onClick={() => void sendVote(false)}
+                >
+                  <span className="combat__key">2</span>
+                  ambush{myVote === false ? ' · chosen' : ''}
+                </button>
+              </div>
+              <p className="combatmodal__wait">
+                {myVote !== undefined
+                  ? `you chose ${myVote ? 'battle' : 'ambush'}`
+                  : `${voteRemainingSec}s to decide`}
+              </p>
+            </div>
+          ) : (
+            <>
+              {!isMyTurn && <div className="combatmodal__wait">awaiting {turnName}…</div>}
+
+              {isMyTurn && !needsTarget && (
+                <div className="combat__actions">
+                  {actionList.map((action, i) => (
+                    <button
+                      type="button"
+                      key={`${i}-${action.label}`}
+                      className="btn combat__act"
+                      disabled={busy}
+                      title={action.title}
+                      onClick={action.invoke}
+                    >
+                      <span className="combat__key">{i + 1}</span>
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {isMyTurn && needsTarget && (
+                <div className="combat__targets">
+                  <span className="combat__targets-label">
+                    engage a target{pendingTargetKind === 'ally' ? ' (ally)' : ''}
+                  </span>
+                  {pendingTargetKind === 'enemy' &&
+                    enemies.map((e, i) => (
+                      <button
+                        type="button"
+                        key={e.id}
+                        className="btn combat__target"
+                        disabled={busy}
+                        onClick={() => pickEnemy(e.id)}
+                      >
+                        <span className="combat__key">{i + 1}</span>
+                        {e.name} · {e.currentHealth}/{e.maxHealth}
+                      </button>
+                    ))}
+                  {pendingTargetKind === 'ally' &&
+                    allies.map((p, i) => (
+                      <button
+                        type="button"
+                        key={p.playerPublicId}
+                        className="btn combat__target"
+                        disabled={busy}
+                        onClick={() => pickAlly(p.playerPublicId)}
+                      >
+                        <span className="combat__key">{i + 1}</span>
+                        {p.name} · {p.stats.health.CurrentHealth}/{p.stats.health.MaxHealth}
+                      </button>
+                    ))}
+                  <button
+                    type="button"
+                    className="btn combat__target"
+                    onClick={() => setPending(null)}
+                  >
+                    cancel
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </footer>
+      </div>
+    </div>
   )
 }
 

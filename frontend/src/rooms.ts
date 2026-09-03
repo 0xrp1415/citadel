@@ -1,4 +1,4 @@
-export type PlayerStatus = 'joined' | 'connected' | 'ready' | 'disconnected' | 'left' | 'in-run'
+export type PlayerStatus = 'joined' | 'connected' | 'ready' | 'disconnected' | 'left' | 'in-run' | 'ended'
 
 export interface Stats {
   hp: number
@@ -66,7 +66,7 @@ export type Ability = {
   active: boolean
   flavor_text: string
   description: string
-  targeting: { kind: 'enemy' | 'ally' | 'self' | 'any'; scope: 'single' | 'all' | 'self' }
+  targeting: { kind: 'enemy' | 'ally' | 'self' | 'any'; scope: 'single' | 'all' | 'self'; type: 'physical' | 'magical' }
   minimumLevel: number
   minimumStats: Partial<Stats>
 }
@@ -183,6 +183,58 @@ export interface RoomData {
   message?: RoomMessage[]
   dungeonMasterState?: 'idle' | 'active'
   hostPublicId: string | null
+  encounter?: EncounterPublicState | null
+}
+
+export type EncounterPhase = '' | 'vote' | 'combat'
+
+export type CombatAction =
+  | { type: 'attack' }
+  | { type: 'ability'; abilityId: string }
+  | { type: 'defend' }
+
+export type CombatTarget =
+  | { kind: 'enemy'; id: string }
+  | { kind: 'ally'; id: string }
+  | { kind: 'self' }
+
+export interface EncounterInitiativeEntry {
+  kind: 'player' | 'enemy'
+  id: string
+  name: string
+  speed: number
+  alive: boolean
+}
+
+export interface EncounterEnemy {
+  id: string
+  name: string
+  threatLevel: number
+  currentHealth: number
+  maxHealth: number
+  alive: boolean
+  defending: boolean
+}
+
+export interface EncounterVoteState {
+  active: boolean
+  deadlineAt: number
+  durationMs: number
+  votes: Record<string, boolean>
+}
+
+export interface EncounterPublicState {
+  active: boolean
+  phase: EncounterPhase
+  round: number
+  currentTurnId: string | null
+  currentTurnKind: 'player' | 'enemy' | null
+  initiative: EncounterInitiativeEntry[]
+  playerActions: Record<string, CombatAction | null>
+  playerTargets: Record<string, CombatTarget>
+  log: string[]
+  enemies: EncounterEnemy[]
+  vote: EncounterVoteState
 }
 
 export interface CreateRoomResult {
@@ -276,6 +328,24 @@ export async function setActiveAbility(
   slot: number,
 ): Promise<void> {
   await sendAction(roomToken, 'set_active_ability', { id, slot })
+}
+
+export async function selectCombatAction(
+  roomToken: string,
+  action: CombatAction,
+): Promise<void> {
+  await sendAction(roomToken, 'combat_select_action', action)
+}
+
+export async function selectCombatVote(roomToken: string, accept: boolean): Promise<void> {
+  await sendAction(roomToken, 'combat_vote', { accept })
+}
+
+export async function selectCombatTarget(
+  roomToken: string,
+  target: CombatTarget,
+): Promise<void> {
+  await sendAction(roomToken, 'combat_select_target', target)
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {
