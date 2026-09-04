@@ -12,13 +12,6 @@ export interface InitiativeEntry {
     alive: boolean;
 }
 
-export interface EncounterVoteState {
-    active: boolean;
-    deadlineAt: number;
-    durationMs: number;
-    votes: Record<string, boolean>;
-}
-
 export interface EncounterPublicState {
     active: boolean;
     phase: EncounterPhase;
@@ -38,12 +31,10 @@ export interface EncounterPublicState {
         alive: boolean;
         defending: boolean;
     }[];
-    vote: EncounterVoteState;
 }
 
 export interface IGameRoomEncounterContext {
     StartEncounter(enemies: EnemyEntity[]): void;
-    SubmitVote(player: Player, accept: boolean): boolean;
     SubmitAction(player: Player, action: CombatAction): boolean;
     SubmitTarget(player: Player, target: CombatTarget): boolean;
     OnPlayerDisconnect(playerId: string): void;

@@ -1,7 +1,7 @@
 import { MulberryRNG } from "../rng.js";
 import { ERoomType, Room } from "../room.js";
 import { EnemyEntity } from "../enemy/entity.js";
-import { EnemyEntityBuilder, threatMultiplier } from "../enemy/builder.js";
+import { EnemyEntityBuilder } from "../enemy/builder.js";
 import { getEnemiesByThreat, getEnemyById } from "../enemy/registry.js";
 
 const TIER_BY_ROOM_TYPE: Partial<Record<ERoomType, number[]>> = {
@@ -22,6 +22,17 @@ const COUNT_BY_ROOM_TYPE: Record<ERoomType, [number, number]> = {
 };
 
 const MAX_TIER_BY_FLOOR = (floor: number): number => 1 + Math.floor((floor - 1) / 4);
+
+export function getEnemyStatScale(
+    floor: number,
+    distanceBonus: number,
+    enemyCount: number,
+    growth: number = 1.15,
+    roomInfluence: number = 0.3,
+): number {
+    const base = Math.pow(growth, floor - 1) + roomInfluence * distanceBonus;
+    return base / Math.sqrt(enemyCount);
+}
 
 export function selectEnemiesForRoom(room: Room, floor: number, rng: MulberryRNG): EnemyEntity[] {
     const allowed = TIER_BY_ROOM_TYPE[room.Type];
@@ -48,8 +59,7 @@ export function selectEnemiesForRoom(room: Room, floor: number, rng: MulberryRNG
     if (count <= 0) return [];
 
     const picked = pickDistinct(band.map((e) => e.id), count, rng);
-    const positionScale = 0.75 + 0.05 * room.DistanceBonus + 0.1 * Math.max(0, floor - 1);
-    const scale = (threatMultiplier(tier) * positionScale) / Math.max(1, count);
+    const scale = getEnemyStatScale(floor, room.DistanceBonus, count);
     return picked
         .map((id) => getEnemyById(id))
         .filter((e): e is NonNullable<typeof e> => e !== undefined)

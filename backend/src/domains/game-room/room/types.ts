@@ -2,6 +2,7 @@ import { PlayerPublic } from "../player/types.js";
 import { IGameRoomConfig } from "./utils/types.js";
 import { IPassageEvent } from "../../procedural-engine/index.js";
 import { EncounterPublicState } from "./utils/interface/encounter.js";
+import { IVoteJSON } from "./utils/helpers/confirmation/types.js";
 
 export interface IExitPublicJSON {
     targetRoomId: number;
@@ -50,4 +51,5 @@ export interface GameRoomPublicData {
     readonly map: IMapPublicJSON | null;
     readonly hostPublicId: string | null;
     readonly encounter: EncounterPublicState;
+    readonly currentVote: IVoteJSON | null;
 }

@@ -10,7 +10,7 @@ import { LobbyState } from "./states/lobby/index.js";
 import { GameRoomDMAdapter } from "./dm-adapter.js";
 import { GameRoomResolver } from "./resolver.js";
 import { GameRoomBroadcaster } from "./broadcaster.js";
-import { GameRoomConfirmationManager } from "./confirmation.js";
+import { GameRoomVoteManager } from "./vote.js";
 import { GameRoomEncounterManager } from "./encounter.js";
 
 
@@ -24,7 +24,7 @@ export class GameRoom implements IGameRoomContext {
     public readonly DMAdapter: GameRoomDMAdapter;
     public readonly Resolver: GameRoomResolver;
     public readonly Broadcaster: GameRoomBroadcaster;
-    public readonly Confirmation: GameRoomConfirmationManager;
+    public readonly Vote: GameRoomVoteManager;
     public readonly Encounter: GameRoomEncounterManager;
 
     constructor(identity: IGameRoomIdentity, emit: (type: RoomEventType, data: unknown) => void) {
@@ -33,11 +33,12 @@ export class GameRoom implements IGameRoomContext {
         this.Socket = new GameRoomSocket(this.Party, (playerId) => {
             this.Party.removePlayer(playerId);
             this.Encounter.OnPlayerDisconnect(playerId);
+            this.Vote.OnPlayerDisconnect(playerId);
             this.Broadcaster.RoomUpdate();
         });
         this.Map = new GameRoomMap();
         this.Broadcaster = new GameRoomBroadcaster(this, emit);
-        this.Confirmation = new GameRoomConfirmationManager(this);
+        this.Vote = new GameRoomVoteManager(this);
         this.Encounter = new GameRoomEncounterManager(this);
         this.StateMachine = new GameRoomStateMachine(new LobbyState(this));
         this.DMAdapter = new GameRoomDMAdapter(this);
@@ -63,6 +64,7 @@ export class GameRoom implements IGameRoomContext {
             map: this.Map.Map ? this.Map.JSON : null,
             hostPublicId: this.Party.LeaderPublicId,
             encounter: this.Encounter.State,
+            currentVote: this.Vote.CurrentVote,
         };
     }
 

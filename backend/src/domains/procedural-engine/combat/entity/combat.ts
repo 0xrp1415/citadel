@@ -19,9 +19,9 @@ export abstract class EntityCombat {
         this.base_stats = new EntityStats(base_stats);
         this.baseMaxHealth = base_health;
         this.baseStatsHp = base_stats.hp;
-        this.health = new EntityHealthStatImpl(base_health, undefined, () => this.resolveMaxHealth());
         this.statModifiers = sumStats([armor_stats, weapon_stats, ability_stats]);
         this.statMultiplier = stat_multiplier;
+        this.health = new EntityHealthStatImpl(base_health, undefined, () => this.resolveMaxHealth());
 
     }
 

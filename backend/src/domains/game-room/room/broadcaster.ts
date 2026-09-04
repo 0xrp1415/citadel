@@ -25,20 +25,6 @@ export class GameRoomBroadcaster implements IGameRoomBroadcaster {
         });
     }
 
-    public ConfirmationUpdate(): void {
-        this.touch();
-        if (!this.context.Confirmation.HasActive || !this.context.Confirmation.Type) {
-            this.emit("confirmation-update", null);
-            return;
-        }
-        this.emit("confirmation-update", {
-            type: this.context.Confirmation.Type,
-            votes: this.context.Confirmation.Votes,
-            deadlineAt: this.context.Confirmation.DeadlineAt ?? Date.now(),
-            durationMs: this.context.Confirmation.DurationMs ?? 0,
-        });
-    }
-
     public LastUpdateTime(): number {
         return this.lastUpdateTime;
     }
@@ -61,6 +47,7 @@ export class GameRoomBroadcaster implements IGameRoomBroadcaster {
             map: this.context.Map.Map ? this.context.Map.JSON : null,
             hostPublicId: this.context.Party.LeaderPublicId,
             encounter: this.context.Encounter.State,
+            currentVote: this.context.Vote.CurrentVote,
         };
     }
 }

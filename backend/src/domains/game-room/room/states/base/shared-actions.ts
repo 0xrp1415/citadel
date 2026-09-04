@@ -16,7 +16,7 @@ export function playerDisconnect(ctx: IGameRoomContext): ActionHandler {
         ctx.Socket.handlePlayerDisconnect(playerId);
         const player = ctx.Party.getPlayer(playerId);
         if (player) {
-            ctx.Confirmation.OnPlayerDisconnect(player.Identity.playerPublicId);
+            ctx.Vote.OnPlayerDisconnect(player.Identity.playerPublicId);
         }
         ctx.Broadcaster.RoomUpdate();
         return { ok: true, value: null };

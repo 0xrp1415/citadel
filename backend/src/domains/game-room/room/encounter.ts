@@ -14,7 +14,7 @@ import {
 
 const AMBUSH_DC_BASE = 10;
 const AMBUSH_ROLL_SIDES = 20;
-const ENCOUNTER_VOTE_DURATION_MS = 10_000;
+const AMBUSH_STAT_DIVISOR = 4;
 
 export class GameRoomEncounterManager implements IGameRoomEncounterContext {
     private readonly context: IGameRoomContext;
@@ -31,12 +31,6 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
 
     private defendingPlayerIds: Set<string> = new Set();
     private log: string[] = [];
-
-    private voteActive: boolean = false;
-    private voteDeadlineAt: number = 0;
-    private voteDurationMs: number = ENCOUNTER_VOTE_DURATION_MS;
-    private voteVotes: Record<string, boolean> = {};
-    private voteTimer: NodeJS.Timeout | null = null;
 
     constructor(context: IGameRoomContext) {
         this.context = context;
@@ -57,22 +51,18 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
 
         this.pushLog(`${enemies.length} foes bar the way. The party decides: battle or ambush?`);
 
-        this.startVote();
+        this.context.Vote.Start(
+            "Foes Bar the Way",
+            "The party must choose their approach.",
+            [
+                { id: "battle", name: "Battle", description: "Face the foes head-on." },
+                { id: "ambush", name: "Ambush", description: "Strike from the shadows." },
+            ],
+            "majority",
+            (winnerId) => this.resolveApproach(winnerId === "battle"),
+        );
 
         this.context.Broadcaster.RoomUpdate();
-    }
-
-    public SubmitVote(player: Player, accept: boolean): boolean {
-        if (!this.voteActive) return false;
-        if (player.Combat.Health.CurrentHealth <= 0) return false;
-
-        this.voteVotes[player.Identity.playerPublicId] = accept;
-        this.context.Broadcaster.RoomUpdate();
-
-        if (this.allConnectedHaveVoted()) {
-            this.finishVote();
-        }
-        return true;
     }
 
     public SubmitAction(player: Player, action: CombatAction): boolean {
@@ -122,15 +112,6 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
         delete this.playerActions[player.Identity.playerPublicId];
         delete this.playerTargets[player.Identity.playerPublicId];
         this.defendingPlayerIds.delete(player.Identity.playerPublicId);
-
-        if (this.voteActive) {
-            delete this.voteVotes[player.Identity.playerPublicId];
-            if (this.connectedPlayerIds().length === 0) {
-                this.finishVote();
-            } else if (this.allConnectedHaveVoted()) {
-                this.finishVote();
-            }
-        }
     }
 
     public get Active(): boolean {
@@ -162,54 +143,10 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
                 alive: CombatManager.IsAlive(e),
                 defending: false,
             })),
-            vote: {
-                active: this.voteActive,
-                deadlineAt: this.voteDeadlineAt,
-                durationMs: this.voteDurationMs,
-                votes: { ...this.voteVotes },
-            },
         };
     }
 
-    // ── Approach vote (battle or ambush) ───────────────────
-
-    private startVote(): void {
-        this.voteActive = true;
-        this.voteVotes = {};
-        this.voteDeadlineAt = Date.now() + ENCOUNTER_VOTE_DURATION_MS;
-        this.voteDurationMs = ENCOUNTER_VOTE_DURATION_MS;
-        this.voteTimer = setTimeout(() => {
-            this.voteTimer = null;
-            this.finishVote();
-        }, ENCOUNTER_VOTE_DURATION_MS);
-    }
-
-    private connectedPlayerIds(): string[] {
-        return this.context.Party.Players
-            .filter((p) => p.status !== "disconnected" && p.status !== "left" && p.status !== "joined")
-            .map((p) => p.Identity.playerPublicId);
-    }
-
-    private allConnectedHaveVoted(): boolean {
-        const pool = this.connectedPlayerIds();
-        if (pool.length === 0) return false;
-        return pool.every((id) => this.voteVotes[id] !== undefined);
-    }
-
-    private finishVote(): void {
-        if (this.voteTimer) {
-            clearTimeout(this.voteTimer);
-            this.voteTimer = null;
-        }
-        this.voteActive = false;
-
-        const pool = this.connectedPlayerIds();
-        const accepted = pool.length > 0 && pool.filter((id) => this.voteVotes[id] !== false).length >= Math.ceil(pool.length / 2);
-
-        this.context.Broadcaster.RoomUpdate();
-        this.resolveApproach(accepted);
-    }
-
+    // ── Approach resolution ─────────────────────────────────
 
     private resolveApproach(battle: boolean): void {
         if (battle) {
@@ -240,7 +177,7 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
             players.reduce((sum, p) => {
                 const eff = p.Combat.EffectiveStats;
                 return sum + (eff.agility + eff.strength);
-            }, 0) / players.length;
+            }, 0) / players.length / AMBUSH_STAT_DIVISOR;
 
         const dc = AMBUSH_DC_BASE + this.totalThreat();
         const roll = this.roll(1, AMBUSH_ROLL_SIDES);
@@ -630,12 +567,6 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
         this.initiative = [];
         this.currentTurnIndex = -1;
         this.round = 0;
-        this.voteActive = false;
-        if (this.voteTimer) {
-            clearTimeout(this.voteTimer);
-            this.voteTimer = null;
-        }
-        this.voteVotes = {};
 
         const enemiesDead = !this.enemies.some((e) => CombatManager.IsAlive(e));
 

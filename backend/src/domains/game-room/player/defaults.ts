@@ -47,7 +47,7 @@ export const toItem = (item: IItem): PlayerRunEntityItem => {
 };
 
 export const BASE_MAX_PLAYER_BASE_STAT = 40;
-export const BASE_PLAYER_HP = 100;
+export const BASE_PLAYER_HP = 50;
 
 export const DefaultSkillPoints = (): number => 50;
 export const DefaultGold = (): number => 200;

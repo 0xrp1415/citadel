@@ -43,13 +43,22 @@ export async function resolveMove(action: DmAction, actor: Player | undefined, c
         return;
     }
 
-    context.Confirmation.Start("unanimous", async (accepted) => {
-        if (!accepted) return;
-        const traveled = context.Map.Travel(direction);
-        if (traveled !== null) {
-            await enterRoom(context, context.Map.CurrentRoomIndex, (d) => context.Resolver.NarrateRoom(d), `${actorName} leads the party ${direction}`);
-        }
-    });
+    context.Vote.Start(
+        "The Party Moves",
+        "Should the party advance?",
+        [
+            { id: "yes", name: "Forward", description: "Advance to the next room." },
+            { id: "no", name: "Hold", description: "Stay in the current room." },
+        ],
+        "majority",
+        async (winnerId) => {
+            if (winnerId !== "yes") return;
+            const traveled = context.Map.Travel(direction);
+            if (traveled !== null) {
+                await enterRoom(context, context.Map.CurrentRoomIndex, (d) => context.Resolver.NarrateRoom(d), `${actorName} leads the party ${direction}`);
+            }
+        },
+    );
 
-    await narrate(`${actorName} proposes the party move ${direction}. The descent votes as one—all must agree.`);
+    await narrate(`${actorName} proposes the party move ${direction}. The party votes — a majority will settle it.`);
 }

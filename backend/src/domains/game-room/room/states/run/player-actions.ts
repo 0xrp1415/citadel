@@ -126,22 +126,25 @@ export function unequipItem(ctx: IGameRoomContext): ActionHandler {
     };
 }
 
-export function confirmPlayerAction(ctx: IGameRoomContext): ActionHandler {
+export function vote(ctx: IGameRoomContext): ActionHandler {
     return (playerId, payload) => {
         const player = ctx.Party.getPlayer(playerId);
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
-        if (!ctx.Confirmation.HasActive) {
+        if (!ctx.Vote.HasActive) {
             return { ok: false, status: 409, error: "No vote is pending" };
         }
 
-        const { accept } = (payload ?? {}) as { accept?: boolean };
-        if (typeof accept !== "boolean") {
+        const { optionId } = (payload ?? {}) as { optionId?: string };
+        if (typeof optionId !== "string" || optionId.length === 0) {
             return { ok: false, status: 400, error: "Invalid payload" };
         }
 
-        ctx.Confirmation.Vote(player.Identity.playerPublicId, accept);
+        if (!ctx.Vote.Vote(player.Identity.playerPublicId, optionId)) {
+            return { ok: false, status: 409, error: "Could not record vote" };
+        }
+
         return { ok: true, value: null };
     };
 }
@@ -170,30 +173,6 @@ export function resolvePlayerAction(ctx: IGameRoomContext): ActionHandler {
         await ctx.Resolver.HandlePlayerAction(payload, `player:${player.Identity.playerPublicId}`);
         return { ok: true, value: null };
     }
-}
-
-export function combatVote(ctx: IGameRoomContext): ActionHandler {
-    return (playerId, payload) => {
-        const player = ctx.Party.getPlayer(playerId);
-        if (!player) {
-            return { ok: false, status: 404, error: "Player not found" };
-        }
-        if (!ctx.Encounter.Active) {
-            return { ok: false, status: 409, error: "No encounter is active" };
-        }
-
-        const { accept } = (payload ?? {}) as { accept?: boolean };
-        if (typeof accept !== "boolean") {
-            return { ok: false, status: 400, error: "Invalid payload" };
-        }
-
-        if (!ctx.Encounter.SubmitVote(player, accept)) {
-            return { ok: false, status: 409, error: "No approach vote is open" };
-        }
-
-        ctx.Broadcaster.RoomUpdate();
-        return { ok: true, value: null };
-    };
 }
 
 export function combatSelectAction(ctx: IGameRoomContext): ActionHandler {
