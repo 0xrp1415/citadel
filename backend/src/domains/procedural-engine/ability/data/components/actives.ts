@@ -176,6 +176,15 @@ export function Revive(): IAbilityActiveComponent {
     return {
         type: "active",
         flavor_text: "Drags a fallen comrade back from the brink.",
-        onExecute: (ctx) => `revived ${names(ctx.targets.length ? ctx.targets : ctx.allies)}`,
+        onExecute: (ctx) => {
+            const targets = ctx.targets.length ? ctx.targets : ctx.allies.filter((a) => a.combat.Health.CurrentHealth <= 0);
+            const reports = targets.map((t) => {
+                const healAmount = Math.round(t.combat.Health.MaxHealth * 0.3);
+                const healed = CombatManager.ReviveAndHeal(t.combat, healAmount);
+                return { name: t.name, healed };
+            });
+            if (reports.length === 0) return "no one to revive";
+            return `revived ${reports.map((r) => `${r.name} (+${r.healed} hp)`).join(", ")}`;
+        },
     };
 }

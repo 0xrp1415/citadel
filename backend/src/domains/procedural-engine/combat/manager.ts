@@ -50,6 +50,14 @@ export class CombatManager {
         return target.Health.CurrentHealth - before;
     }
 
+    public static ReviveAndHeal(target: EntityCombat, amount: number): number {
+        if (amount <= 0) return 0;
+
+        const before = target.Health.CurrentHealth;
+        target.changeHealthBy(amount);
+        return target.Health.CurrentHealth - before;
+    }
+
     public static ApplyTemporaryModifiers(target: EntityCombat, modifiers: Partial<Record<keyof IStats, number>>): void {
         for (const stat of Object.keys(modifiers) as (keyof IStats)[]) {
             const value = modifiers[stat];

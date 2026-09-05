@@ -1,39 +1,36 @@
 import { IScroll } from "../scroll.js";
-import { getAbilityByName } from "../../ability/data/abilities/registry.js";
+import { allAbilities } from "../../ability/data/abilities/registry.js";
 
-const scrollAbility = (name: string) => {
-    const ability = getAbilityByName(name);
-    if (!ability) {
-        throw new Error(`No ability named '${name}' for a scroll`);
-    }
-    return ability;
-};
+function abilityIdToScrollId(abilityId: string): string {
+    return `scroll_${abilityId}`;
+}
 
-export const SCROLL_ITEMS: IScroll[] = [
-    {
-        id: "scroll_war_cry",
-        name: "Scroll: War Cry",
-        description: "A weathered scroll that teaches the reader to bellow a War Cry.",
+function abilityToRarity(ability: { minimumLevel: number }): { name: "common" | "uncommon" | "rare" | "epic" | "legendary"; rarityLevel: number } {
+    if (ability.minimumLevel <= 2) return { name: "common", rarityLevel: 1 };
+    if (ability.minimumLevel <= 4) return { name: "uncommon", rarityLevel: 2 };
+    if (ability.minimumLevel <= 7) return { name: "rare", rarityLevel: 3 };
+    return { name: "epic", rarityLevel: 4 };
+}
+
+function abilityToPrice(ability: { minimumLevel: number }): number {
+    return ability.minimumLevel * 60 + 40;
+}
+
+function generateScrollForAbility(ability: { id: string; name: string; flavor_text: string; minimumLevel: number }): IScroll {
+    const rarity = abilityToRarity(ability);
+    return {
+        id: abilityIdToScrollId(ability.id),
+        name: `Scroll: ${ability.name}`,
+        description: `A weathered scroll inscribed with the ${ability.name} art. "${ability.flavor_text}"`,
         stackable: false,
         maxStackQty: 1,
-        rarity: { name: "uncommon", rarityLevel: 2 },
-        buyPrice: 120,
+        rarity,
+        buyPrice: abilityToPrice(ability),
         type: "scroll",
         equipable: true,
         useable: false,
-        metadata: { ability: scrollAbility("War Cry") },
-    },
-    {
-        id: "scroll_mend_wounds",
-        name: "Scroll: Mend Wounds",
-        description: "A softly glowing scroll holding the Mend Wounds art.",
-        stackable: false,
-        maxStackQty: 1,
-        rarity: { name: "rare", rarityLevel: 3 },
-        buyPrice: 250,
-        type: "scroll",
-        equipable: true,
-        useable: false,
-        metadata: { ability: scrollAbility("Mend Wounds") },
-    },
-];
+        metadata: { ability: ability as any },
+    };
+}
+
+export const SCROLL_ITEMS: IScroll[] = allAbilities().map((a) => generateScrollForAbility(a));
