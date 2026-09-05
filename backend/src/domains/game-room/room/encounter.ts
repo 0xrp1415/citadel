@@ -70,13 +70,20 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
         if (!this.isPlayerTurn(player)) return false;
         if (player.Combat.Health.CurrentHealth <= 0) return false;
 
-        if (action.type !== "attack" && action.type !== "ability" && action.type !== "defend") {
+        if (action.type !== "attack" && action.type !== "ability" && action.type !== "defend" && action.type !== "revive") {
             return false;
         }
 
         if (action.type === "ability") {
             if (!action.abilityId) return false;
             if (!this.isActiveAbility(player, action.abilityId)) return false;
+        }
+
+        if (action.type === "revive") {
+            const hasDownedAlly = this.context.Party.Players.some(
+                (p) => p.Identity.playerPublicId !== player.Identity.playerPublicId && p.Combat.Health.CurrentHealth <= 0,
+            );
+            if (!hasDownedAlly) return false;
         }
 
         this.playerActions[player.Identity.playerPublicId] = action;
@@ -134,6 +141,9 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
             playerActions: { ...this.playerActions },
             playerTargets: { ...this.playerTargets },
             log: [...this.log],
+            downedPlayerIds: this.context.Party.Players
+                .filter((p) => p.Combat.Health.CurrentHealth <= 0)
+                .map((p) => p.Identity.playerPublicId),
             enemies: this.enemies.map((e) => ({
                 id: e.id,
                 name: e.name,
@@ -304,6 +314,7 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
     private needsTarget(action: CombatAction, player: Player): boolean {
         if (action.type === "attack") return true;
         if (action.type === "defend") return false;
+        if (action.type === "revive") return true;
         if (action.type === "ability") {
             const ability = this.getActiveAbilityById(player, action.abilityId!);
             if (!ability) return false;
@@ -316,6 +327,13 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
     private isValidTarget(player: Player, action: CombatAction, target: CombatTarget): boolean {
         if (action.type === "attack") {
             return this.isAliveEnemyTarget(target);
+        }
+        if (action.type === "revive") {
+            if (target.kind === "ally") {
+                const ally = this.context.Party.getPlayerByPublicId(target.id);
+                return !!ally && ally.Combat.Health.CurrentHealth <= 0;
+            }
+            return false;
         }
         if (action.type === "ability" && action.abilityId) {
             const ability = this.getActiveAbilityById(player, action.abilityId);
@@ -363,6 +381,10 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
                 this.pushLog(`${player.Identity.name} braces to defend.`);
                 break;
             }
+            case "revive": {
+                this.resolvePlayerRevive(player, target);
+                break;
+            }
         }
 
         this.playerActions[player.Identity.playerPublicId] = null;
@@ -387,6 +409,16 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
         this.pushLog(
             `${player.Identity.name} ${physical ? "strikes" : "casts on"} ${enemy.name} for ${damage} damage (${enemy.Health.CurrentHealth}/${enemy.Health.MaxHealth} hp).`,
         );
+    }
+
+    private resolvePlayerRevive(player: Player, target: CombatTarget | undefined): void {
+        if (!target || target.kind !== "ally") return;
+        const ally = this.context.Party.getPlayerByPublicId(target.id);
+        if (!ally || ally.Combat.Health.CurrentHealth > 0) return;
+
+        const healAmount = Math.round(ally.Combat.Health.MaxHealth * 0.3);
+        CombatManager.ReviveAndHeal(ally.Combat, healAmount);
+        this.pushLog(`${player.Identity.name} revives ${ally.Identity.name} to ${ally.Combat.Health.CurrentHealth}/${ally.Combat.Health.MaxHealth} hp.`);
     }
 
     private resolvePlayerAbility(player: Player, action: CombatAction, target: CombatTarget | undefined): void {

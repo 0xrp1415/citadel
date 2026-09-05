@@ -1,4 +1,4 @@
-import { getItemById, IItem, IGear } from "../../procedural-engine/index.js";
+import { getItemById, IItem, IGear, SCROLL_ITEMS } from "../../procedural-engine/index.js";
 import { PlayerRunEntityArmor, PlayerRunEntityItem, PlayerRunEntityWeapon } from "./types.js";
 
 export const toArmorPiece = (gear: IGear, gear_position: "head" | "chest" | "greaves"): PlayerRunEntityArmor => ({
@@ -66,8 +66,6 @@ const STARTING_ITEM_IDS = [
     "iron_chestplate",
     "cloth_wraps",
     "war_hammer",
-    "scroll_war_cry",
-    "scroll_mend_wounds",
 ] as const;
 
 export const DefaultStartingInventory = (): IItem[] => {
@@ -77,6 +75,9 @@ export const DefaultStartingInventory = (): IItem[] => {
         if (item) {
             items.push(item);
         }
+    }
+    for (const scroll of SCROLL_ITEMS) {
+        items.push(scroll);
     }
     return items;
 };

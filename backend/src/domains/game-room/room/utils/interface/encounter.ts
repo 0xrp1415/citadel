@@ -22,6 +22,7 @@ export interface EncounterPublicState {
     playerActions: Record<string, CombatAction | null>;
     playerTargets: Record<string, CombatTarget>;
     log: string[];
+    downedPlayerIds: string[];
     enemies: {
         id: string;
         name: string;

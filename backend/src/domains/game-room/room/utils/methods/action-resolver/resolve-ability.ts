@@ -51,9 +51,26 @@ export async function resolveAbility(
         .filter((p) => p.Identity.playerId !== actor.Identity.playerId)
         .map((p) => new PlayerAbilityActor(p));
 
+    const isReviveAbility = ability.components.some((c) => c.type === "active" && "flavor_text" in c && c.flavor_text.includes("fallen"));
+
     let targets: PlayerAbilityActor[];
     if (ability.targeting.kind === "enemy") {
         targets = [];
+    } else if (isReviveAbility) {
+        const downed = context.Party.Players
+            .filter((p) => p.Combat.Health.CurrentHealth <= 0)
+            .map((p) => new PlayerAbilityActor(p));
+        if (ability.targeting.scope === "single" && action.target_id?.length) {
+            const named = action.target_id[0];
+            const target = named
+                ? (context.Party.getPlayer(named) ?? context.Party.getPlayerByPublicId(named))
+                : undefined;
+            targets = target && target.Combat.Health.CurrentHealth <= 0
+                ? [new PlayerAbilityActor(target)]
+                : downed.length > 0 ? downed : [];
+        } else {
+            targets = downed.length > 0 ? downed : [];
+        }
     } else if (ability.targeting.scope === "single" && action.target_id?.length) {
         const named = action.target_id[0];
         const target = named

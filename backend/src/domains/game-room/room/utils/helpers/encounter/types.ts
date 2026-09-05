@@ -1,4 +1,4 @@
-export type CombatActionType = "attack" | "ability" | "defend";
+export type CombatActionType = "attack" | "ability" | "defend" | "revive";
 
 export interface CombatAction {
     type: CombatActionType;
