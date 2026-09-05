@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Citadel — The Descent</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&amp;family=EB+Garamond:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0c0b0f;
+        color: #e7e0e9;
+        font-family: 'EB Garamond', serif;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #141218;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2b292f;
+        border-radius: 2px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #d4af37;
+      }
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "void-bg": "#0c0b0f",
+          "surface-dark": "#141218",
+          "surface-card": "#181520",
+          "surface-raised": "#221c2e",
+          "gold-brass": "#f2ca50",
+          "gold-brass-dim": "#d4af37",
+          "gold-brass-dark": "#735c00",
+          "astral-violet": "#c084fc",
+          "astral-deep": "#3b0764",
+          "ink-cream": "#e7e0e9",
+          "ink-parchment": "#ece4d4",
+          "ink-muted": "#9d9280",
+          "ink-faint": "#5e5549",
+          "crimson-glow": "#dc2626",
+          "crimson-seal": "#8c0f13",
+          "emerald-rune": "#34d399",
+          "border-subtle": "rgba(212, 175, 55, 0.15)",
+          "border-gold": "rgba(212, 175, 55, 0.35)",
+          "border-violet": "rgba(192, 132, 252, 0.25)"
+        },
+        fontFamily: {
+          "display": ["Playfair Display", "serif"],
+          "heading": ["Cinzel", "serif"],
+          "body": ["EB Garamond", "serif"],
+          "mono": ["JetBrains Mono", "monospace"]
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body class="bg-void-bg text-ink-cream antialiased h-screen max-h-screen overflow-hidden flex flex-col selection:bg-gold-brass-dim/30 selection:text-gold-brass">
+<!-- TOP HEADER NAVIGATION (Matching SCREEN_5, 6, 7 exactly) -->
+<header class="border-b border-border-gold/50 bg-[#141218]/95 backdrop-blur-md h-13 shrink-0 z-50 flex items-center px-6 justify-between select-none">
+<!-- Brand Seal -->
+<div class="flex items-center gap-4 shrink-0">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded border border-gold-brass-dim/60 bg-gradient-to-br from-surface-raised to-surface-card flex items-center justify-center text-gold-brass text-base font-heading shadow-inner">
+        §
+      </div>
+<div class="flex flex-col">
+<span class="font-heading tracking-[0.25em] text-xs font-bold text-ink-parchment flex items-center gap-1.5">
+          CITADEL <span class="text-[10px] text-gold-brass">☾</span>
+</span>
+<span class="font-mono text-[8px] text-gold-brass/80 tracking-widest uppercase">TOME VIII: THE UMBRAL ARCANUM</span>
+</div>
+</div>
+</div>
+<!-- Central Navigation Tabs -->
+<nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-[10px] font-heading tracking-widest uppercase">
+<a class="px-3 py-1.5 text-ink-muted hover:text-gold-brass hover:bg-surface-raised/40 rounded transition-all flex items-center gap-1" href="#">
+<span>THE GATE</span>
+<span class="font-mono text-[8px] text-ink-faint">// Inscription</span>
+</a>
+<a class="px-3 py-1.5 text-ink-muted hover:text-gold-brass hover:bg-surface-raised/40 rounded transition-all flex items-center gap-1" href="#">
+<span>CHAMBER NEXUS</span>
+<span class="font-mono text-[8px] text-ink-faint">// Matchmaking</span>
+</a>
+<a class="px-3 py-1.5 text-ink-muted hover:text-gold-brass hover:bg-surface-raised/40 rounded transition-all flex items-center gap-1" href="#">
+<span>STAGING GROUNDS</span>
+<span class="font-mono text-[8px] text-ink-faint">// Cadre Lobby</span>
+</a>
+<a class="px-3 py-1.5 bg-gradient-to-r from-gold-brass-dim/20 via-gold-brass-dim/10 to-transparent border border-gold-brass-dim/50 text-gold-brass font-bold rounded shadow-sm flex items-center gap-1.5" href="#">
+<span class="w-1.5 h-1.5 rounded-full bg-gold-brass animate-pulse"></span>
+<span>THE DESCENT</span>
+<span class="font-mono text-[8px] text-gold-brass/90">// Live Run</span>
+<span class="text-[10px] text-gold-brass">✦</span>
+</a>
+<a class="px-3 py-1.5 text-ink-muted hover:text-gold-brass hover:bg-surface-raised/40 rounded transition-all flex items-center gap-1" href="#">
+<span>TACTICAL ARCHIVE</span>
+<span class="font-mono text-[8px] text-ink-faint">// Folio</span>
+</a>
+</nav>
+<!-- Right Status Telemetry -->
+<div class="flex items-center gap-3 font-mono shrink-0">
+<div class="hidden sm:flex items-center gap-2.5 border-r border-border-subtle pr-3 text-[10px]">
+<span class="flex items-center gap-1.5 text-emerald-rune bg-surface-card px-2.5 py-1 border border-emerald-rune/30 rounded-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-rune animate-pulse"></span>
+        Leyline Synchronized
+      </span>
+<span class="text-gold-brass bg-surface-card px-2.5 py-1 border border-border-gold rounded-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-gold-brass">light_mode</span>
+        Lantern 84% <span class="text-[8px] text-gold-brass/70 uppercase font-sans">Arcane</span>
+</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="text-right text-[10px] leading-tight hidden md:block">
+<div class="font-heading font-semibold text-ink-parchment tracking-wider">VEX_MORTIS_IX</div>
+<div class="text-[8px] text-gold-brass/80 tracking-widest uppercase">Grand Hierophant</div>
+</div>
+<div class="w-8 h-8 rounded border border-gold-brass-dim/70 bg-gradient-to-br from-surface-raised to-astral-deep/40 flex items-center justify-center text-gold-brass hover:border-gold-brass transition-all shadow-inner">
+<span class="font-heading text-[11px] font-bold">VM</span>
+</div>
+</div>
+</div>
+</header>
+<!-- CHAMBER CONTEXT RIBBON BAR (Under Header) -->
+<div class="border-b border-border-subtle bg-[#110f16]/90 px-6 py-2 flex items-center justify-between text-[11px] font-mono shrink-0">
+<div class="flex items-center gap-3 overflow-x-auto whitespace-nowrap">
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-card border border-border-gold/40">
+<span class="text-ink-muted text-[10px] uppercase tracking-wider">Sanctum Cipher:</span>
+<span class="text-gold-brass font-bold">#K7X9-M2</span>
+<button class="hover:text-gold-brass text-ink-muted text-[10px] ml-1 flex items-center" title="Copy Cipher">
+<span class="material-symbols-outlined text-[12px]">content_copy</span>
+</button>
+</div>
+<span class="text-border-subtle">•</span>
+<span class="text-ink-parchment flex items-center gap-1 font-body text-xs">
+<span class="text-gold-brass font-heading text-[11px]">✦ Cadre:</span> 4/4 Delvers Sworn
+    </span>
+<span class="text-border-subtle">•</span>
+<span class="text-astral-violet flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet animate-ping"></span>
+      Resonance Lock Engaged
+    </span>
+<span class="text-border-subtle hidden md:inline">•</span>
+<span class="text-ink-muted hidden md:inline">Stratum Depth: <strong class="text-ink-parchment">Stratum VII (Basal Seam • Fathom 380)</strong></span>
+</div>
+<div class="flex items-center gap-2.5 shrink-0">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 border border-crimson-seal/60 bg-crimson-seal/15 text-crimson-glow text-[10px] rounded tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-crimson-glow animate-pulse"></span>
+      Peril Hazard Index: Tier VII • Abyssal
+    </span>
+<span class="px-2 py-0.5 border border-gold-brass/30 bg-surface-card text-gold-brass text-[10px] rounded hidden sm:inline">
+      Ward DC: 14 ✦
+    </span>
+</div>
+</div>
+<!-- MAIN TACTICAL WORKBENCH (Locked Viewport 3-Column Grid) -->
+<main class="flex-1 min-h-0 w-full max-w-[1780px] mx-auto px-5 py-3 flex flex-col gap-3 overflow-hidden">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0 overflow-hidden items-stretch">
+<!-- LEFT COLUMN: CADRE / COMPANY ROSTER (Matching Lobby Card Aesthetic) -->
+<aside class="lg:col-span-3 flex flex-col gap-2 min-h-0 overflow-hidden bg-surface-card border border-border-gold/30 rounded shadow-2xl p-3">
+<!-- Section Header -->
+<div class="flex items-center justify-between pb-2 border-b border-border-subtle shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 rounded border border-gold-brass/50 bg-surface-raised flex items-center justify-center text-gold-brass text-xs">
+            🛡
+          </div>
+<h2 class="font-heading text-xs font-bold tracking-[0.15em] text-ink-parchment uppercase">Sworn Cadre Manifest</h2>
+</div>
+<span class="font-mono text-[9px] px-1.5 py-0.5 rounded border border-emerald-rune/40 text-emerald-rune bg-emerald-rune/10">4 / 4 Active</span>
+</div>
+<!-- Delver Cards List (Scrollable) -->
+<div class="flex-1 min-h-0 overflow-y-auto space-y-2.5 pr-1">
+<!-- Delver 1: Ser Merrick / Vex_Mortis_IX -->
+<div class="p-2.5 rounded bg-surface-dark border border-gold-brass/40 relative overflow-hidden transition-all hover:border-gold-brass">
+<div class="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-gold-brass/10 to-transparent pointer-events-none"></div>
+<div class="flex items-center gap-2 mb-1.5">
+<div class="w-7 h-7 rounded border border-gold-brass bg-astral-deep/40 text-gold-brass font-heading font-bold text-xs flex items-center justify-center shrink-0">
+              ☩ VM
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between">
+<h3 class="font-heading font-bold text-xs text-ink-parchment truncate">Ser Merrick</h3>
+<span class="font-mono text-[9px] text-gold-brass font-medium">Lv.44 Vanguard</span>
+</div>
+<div class="text-[10px] font-body italic text-ink-muted truncate">Kinetic Bulwark • Iron-Born Sovereign</div>
+</div>
+</div>
+<!-- Vitality Bar -->
+<div class="space-y-1 mt-1.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase tracking-wider">Vitality</span>
+<span class="text-ink-parchment font-semibold">28 / 34</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-gradient-to-r from-gold-brass-dark via-gold-brass-dim to-gold-brass rounded-full" style="width: 82%;"></div>
+</div>
+</div>
+<!-- Aether / Ward Status -->
+<div class="flex items-center justify-between pt-1.5 mt-2 border-t border-border-subtle/70 text-[9px] font-mono">
+<span class="text-emerald-rune flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-rune animate-pulse"></span> Kinetic Barrier: Active
+            </span>
+<span class="text-astral-violet font-medium">Ward +12 DC</span>
+</div>
+</div>
+<!-- Delver 2: Valentina Hex -->
+<div class="p-2.5 rounded bg-surface-dark border border-border-gold/30 relative overflow-hidden transition-all hover:border-astral-violet/60">
+<div class="flex items-center gap-2 mb-1.5">
+<div class="w-7 h-7 rounded border border-astral-violet/70 bg-surface-raised text-astral-violet font-heading font-bold text-xs flex items-center justify-center shrink-0">
+              ✦ VH
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between">
+<h3 class="font-heading font-bold text-xs text-ink-parchment truncate">Valentina Hex</h3>
+<span class="font-mono text-[9px] text-astral-violet font-medium">Lv.41 Arcanist</span>
+</div>
+<div class="text-[10px] font-body italic text-ink-muted truncate">Dross-Elf • Weave Stitcher</div>
+</div>
+</div>
+<!-- Vitality Bar -->
+<div class="space-y-1 mt-1.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase tracking-wider">Vitality</span>
+<span class="text-ink-parchment font-semibold">18 / 26</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-gradient-to-r from-astral-deep via-astral-violet to-purple-400 rounded-full" style="width: 69%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1.5 mt-2 border-t border-border-subtle/70 text-[9px] font-mono">
+<span class="text-gold-brass flex items-center gap-1">✦ Focus Primed</span>
+<span class="text-ink-muted">Aether: 84%</span>
+</div>
+</div>
+<!-- Delver 3: Bran the Mute -->
+<div class="p-2.5 rounded bg-surface-dark border border-border-gold/30 relative overflow-hidden transition-all hover:border-gold-brass/50">
+<div class="flex items-center gap-2 mb-1.5">
+<div class="w-7 h-7 rounded border border-border-gold bg-surface-raised text-gold-brass-dim font-heading font-bold text-xs flex items-center justify-center shrink-0">
+              ⚚ BM
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between">
+<h3 class="font-heading font-bold text-xs text-ink-parchment truncate">Bran the Mute</h3>
+<span class="font-mono text-[9px] text-gold-brass font-medium">Lv.39 Iron Wall</span>
+</div>
+<div class="text-[10px] font-body italic text-ink-muted truncate">Hollow • Bio-Flask Heavy Carapace</div>
+</div>
+</div>
+<!-- Vitality Bar -->
+<div class="space-y-1 mt-1.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase tracking-wider">Vitality</span>
+<span class="text-emerald-rune font-semibold">30 / 30</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-emerald-rune rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1.5 mt-2 border-t border-border-subtle/70 text-[9px] font-mono">
+<span class="text-ink-parchment">Sentinel Guard</span>
+<span class="text-crimson-glow font-medium">Threat: 92%</span>
+</div>
+</div>
+<!-- Delver 4: Corvus Crow -->
+<div class="p-2.5 rounded bg-surface-dark border border-border-gold/30 relative overflow-hidden transition-all hover:border-gold-brass/50">
+<div class="flex items-center gap-2 mb-1.5">
+<div class="w-7 h-7 rounded border border-border-subtle bg-surface-raised text-ink-muted font-heading font-bold text-xs flex items-center justify-center shrink-0">
+              🜂 CC
+            </div>
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline justify-between">
+<h3 class="font-heading font-bold text-xs text-ink-parchment truncate">Corvus Crow</h3>
+<span class="font-mono text-[9px] text-gold-brass font-medium">Lv.38 Stalker</span>
+</div>
+<div class="text-[10px] font-body italic text-ink-muted truncate">Scout • Obsidian Arrowhead</div>
+</div>
+</div>
+<!-- Vitality Bar -->
+<div class="space-y-1 mt-1.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase tracking-wider">Vitality</span>
+<span class="text-emerald-rune font-semibold">22 / 22</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-emerald-rune rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1.5 mt-2 border-t border-border-subtle/70 text-[9px] font-mono">
+<span class="text-astral-violet">Stealth Primed [Veil]</span>
+<span class="text-ink-muted">Agi +18</span>
+</div>
+</div>
+</div>
+<!-- Quick Supply Diagnostics Footer in Left Rail -->
+<div class="pt-2 border-t border-border-subtle grid grid-cols-2 gap-2 text-[10px] font-mono shrink-0">
+<div class="px-2 py-1 bg-surface-dark border border-border-subtle rounded flex items-center justify-between">
+<span class="text-ink-faint uppercase text-[8px]">Arcane Rations</span>
+<span class="text-ink-parchment font-bold">16 / 24</span>
+</div>
+<div class="px-2 py-1 bg-surface-dark border border-border-subtle rounded flex items-center justify-between">
+<span class="text-ink-faint uppercase text-[8px]">Miasma Pressure</span>
+<span class="text-emerald-rune font-bold">Stable 0.04</span>
+</div>
+</div>
+</aside>
+<!-- CENTER COLUMN: SACRED EXEGESIS & TACTICAL CONSOLE -->
+<section class="lg:col-span-6 flex flex-col min-h-0 overflow-hidden bg-surface-card border border-border-gold/30 rounded shadow-2xl">
+<!-- Chamber Header with Astrological Markers & Visual Frame (Pure SVG/Typography) -->
+<div class="relative w-full h-36 shrink-0 overflow-hidden border-b border-border-gold/40 bg-surface-dark">
+<!-- SVG Geometric Occult Sigils & Altar Projection (No Raster) -->
+<svg class="absolute inset-0 w-full h-full opacity-70" preserveaspectratio="xMidYMid slice" viewbox="0 0 800 160">
+<defs>
+<radialgradient cx="50%" cy="50%" id="occultGlow" r="50%">
+<stop offset="0%" stop-color="#c084fc" stop-opacity="0.3"></stop>
+<stop offset="60%" stop-color="#3b0764" stop-opacity="0.15"></stop>
+<stop offset="100%" stop-color="#0c0b0f" stop-opacity="0"></stop>
+</radialgradient>
+<pattern height="24" id="runeGrid" patternunits="userSpaceOnUse" width="24">
+<path d="M 24 0 L 0 0 0 24" fill="none" stroke="#d4af37" stroke-opacity="0.25" stroke-width="0.3"></path>
+<circle cx="12" cy="12" fill="#c084fc" fill-opacity="0.3" r="0.75"></circle>
+</pattern>
+</defs>
+<rect fill="url(#runeGrid)" height="160" width="800"></rect>
+<circle cx="400" cy="80" fill="url(#occultGlow)" r="75"></circle>
+<circle cx="400" cy="80" fill="none" r="62" stroke="#d4af37" stroke-opacity="0.65" stroke-width="1.2"></circle>
+<circle cx="400" cy="80" fill="none" r="48" stroke="#c084fc" stroke-dasharray="5 3" stroke-opacity="0.5" stroke-width="0.8"></circle>
+<!-- Altar geometry -->
+<polygon fill="none" points="400,28 448,104 352,104" stroke="#f2ca50" stroke-opacity="0.8" stroke-width="1.2"></polygon>
+<polygon fill="none" points="400,132 448,56 352,56" stroke="#d4af37" stroke-opacity="0.6" stroke-width="0.9"></polygon>
+<!-- Central pulsator -->
+<circle cx="400" cy="80" fill="#dc2626" fill-opacity="0.85" r="6">
+<animate attributename="r" dur="2.8s" repeatcount="indefinite" values="5;8;5"></animate>
+</circle>
+<!-- Constellation lines -->
+<line stroke="#d4af37" stroke-dasharray="4 4" stroke-opacity="0.4" stroke-width="0.8" x1="220" x2="338" y1="80" y2="80"></line>
+<line stroke="#d4af37" stroke-dasharray="4 4" stroke-opacity="0.4" stroke-width="0.8" x1="462" x2="580" y1="80" y2="80"></line>
+<text fill="#f2ca50" font-family="Cinzel" font-size="10" opacity="0.65" x="250" y="75">✦ 🜚 🜂</text>
+<text fill="#f2ca50" font-family="Cinzel" font-size="10" opacity="0.65" x="520" y="75">🜄 ☩ ☾</text>
+</svg>
+<!-- Context Badges on Top of Header Frame -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-card via-surface-card/40 to-transparent pointer-events-none"></div>
+<div class="absolute top-2.5 left-4 right-4 flex items-center justify-between">
+<span class="font-mono text-[9px] tracking-widest uppercase text-gold-brass bg-surface-dark/90 px-2 py-0.5 border border-border-gold/40 rounded flex items-center gap-1.5">
+<span class="text-astral-violet">✧</span> Chamber VII of XXVIII • Abyssal Vault
+          </span>
+<span class="font-mono text-[9px] tracking-widest uppercase text-astral-violet bg-surface-dark/90 px-2 py-0.5 border border-border-violet rounded">
+            Tier III Arcanum
+          </span>
+</div>
+<div class="absolute bottom-2 left-4 right-4 flex items-end justify-between select-none">
+<div>
+<span class="font-mono text-[8px] tracking-widest uppercase text-gold-brass block">Locational Relic &amp; Altar</span>
+<h1 class="font-display text-base md:text-lg text-ink-parchment font-semibold tracking-tight flex items-center gap-2">
+              The Rusted Obliquity
+              <span class="font-body italic text-xs text-ink-muted font-normal">— Omen of the Sundered Dais</span>
+</h1>
+</div>
+<span class="font-mono text-[9px] text-ink-muted border border-border-subtle bg-surface-dark/80 px-2 py-0.5 rounded">
+            Encounter Turn: #04
+          </span>
+</div>
+</div>
+<!-- Sacred Exegesis Atmosphere Quote -->
+<div class="px-4 py-2 border-b border-border-subtle bg-[#141218]/90 shrink-0">
+<div class="flex items-center justify-between mb-0.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gold-brass text-sm">menu_book</span>
+<span class="font-heading text-[10px] tracking-widest uppercase text-gold-brass font-bold flex items-center gap-1">
+              Sacred Exegesis • Daemon Chronicles ✧
+            </span>
+</div>
+<span class="font-mono text-[9px] tracking-widest uppercase text-ink-muted">Folio 24</span>
+</div>
+<p class="font-body text-xs text-ink-parchment italic leading-snug line-clamp-2">
+          “Water drips from obsidian fangs above into the silent void. The altar is cleaved down its celestial axis, weeping luminescent black ichor. Astral sigils ignite in resonant violet cadence beneath centuries of sacred dust as Ser Merrick’s kinetic core unleashes its golden pulse.”
+        </p>
+</div>
+<!-- Narrative Encounter Chronicle Feed (Scrollable) -->
+<div class="flex-1 min-h-0 p-3 overflow-y-auto space-y-2.5" id="chronicleFeed">
+<!-- Entry 1 -->
+<div class="p-2.5 bg-surface-dark border-l-2 border-astral-violet rounded-r text-xs border-y border-r border-border-subtle/40">
+<div class="flex items-baseline justify-between font-mono text-[10px] mb-0.5">
+<span class="text-astral-violet font-semibold flex items-center gap-1">✦ Valentina Hex</span>
+<span class="text-ink-muted text-[8px]">Turn 02 • Spell Incantation</span>
+</div>
+<p class="font-body text-ink-cream leading-tight text-xs">
+            Channeled the <em class="text-gold-brass">Glyph of Subservience</em> against Sentinel Prime. The mechanical joints seize; kinetic armor shattered by -35%.
+          </p>
+</div>
+<!-- Entry 2 -->
+<div class="p-2.5 bg-surface-dark border-l-2 border-border-gold rounded-r text-xs border-y border-r border-border-subtle/40">
+<div class="flex items-baseline justify-between font-mono text-[10px] mb-0.5">
+<span class="text-ink-parchment font-semibold">🜂 Corvus Crow</span>
+<span class="text-ink-muted text-[8px]">Turn 03 • Ranged Volley</span>
+</div>
+<p class="font-body text-ink-cream leading-tight text-xs">
+            Releases an obsidian bolt targeting the exposed cervical hinge with silent precision.
+          </p>
+</div>
+<!-- Entry 3: D20 Resolution Verdict Terminal -->
+<div class="p-3 bg-gradient-to-br from-surface-raised via-surface-dark to-surface-dark border border-gold-brass/40 rounded shadow-md">
+<div class="flex items-center justify-between font-mono text-[10px] pb-1.5 mb-1.5 border-b border-border-gold/30">
+<span class="text-gold-brass font-bold flex items-center gap-1.5 uppercase tracking-wider">
+<span class="material-symbols-outlined text-xs">military_tech</span>
+              D20 Resolution Verdict
+            </span>
+<span class="text-emerald-rune font-bold px-2 py-0.5 bg-emerald-rune/10 border border-emerald-rune/30 rounded">
+              Critical Success (Roll 19 vs DC 14)
+            </span>
+</div>
+<p class="font-body text-xs text-ink-parchment leading-snug">
+            The broadhead shatters the rusted pivot. Sentinel Prime drops to one knee with grinding gears, its molten furnace core laid bare!
+          </p>
+<div class="mt-2 pt-2 flex flex-wrap items-center gap-3 text-[10px] font-mono border-t border-border-subtle">
+<span class="text-ink-muted">Kinetic Delta: <strong class="text-gold-brass">+26 Kinetic</strong></span>
+<span class="text-ink-muted">Status: <strong class="text-astral-violet font-semibold">Stunned (1 Rnd)</strong></span>
+<span class="text-ink-muted">Vulnerability: <strong class="text-crimson-glow font-bold">Core Exposed (+50% Dmg)</strong></span>
+</div>
+</div>
+</div>
+<!-- Action Prompt Bar / Inscription Matrix (Interactive Footer) -->
+<div class="p-3 bg-[#131119] border-t border-border-gold/30 shrink-0">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-1.5 text-xs font-heading text-ink-parchment font-bold uppercase tracking-wider">
+<span class="text-gold-brass">🜂</span> Inscription Matrix
+          </div>
+<!-- Quick syntax rune shortcuts -->
+<div class="flex items-center gap-1.5 font-mono text-[9px]">
+<button class="px-2 py-0.5 border border-border-gold text-gold-brass hover:bg-gold-brass/15 bg-surface-dark rounded transition-colors" onclick="quickSyntax('/strike Sentinel Prime')" type="button">
+              /strike
+            </button>
+<button class="px-2 py-0.5 border border-astral-violet/50 text-astral-violet hover:bg-astral-violet/15 bg-surface-dark rounded transition-colors" onclick="quickSyntax('/incant Rite of Ash')" type="button">
+              /incant
+            </button>
+<button class="px-2 py-0.5 border border-border-subtle text-ink-muted hover:border-gold-brass text-ink-parchment bg-surface-dark rounded transition-colors" onclick="quickSyntax('/ward Kinetic Shield')" type="button">
+              /ward
+            </button>
+<button class="px-2 py-0.5 border border-border-subtle text-ink-muted hover:border-gold-brass text-ink-parchment bg-surface-dark rounded transition-colors" onclick="quickSyntax('/relic Transmute Ichor Altar')" type="button">
+              /relic
+            </button>
+</div>
+</div>
+<div class="flex gap-2">
+<div class="flex-1 flex items-center bg-void-bg border border-border-gold/40 focus-within:border-gold-brass rounded px-3 py-1.5 transition-all shadow-inner">
+<span class="font-mono text-gold-brass text-xs mr-2 select-none">🜚</span>
+<input class="w-full bg-transparent border-none p-0 text-xs font-body text-ink-parchment placeholder-ink-faint focus:ring-0 focus:outline-none" id="actionInput" placeholder="Inscribe combat formula, incantation, or ritual command..." type="text" value="Ser Merrick drives the heavy poleaxe into Sentinel Prime's exposed furnace heart with kinetic retribution."/>
+</div>
+<button class="px-4 py-1.5 bg-gradient-to-r from-gold-brass-dim via-gold-brass to-gold-brass-dim text-[#141218] font-heading font-bold text-xs tracking-widest uppercase hover:brightness-110 active:scale-[0.98] transition-all rounded flex items-center gap-1.5 shadow-lg shrink-0" onclick="submitAction()" type="button">
+<span>Inscribe</span>
+<span class="material-symbols-outlined text-xs font-bold">draw</span>
+</button>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN: HOSTILES, CARTOGRAPHY & INITIATIVE -->
+<aside class="lg:col-span-3 flex flex-col gap-2.5 min-h-0 overflow-hidden bg-surface-card border border-border-gold/30 rounded shadow-2xl p-3">
+<!-- Hostile Entity Dossier Deck -->
+<div class="flex flex-col gap-2 shrink-0">
+<div class="flex items-center justify-between pb-1.5 border-b border-border-subtle">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-crimson-glow text-sm">swords</span>
+<h2 class="font-heading text-xs font-bold tracking-[0.15em] text-ink-parchment uppercase">Hostile Entities</h2>
+</div>
+<span class="font-mono text-[9px] px-1.5 py-0.5 border border-crimson-seal/50 text-crimson-glow bg-crimson-seal/10 rounded">
+            2 Engaged
+          </span>
+</div>
+<!-- Hostile 1: Sentinel Prime -->
+<div class="p-2.5 bg-surface-dark border border-crimson-seal/40 rounded text-xs space-y-1">
+<div class="flex justify-between items-baseline">
+<span class="font-heading font-bold text-ink-parchment flex items-center gap-1 text-[11px]">
+              Sentinel Prime <span class="text-[9px] text-gold-brass">🜚</span>
+</span>
+<span class="font-mono text-[8px] px-1.5 py-0.5 bg-crimson-seal text-ink-cream rounded tracking-wider uppercase font-bold">
+              [STUNNED]
+            </span>
+</div>
+<div class="text-[10px] font-body italic text-ink-muted">Ancient War Golem • Molten Core</div>
+<!-- Vitality Bar -->
+<div class="space-y-0.5 pt-0.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase">Hull Integrity</span>
+<span class="text-crimson-glow font-bold">14 / 40</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-crimson-glow rounded-full" style="width: 35%;"></div>
+</div>
+</div>
+<div class="pt-1 mt-1 border-t border-border-subtle flex justify-between text-[9px] font-mono text-gold-brass">
+<span class="text-gold-brass-dim">✧ Core Fracture Exposed</span>
+<span class="font-bold text-crimson-glow">+50% Dmg</span>
+</div>
+</div>
+<!-- Hostile 2: Sentinel Scout -->
+<div class="p-2 bg-surface-dark border border-border-subtle rounded text-xs space-y-1">
+<div class="flex justify-between items-baseline">
+<span class="font-heading font-bold text-ink-parchment text-[11px]">Sentinel Scout</span>
+<span class="font-mono text-[8px] px-1.5 py-0.5 bg-surface-raised text-astral-violet rounded tracking-wider uppercase">
+              [CHILLED]
+            </span>
+</div>
+<div class="space-y-0.5">
+<div class="flex justify-between text-[9px] font-mono">
+<span class="text-ink-muted uppercase">Hull Integrity</span>
+<span class="text-ink-parchment font-medium">32 / 32</span>
+</div>
+<div class="h-1.5 bg-void-bg rounded-full overflow-hidden border border-border-subtle">
+<div class="h-full bg-gold-brass-dim rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Celestial Cartography (Procedural SVG Node Map) -->
+<div class="flex flex-col gap-1.5 p-2 bg-void-bg border border-border-gold/30 rounded shrink-0">
+<div class="flex items-center justify-between text-[10px] pb-1 border-b border-border-subtle">
+<span class="font-heading text-ink-parchment flex items-center gap-1 font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-xs text-gold-brass">explore</span> Celestial Cartography
+          </span>
+<span class="font-mono text-[9px] text-gold-brass">Chamber VII / XXVIII</span>
+</div>
+<div class="flex items-center justify-center">
+<svg class="w-full h-18" viewbox="0 0 240 85">
+<pattern height="16" id="celestialDots" patternunits="userSpaceOnUse" width="16" x="0" y="0">
+<circle cx="2" cy="2" fill="#735c00" opacity="0.3" r="0.6"></circle>
+<circle cx="10" cy="10" fill="#c084fc" opacity="0.25" r="0.4"></circle>
+</pattern>
+<rect fill="url(#celestialDots)" height="85" width="240"></rect>
+<!-- Paths -->
+<line stroke="#735c00" stroke-width="1.5" x1="35" x2="85" y1="42" y2="42"></line>
+<line stroke="#f2ca50" stroke-width="1.5" x1="85" x2="135" y1="42" y2="24"></line>
+<line stroke="#36343a" stroke-width="1.5" x1="85" x2="135" y1="42" y2="62"></line>
+<line stroke="#735c00" stroke-dasharray="3 3" stroke-width="1.5" x1="135" x2="190" y1="24" y2="24"></line>
+<!-- Nodes -->
+<circle cx="35" cy="42" fill="#181520" r="5" stroke="#735c00" stroke-width="1.5"></circle>
+<text fill="#9d9280" font-family="Cinzel" font-size="5" text-anchor="middle" x="35" y="44">I</text>
+<circle cx="85" cy="42" fill="#181520" r="5" stroke="#735c00" stroke-width="1.5"></circle>
+<text fill="#9d9280" font-family="Cinzel" font-size="5" text-anchor="middle" x="85" y="44">IV</text>
+<!-- Current Node VII -->
+<circle cx="135" cy="24" fill="#221c2e" r="7.5" stroke="#f2ca50" stroke-width="1.8"></circle>
+<circle cx="135" cy="24" fill="none" r="11" stroke="#f2ca50" stroke-opacity="0.4" stroke-width="1">
+<animate attributename="r" dur="2.8s" repeatcount="indefinite" values="8;13;8"></animate>
+</circle>
+<text fill="#f2ca50" font-family="Cinzel" font-size="6.5" font-weight="bold" text-anchor="middle" x="135" y="27">VII ✦</text>
+<!-- Fork node VI -->
+<circle cx="135" cy="62" fill="#141218" r="5" stroke="#36343a" stroke-width="1.2"></circle>
+<text fill="#5e5549" font-family="Cinzel" font-size="5" text-anchor="middle" x="135" y="64">VI</text>
+<!-- Unknown Next node -->
+<circle cx="190" cy="24" fill="#141218" r="5" stroke="#dc2626" stroke-dasharray="2 2" stroke-width="1"></circle>
+<text fill="#dc2626" font-family="Cinzel" font-size="5.5" text-anchor="middle" x="190" y="26">?</text>
+</svg>
+</div>
+</div>
+<!-- Initiative Order Queue -->
+<div class="flex-1 min-h-0 flex flex-col justify-between pt-1">
+<div>
+<div class="flex items-center justify-between pb-1 mb-1.5 border-b border-border-subtle text-[10px]">
+<span class="font-heading font-bold tracking-wider text-ink-muted uppercase">Initiative Order</span>
+<span class="font-mono text-[9px] text-gold-brass">Round 04</span>
+</div>
+<ol class="space-y-1 font-mono text-[10px]">
+<li class="px-2 py-1 bg-surface-dark border border-gold-brass text-ink-parchment rounded flex items-center justify-between">
+<span class="flex items-center gap-1.5 font-medium">
+<span class="text-gold-brass font-bold">1.</span>
+<span class="font-heading">Ser Merrick</span>
+</span>
+<span class="text-[8px] px-1.5 py-0.2 bg-gold-brass/20 text-gold-brass uppercase tracking-wider rounded font-bold">Acting Now</span>
+</li>
+<li class="px-2 py-0.5 text-ink-muted flex items-center justify-between text-[9px]">
+<span class="flex items-center gap-1.5">
+<span class="text-ink-faint">2.</span>
+<span>Sentinel Scout</span>
+</span>
+<span class="text-[8px] text-ink-faint uppercase">Queued</span>
+</li>
+<li class="px-2 py-0.5 text-ink-muted flex items-center justify-between text-[9px]">
+<span class="flex items-center gap-1.5">
+<span class="text-ink-faint">3.</span>
+<span>Valentina Hex</span>
+</span>
+<span class="text-[8px] text-ink-faint uppercase">Queued</span>
+</li>
+</ol>
+</div>
+<!-- Hazard Alert Banner -->
+<div class="p-1.5 bg-crimson-seal/15 border border-crimson-seal/40 text-[10px] font-body italic text-crimson-glow rounded flex items-center gap-1.5 shrink-0 mt-1">
+<span class="material-symbols-outlined text-xs shrink-0 text-crimson-glow">warning</span>
+<span class="truncate">Ichor seep: 2 entropy damage/turn in altar quadrant.</span>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- BOTTOM TELEMETRY FOOTER (Matching SCREEN_5, 6, 7 exactly) -->
+<footer class="border-t border-border-gold/40 bg-surface-dark text-ink-muted px-6 h-8 shrink-0 text-[10px] font-mono flex items-center justify-between select-none">
+<div class="flex items-center gap-3">
+<!-- Quick Exit/Retreat CTA -->
+<button class="px-2 py-0.5 border border-crimson-seal/60 text-crimson-glow hover:bg-crimson-seal hover:text-ink-cream transition-all uppercase text-[8px] tracking-widest rounded flex items-center gap-1" type="button">
+<span>Retreat to Threshold</span>
+<span>🜂</span>
+</button>
+<span class="text-border-subtle">|</span>
+<span class="text-ink-parchment flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-rune"></span>
+      Leyline Sync: Verified
+    </span>
+<span class="text-border-subtle hidden md:inline">•</span>
+<span class="text-ink-muted hidden md:inline">Ward Integrity: <strong class="text-ink-parchment">100%</strong></span>
+<span class="text-border-subtle hidden lg:inline">•</span>
+<span class="text-ink-muted hidden lg:inline">Protocol: 0xDEADBEEF-VIII</span>
+</div>
+<div class="flex items-center gap-4 text-[10px]">
+<span class="text-astral-violet hidden sm:inline">✦ Celestial Seal Validated</span>
+<span class="text-border-subtle hidden sm:inline">|</span>
+<span class="text-gold-brass font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gold-brass animate-pulse"></span>
+      Dark Academia Sovereign Mode
+    </span>
+</div>
+</footer>
+<script>
+  function quickSyntax(syntax) {
+    const input = document.getElementById('actionInput');
+    if (input) {
+      input.value = syntax;
+      input.focus();
+    }
+  }
+
+  function submitAction() {
+    const input = document.getElementById('actionInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const feed = document.getElementById('chronicleFeed');
+    if (feed) {
+      const item = document.createElement('div');
+      item.className = 'p-2.5 bg-surface-dark border-l-2 border-gold-brass rounded-r text-xs border-y border-r border-border-subtle/40 transition-all duration-300';
+      item.innerHTML = `
+        <div class="flex items-baseline justify-between font-mono text-[10px] mb-0.5">
+          <span class="text-gold-brass font-semibold">☩ Ser Merrick</span>
+          <span class="text-ink-muted text-[8px]">Turn 04 • Inscribed Just Now</span>
+        </div>
+        <p class="font-body text-ink-cream leading-tight text-xs">${text}</p>
+      `;
+      feed.appendChild(item);
+      feed.scrollTop = feed.scrollHeight;
+    }
+    input.value = '';
+  }
+</script>
+</body></html>

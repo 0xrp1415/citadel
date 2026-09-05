@@ -15,8 +15,8 @@ export function DisconnectCountdown({ disconnectedAt }: { disconnectedAt: number
   }, [disconnectedAt])
 
   return (
-    <span className="board__disconnect">
-      {secondsLeft > 0 ? `${secondsLeft}s` : 'removing…'}
+    <span className="delver__countdown">
+      {secondsLeft > 0 ? `${secondsLeft}s` : 'expiring…'}
     </span>
   )
 }

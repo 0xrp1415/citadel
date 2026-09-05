@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { LedgerFrame } from '../components/LedgerFrame'
-import { PageHead } from '../components/PageHead'
 import { setStage } from '../stages'
-import type { Ability, CombatAction, CombatTarget, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats } from '../rooms'
-import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, selectCombatVote } from '../rooms'
+import type { Ability, CombatAction, CombatTarget, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats, VoteJSON } from '../rooms'
+import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, sendVoteOption } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
-import { DisconnectCountdown } from '../components/DisconnectCountdown'
 
 export const Route = createFileRoute('/run')({
   component: Run,
@@ -254,7 +251,7 @@ function statusLabel(status: PlayerPublic['status']): string {
 function Run() {
   const navigate = useNavigate()
   const roomToken = getRoomToken()
-  const { room, connected, error: socketError, confirmation } = useRoomSocket(roomToken)
+  const { room, error: socketError } = useRoomSocket(roomToken)
 
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
@@ -272,6 +269,19 @@ function Run() {
   const caretRef = useRef(0)
   const [mentionIndex, setMentionIndex] = useState(0)
   const [abilityIndex, setAbilityIndex] = useState(0)
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+          ;(e.target as HTMLElement).blur()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const handleChangeStat = useCallback(async (stat: keyof Stats, amount: number) => {
     if (!roomToken) return
@@ -380,12 +390,12 @@ function Run() {
     }
   }, [draft, room, roomToken, resetComposer, selfPlayerId])
 
-  const handleConfirm = useCallback(
-    async (accept: boolean) => {
+  const handleVote = useCallback(
+    async (optionId: string) => {
       if (!roomToken) return
       setPlayError(null)
       try {
-        await sendAction(roomToken, 'player_confirm', { accept })
+        await sendVoteOption(roomToken, optionId)
       } catch (err) {
         setPlayError(errorMessage(err))
       }
@@ -395,18 +405,18 @@ function Run() {
 
   useEffect(() => {
     if (!roomToken) {
-      setStage(1)
+      setStage(2)
       navigate({ to: '/lobby' })
       return
     }
     if (socketError && isFatalRoomSocketError(socketError)) {
       clearRoomSession()
-      setStage(1)
+      setStage(2)
       navigate({ to: '/lobby' })
       return
     }
     if (room && room.status === 'lobby') {
-      setStage(1)
+      setStage(2)
       navigate({ to: '/lobby' })
     }
   }, [room, roomToken, socketError, navigate])
@@ -484,20 +494,9 @@ function Run() {
   const encounterActive = (room?.encounter?.phase ?? '') !== ''
   const runEnded = room?.status === 'end'
 
-  const officer = socketError
-    ? socketError
-    : room?.status === 'end'
-      ? 'The descent is over. The expedition has fallen.'
-      : room?.status === 'in-run'
-        ? connected
-          ? dmActive
-            ? 'The officer deliberates. The record is continuous.'
-            : 'The descent is live. The record is continuous.'
-          : 'The line is down — retrying the connection…'
-        : "The register opens. Await the officer\u2019s word."
-
   const selfPlayer = room?.players.find((p) => p.playerId === selfPlayerId) ?? null
   const selfPublicId = selfPlayer?.playerPublicId ?? null
+  const awayFromGrace = room !== null && room.currentRoom.type !== 'grace'
   const playerNameById = new Map<string, string>(
     (room?.players ?? []).map((p) => [p.playerPublicId, p.name]),
   )
@@ -569,42 +568,31 @@ function Run() {
 
   return (
     <div className="descent">
-      <aside className="descent__rail" aria-label="Expedition file">
+      {/* LEFT RAIL: Company manifest */}
+      <aside className="descent__left" aria-label="Company manifest">
         <PartyManifest
           room={room}
           selfPlayerId={selfPlayerId}
-          connected={connected}
-          focusedPlayerId={openPlayerId}
           onSelect={openFile}
         />
       </aside>
 
-      <LedgerFrame xwide className="descent__log">
-        <PageHead
-          waypoint
-          kicker="the descent · continuous field log"
-          title="The Descent"
-          officer={officer}
-        />
-
-        {runEnded && (
-          <div className="run-end" role="status" aria-live="polite">
-            <p className="run-end__title">The expedition is over.</p>
-            <p className="run-end__sub">
-              The last of you has fallen to the depths. The descent ends here.
-            </p>
-            <a className="btn run-end__back" href="/lobby">
-              Return to the register
-            </a>
-          </div>
-        )}
-
-        <section className="panel" aria-label="Field log">
+      {/* CENTER RAIL: exegesis + field log + desk */}
+      <section className="descent__center" aria-label="Field chronicle">
+        {/* Field log */}
+        <section className="panel" aria-label="Field log" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="corner-accent corner-accent--tl corner-accent--gold" />
+          <div className="corner-accent corner-accent--tr corner-accent--gold" />
+          <div className="corner-accent corner-accent--bl corner-accent--gold" />
+          <div className="corner-accent corner-accent--br corner-accent--gold" />
           <div className="panel__head">
-            <span className="panel__title">Field log</span>
+            <span>
+              <span className="panel__dot" aria-hidden="true" />
+              <span className="panel__title">Field log</span>
+            </span>
             <span className="panel__sub">live · every word judged</span>
           </div>
-          <div className="record-scroll" ref={scrollRef}>
+          <div className="record-scroll" ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <div className="record">
               {lines.map((line) => (
                 <span
@@ -615,14 +603,9 @@ function Run() {
                 >
                   <span className="record__rune" aria-hidden="true">
                     {line.speaker === 'player'
-                      ? line.isSelf
-                        ? '‹'
-                        : '›'
-                      : line.speaker === 'officer'
-                        ? '✦'
-                        : line.speaker === 'ruling'
-                          ? '§'
-                          : '·'}
+                      ? line.isSelf ? '‹' : '›'
+                      : line.speaker === 'officer' ? '✦'
+                      : line.speaker === 'ruling' ? '§' : '·'}
                   </span>
                   <span className="record__text">
                     {line.speaker === 'player' && line.name && !line.isSelf && (
@@ -639,28 +622,15 @@ function Run() {
             </div>
           </div>
           {playError && (
-            <p className="composer__error" role="alert">
-              {playError}
-            </p>
+            <p className="composer__error" role="alert">{playError}</p>
           )}
           <div className="composer">
             <div className="composer__field">
+              <span className="composer__glyph" aria-hidden="true">🜚</span>
               {mentionMembers.length > 0 && (
                 <ul className="composer__pick" role="listbox" aria-label="Mention a member">
                   {mentionMembers.map((p, i) => (
-                    <li
-                      key={p.playerPublicId}
-                      role="option"
-                      aria-selected={i === mentionIndex}
-                      className={`composer__pick-item${
-                        i === mentionIndex ? ' composer__pick-item--active' : ''
-                      }`}
-                      onMouseDown={(event) => {
-                        event.preventDefault()
-                        acceptMention(p.playerPublicId)
-                      }}
-                      onMouseEnter={() => setMentionIndex(i)}
-                    >
+                    <li key={p.playerPublicId} role="option" aria-selected={i === mentionIndex} className={`composer__pick-item${i === mentionIndex ? ' composer__pick-item--active' : ''}`} onMouseDown={(event) => { event.preventDefault(); acceptMention(p.playerPublicId); }} onMouseEnter={() => setMentionIndex(i)}>
                       @{p.name}
                     </li>
                   ))}
@@ -669,23 +639,9 @@ function Run() {
               {pickableAbilities.length > 0 && (
                 <ul className="composer__pick" role="listbox" aria-label="Reference an ability">
                   {pickableAbilities.map((a, i) => (
-                    <li
-                      key={a.id}
-                      role="option"
-                      aria-selected={i === abilityIndex}
-                      className={`composer__pick-item${
-                        i === abilityIndex ? ' composer__pick-item--active' : ''
-                      }`}
-                      onMouseDown={(event) => {
-                        event.preventDefault()
-                        acceptAbility(a.id)
-                      }}
-                      onMouseEnter={() => setAbilityIndex(i)}
-                    >
+                    <li key={a.id} role="option" aria-selected={i === abilityIndex} className={`composer__pick-item${i === abilityIndex ? ' composer__pick-item--active' : ''}`} onMouseDown={(event) => { event.preventDefault(); acceptAbility(a.id); }} onMouseEnter={() => setAbilityIndex(i)}>
                       <span className="composer__pick-name">#{a.name}</span>
-                      <span className="composer__pick-target">
-                        {a.targeting.kind}/{a.targeting.scope}
-                      </span>
+                      <span className="composer__pick-target">{a.targeting.kind}/{a.targeting.scope}</span>
                     </li>
                   ))}
                 </ul>
@@ -695,86 +651,22 @@ function Run() {
                 className="composer__input"
                 rows={1}
                 value={draft}
-                onChange={(event) => {
-                  caretRef.current = event.target.selectionStart
-                  setMentionIndex(0)
-                  setAbilityIndex(0)
-                  setDraft(event.target.value)
-                  autoGrowComposer()
-                }}
+                onChange={(event) => { caretRef.current = event.target.selectionStart; setMentionIndex(0); setAbilityIndex(0); setDraft(event.target.value); autoGrowComposer(); }}
                 onKeyDown={(event) => {
                   if (mentionMembers.length > 0) {
-                    if (event.key === 'ArrowDown') {
-                      event.preventDefault()
-                      setMentionIndex((i) => (i + 1) % mentionMembers.length)
-                      return
-                    }
-                    if (event.key === 'ArrowUp') {
-                      event.preventDefault()
-                      setMentionIndex((i) => (i - 1 + mentionMembers.length) % mentionMembers.length)
-                      return
-                    }
-                    if (event.key === 'Enter' && mentionMembers[mentionIndex]) {
-                      event.preventDefault()
-                      acceptMention(mentionMembers[mentionIndex].playerPublicId)
-                      return
-                    }
-                    if (event.key === 'Escape') {
-                      event.preventDefault()
-                      const m = findPendingMention(draft, caretRef.current)
-                      if (m) {
-                        const next = draft.slice(0, m.start)
-                        setDraft(next)
-                        caretRef.current = m.start
-                        const el = composerRef.current
-                        if (el) {
-                          el.focus()
-                          el.setSelectionRange(m.start, m.start)
-                          autoGrowComposer()
-                        }
-                      }
-                      return
-                    }
+                    if (event.key === 'ArrowDown') { event.preventDefault(); setMentionIndex((i) => (i + 1) % mentionMembers.length); return; }
+                    if (event.key === 'ArrowUp') { event.preventDefault(); setMentionIndex((i) => (i - 1 + mentionMembers.length) % mentionMembers.length); return; }
+                    if (event.key === 'Enter' && mentionMembers[mentionIndex]) { event.preventDefault(); acceptMention(mentionMembers[mentionIndex].playerPublicId); return; }
+                    if (event.key === 'Escape') { event.preventDefault(); const m = findPendingMention(draft, caretRef.current); if (m) { const next = draft.slice(0, m.start); setDraft(next); caretRef.current = m.start; const el = composerRef.current; if (el) { el.focus(); el.setSelectionRange(m.start, m.start); autoGrowComposer(); } } return; }
                   }
                   if (pickableAbilities.length > 0) {
-                    if (event.key === 'ArrowDown') {
-                      event.preventDefault()
-                      setAbilityIndex((i) => (i + 1) % pickableAbilities.length)
-                      return
-                    }
-                    if (event.key === 'ArrowUp') {
-                      event.preventDefault()
-                      setAbilityIndex(
-                        (i) => (i - 1 + pickableAbilities.length) % pickableAbilities.length,
-                      )
-                      return
-                    }
-                    if (event.key === 'Enter' && pickableAbilities[abilityIndex]) {
-                      event.preventDefault()
-                      acceptAbility(pickableAbilities[abilityIndex].id)
-                      return
-                    }
-                    if (event.key === 'Escape') {
-                      event.preventDefault()
-                      const m = findPendingAbility(draft, caretRef.current)
-                      if (m) {
-                        const next = draft.slice(0, m.start)
-                        setDraft(next)
-                        caretRef.current = m.start
-                        const el = composerRef.current
-                        if (el) {
-                          el.focus()
-                          el.setSelectionRange(m.start, m.start)
-                          autoGrowComposer()
-                        }
-                      }
-                      return
-                    }
+                    if (event.key === 'ArrowDown') { event.preventDefault(); setAbilityIndex((i) => (i + 1) % pickableAbilities.length); return; }
+                    if (event.key === 'ArrowUp') { event.preventDefault(); setAbilityIndex((i) => (i - 1 + pickableAbilities.length) % pickableAbilities.length); return; }
+                    if (event.key === 'Enter' && pickableAbilities[abilityIndex]) { event.preventDefault(); acceptAbility(pickableAbilities[abilityIndex].id); return; }
+                    if (event.key === 'Escape') { event.preventDefault(); const m = findPendingAbility(draft, caretRef.current); if (m) { const next = draft.slice(0, m.start); setDraft(next); caretRef.current = m.start; const el = composerRef.current; if (el) { el.focus(); el.setSelectionRange(m.start, m.start); autoGrowComposer(); } } return; }
                   }
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault()
-                    void handlePlay()
-                  }
+                  if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void handlePlay(); }
+                  if (event.key === 'Escape') { event.preventDefault(); composerRef.current?.blur(); }
                 }}
                 placeholder={encounterActive ? 'The battle commands govern — use the fray.' : runEnded ? 'The descent has ended.' : 'Say what you do…'}
                 disabled={dmActive || encounterActive || runEnded}
@@ -791,21 +683,16 @@ function Run() {
             </button>
           </div>
         </section>
-      </LedgerFrame>
+      </section>
 
-      <aside className="descent__rail descent__rail--map" aria-label="Current room">
-        {room && (
-          <CurrentRoomCard
-            room={room}
-            onOpenMap={() => setMapOpen(true)}
-            onOpenInventory={() => setInventoryOpen(true)}
-            onOpenGear={() => setGearOpen(true)}
-          />
-        )}
-        {room && room.encounter?.phase === '' && <EnemiesCard room={room} />}
+      {/* RIGHT RAIL: Hostiles */}
+      <aside className="descent__right" aria-label="Tactical overview">
+        <RightRail
+          room={room}
+        />
       </aside>
 
-      {(room?.encounter?.phase === 'vote' || room?.encounter?.phase === 'combat') && (
+      {(room?.encounter?.phase === 'combat') && (
         <CombatModal
           room={room}
           roomToken={roomToken}
@@ -860,20 +747,29 @@ function Run() {
         />
       )}
 
-      {confirmation && (
-        <ConfirmationModal
-          type={confirmation.type}
-          votes={confirmation.votes}
-          deadlineAt={confirmation.deadlineAt}
-          durationMs={confirmation.durationMs}
+      {room?.currentVote && (
+        <VoteModal
+          vote={room.currentVote}
           totalVoters={
             (room?.players ?? []).filter((p) => p.status !== 'disconnected' && p.status !== 'left')
               .length
           }
           playerNameById={playerNameById}
           selfPublicId={selfPublicId}
-          onVote={handleConfirm}
+          onVote={handleVote}
         />
+      )}
+      {selfPlayer && selfPlayer.stats.skill_points > 0 && !runEnded && (
+        <div className="runtoast" role="status" aria-live="polite">
+          <div className="runtoast__head">
+            <span className="runtoast__dot" aria-hidden="true" />
+            <span className="runtoast__title">Unspent skill points</span>
+            <span className="runtoast__amount">{selfPlayer.stats.skill_points}</span>
+          </div>
+          <p className="runtoast__note">
+            {awayFromGrace ? 'return to grace' : 'open your file to spend them'}
+          </p>
+        </div>
       )}
     </div>
   )
@@ -882,97 +778,67 @@ function Run() {
 interface PartyManifestProps {
   room: RoomData | null
   selfPlayerId: string | null
-  connected: boolean
-  focusedPlayerId: string | null
   onSelect: (playerId: string) => void
 }
 
 function PartyManifest({
   room,
   selfPlayerId,
-  connected,
-  focusedPlayerId,
   onSelect,
 }: PartyManifestProps) {
   return (
-    <div className="board">
-      <div className="board__head">
-        <span className="board__title">Party manifest</span>
-        <span className="board__sub board__sub--muted">
-          {room ? `${room.totalPlayers} in the descent` : '· —'}
-        </span>
+    <>
+      <div className="manifest__head">
+        <div className="manifest__title">
+          <span>🛡</span>
+          <span>The Company</span>
+        </div>
+        <span className="manifest__count">{room ? `${room.totalPlayers} alive` : '—'}</span>
       </div>
-      <ol className="board__list">
+      <div className="manifest__list">
         {room?.players.map((player) => {
           const isSelf = player.playerId === selfPlayerId
-          const isFocused = player.playerId === focusedPlayerId
           const s = player.stats
           const hpPct = s.health.MaxHealth > 0
             ? Math.round((s.health.CurrentHealth / s.health.MaxHealth) * 100)
             : 0
+          const isLead = player.playerPublicId === room.hostPublicId
+          const barColor = hpPct <= 25 ? 'bg-crimson-glow' : hpPct < 100 ? 'bg-gold-brass' : 'bg-emerald-rune'
           return (
-            <li
+            <button
               key={player.playerId}
-              className={`board__row${isSelf ? ' board__row--you' : ''}${
-                isFocused ? ' board__row--focused' : ''
-              }`}
+              type="button"
+              className="manifest__delver"
+              onClick={() => onSelect(player.playerId)}
+              aria-label={`View ${player.name}'s file`}
             >
-              <span
-                className={`board__mark board__mark--${player.status}`}
-                title={statusLabel(player.status)}
-                aria-label={`status: ${statusLabel(player.status)}`}
-              />
-              <div className="board__cell">
-                <div className="board__top">
-                  <button
-                    type="button"
-                    className="board__select"
-                    title={player.name}
-                    aria-haspopup="dialog"
-                    aria-expanded={isFocused}
-                    aria-label={`View ${player.name}'s file`}
-                    onClick={() => onSelect(player.playerId)}
-                  >
-                    <span className="board__name">{player.name}</span>
-                  </button>
-                  <div className="board__tags">
-                    {player.playerPublicId === room.hostPublicId && <span className="board__tag board__tag--host">lead</span>}
-                    {isSelf && <span className="board__tag board__tag--you">you</span>}
-                  </div>
-                </div>
-                <div className="board__detail">
-                  {player.status === 'disconnected' && player.disconnectedAt != null ? (
-                    <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
-                  ) : (
-                    <>
-                      <span className="board__level">Lv.{s.level}</span>
-                      <span className="board__sep">·</span>
-                      <span className="board__hp">
-                        <span className="board__hp-track">
-                          <span
-                            className={`board__hp-fill${hpPct <= 25 ? ' board__hp-fill--low' : ''}`}
-                            style={{ width: `${hpPct}%` }}
-                          />
-                        </span>
-                        <span className="board__hp-num">
-                          {s.health.CurrentHealth}/{s.health.MaxHealth}
-                        </span>
-                      </span>
-                    </>
-                  )}
-                </div>
+              <div className="manifest__delver-name">
+                <span className="manifest__delver-name-text">{player.name}</span>
+                <span className="manifest__delver-level">Lv.{s.level}</span>
               </div>
-            </li>
+              <div className="manifest__delver-class">
+                {ROOM_LABELS[player.stats.abilities?.[0]?.targeting?.kind ?? 'normal'] ?? 'Combatant'}
+              </div>
+              <div className="manifest__delver-bar">
+                <span style={{ color: '#9d9280', textTransform: 'uppercase', fontSize: '0.5625rem' }}>Vitality</span>
+                <span style={{ color: isSelf ? '#ece4d4' : '#9d9280', fontSize: '0.5625rem' }}>
+                  {s.health.CurrentHealth}/{s.health.MaxHealth}
+                </span>
+              </div>
+              <div className="manifest__bar-track">
+                <span className={`manifest__bar-fill ${barColor}`} style={{ width: `${hpPct}%` }} />
+              </div>
+              <div className="manifest__delver-meta">
+                <span>{statusLabel(player.status)}</span>
+                {isLead && <span style={{ color: '#f2ca50' }}>lead</span>}
+                {isSelf && <span style={{ color: '#f2ca50' }}>you</span>}
+              </div>
+            </button>
           )
         })}
-        {!room && <li className="board__empty">awaiting the record…</li>}
-      </ol>
-      {!connected && (
-        <div className="board__foot">
-          <p>The line is down — the manifest is not live. The connection is being retried.</p>
-        </div>
-      )}
-    </div>
+        {!room && <div className="manifest__delver" style={{ color: 'var(--color-muted)' }}>awaiting the record…</div>}
+      </div>
+    </>
   )
 }
 
@@ -986,73 +852,6 @@ const ROOM_LABELS: Record<string, string> = {
   secret: 'Secret',
 }
 
-type DisplayEnemy = {
-  id: string
-  name: string
-  threatLevel: number
-  currentHealth: number
-  maxHealth: number
-  alive: boolean
-  description?: string
-}
-
-function EnemiesCard({ room }: { room: RoomData }) {
-  const enc = room.encounter
-  const currentTurnEnemyId =
-    enc?.phase === 'combat' && enc.currentTurnKind === 'enemy' ? enc.currentTurnId : null
-  const enemies: DisplayEnemy[] =
-    enc?.phase === 'combat'
-      ? enc.enemies
-      : (room.map?.rooms[room.currentRoom.index]?.enemies ?? [])
-
-  return (
-    <section className="board enemiespanel" aria-label="Enemies present">
-      <div className="board__head">
-        <span className="board__title">Enemies</span>
-        <span className="board__sub board__sub--muted">
-          {enemies.length === 0 ? 'none present' : `${enemies.length} present`}
-        </span>
-      </div>
-      {enemies.length === 0 ? (
-        <div className="enemiespanel__empty">The chamber is clear of foes.</div>
-      ) : (
-        <ul className="enemiespanel__list">
-          {enemies.map((enemy) => {
-            const pct =
-              enemy.maxHealth > 0 ? Math.round((enemy.currentHealth / enemy.maxHealth) * 100) : 0
-            return (
-              <li
-                className={`enemiespanel__enemy${
-                  enemy.id === currentTurnEnemyId ? ' enemiespanel__enemy--turn' : ''
-                }`}
-                key={enemy.id}
-              >
-                <div className="enemiespanel__top">
-                  <span className="enemiespanel__name" title={enemy.description}>
-                    {enemy.name}
-                  </span>
-                  <span className="enemiespanel__tier">T{enemy.threatLevel}</span>
-                </div>
-                <div className="enemiespanel__hp">
-                  <span
-                    className={`enemiespanel__fill${
-                      !enemy.alive ? ' enemiespanel__fill--down' : ''
-                    }`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                <span className="enemiespanel__hpnum">
-                  {enemy.alive ? `${enemy.currentHealth}/${enemy.maxHealth}` : 'down'}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </section>
-  )
-}
-
 function abilityNeedsTarget(a: Ability): boolean {
   return (a.targeting.kind === 'enemy' || a.targeting.kind === 'ally') && a.targeting.scope === 'single'
 }
@@ -1061,6 +860,95 @@ function numberKeyIndex(key: string): number {
   if (key >= '1' && key <= '9') return key.charCodeAt(0) - 49
   if (key === '0') return 9
   return -1
+}
+
+function RightRail({
+  room,
+}: {
+  room: RoomData | null
+}) {
+  const encounter = room?.encounter
+  const enemies = encounter?.enemies ?? []
+
+  return (
+    <>
+      {/* Chamber art */}
+      <div className="chamberart">
+        <svg className="chamberart__svg" viewBox="0 0 800 160" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <radialGradient cx="50%" cy="50%" id="occultGlow" r="50%">
+              <stop offset="0%" stopColor="#c084fc" stopOpacity="0.3" />
+              <stop offset="60%" stopColor="#3b0764" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#0c0b0f" stopOpacity="0" />
+            </radialGradient>
+            <pattern id="runeGrid" patternUnits="userSpaceOnUse" width="24" height="24">
+              <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#d4af37" strokeOpacity="0.25" strokeWidth="0.3" />
+              <circle cx="12" cy="12" fill="#c084fc" fillOpacity="0.3" r="0.75" />
+            </pattern>
+          </defs>
+          <rect fill="url(#runeGrid)" width="800" height="160" />
+          <circle cx="400" cy="80" fill="url(#occultGlow)" r="75" />
+          <circle cx="400" cy="80" fill="none" r="62" stroke="#d4af37" strokeOpacity="0.65" strokeWidth="1.2" />
+          <circle cx="400" cy="80" fill="none" r="48" stroke="#c084fc" strokeDasharray="5 3" strokeOpacity="0.5" strokeWidth="0.8" />
+          <polygon fill="none" points="400,28 448,104 352,104" stroke="#f2ca50" strokeOpacity="0.8" strokeWidth="1.2" />
+          <polygon fill="none" points="400,132 448,56 352,56" stroke="#d4af37" strokeOpacity="0.6" strokeWidth="0.9" />
+          <circle cx="400" cy="80" fill="#dc2626" fillOpacity="0.85" r="6">
+            <animate attributeName="r" dur="2.8s" repeatCount="indefinite" values="5;8;5" />
+          </circle>
+          <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="220" y1="80" x2="338" y2="80" />
+          <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="462" y1="80" x2="580" y2="80" />
+          <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="250" y="75">✦ ☽ ☥</text>
+          <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="520" y="75">☥ ☩ ☾</text>
+        </svg>
+        <div className="chamberart__overlay" />
+        <div className="chamberart__badges">
+          <span className="chamberart__badge">
+            <span style={{ color: '#c084fc' }}>✧</span> Chamber {room ? (room.currentRoom.index + 1) : '—'} • {room ? room.currentRoom.type : ''}
+          </span>
+        </div>
+        <div className="chamberart__caption">
+          <div>
+            <span className="chamberart__label">Locational Relic & Altar</span>
+            <h2 className="chamberart__title">{room ? (ROOM_LABELS[room.currentRoom.type] ?? room.currentRoom.type) : ''}</h2>
+          </div>
+        </div>
+      </div>
+
+      {/* Hostiles deck */}
+      <div className="hostiles">
+        <div className="hostiles__head">
+          <div className="hostiles__title">
+            <span>⚔</span>
+            <span>Hostiles</span>
+          </div>
+          <span className="hostiles__badge">{enemies.length} Engaged</span>
+        </div>
+        {enemies.map((foe) => {
+          const pct = foe.maxHealth > 0 ? Math.round((foe.currentHealth / foe.maxHealth) * 100) : 0
+          return (
+            <div key={foe.id} className="hostile-card">
+              <div className="hostile-card__name">
+                <span className="hostile-card__name-text">{foe.name}</span>
+                <span className="hostile-card__status">{foe.alive ? 'Active' : 'Down'}</span>
+              </div>
+              <div className="hostile-card__bar">
+                <span style={{ color: '#9d9280', textTransform: 'uppercase', fontSize: '0.5625rem' }}>Vitality</span>
+                <span style={{ color: '#dc2626', fontSize: '0.5625rem' }}>{foe.currentHealth}/{foe.maxHealth}</span>
+              </div>
+              <div className="manifest__bar-track">
+                <span className="manifest__bar-fill bg-crimson-glow" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          )
+        })}
+        {enemies.length === 0 && (
+          <div style={{ fontSize: '0.75rem', color: '#6e6656', padding: '0.5rem 0', fontFamily: '"EB Garamond", serif', fontStyle: 'italic' }}>
+            No enemies found.
+          </div>
+        )}
+      </div>
+    </>
+  )
 }
 
 function CombatModal({
@@ -1080,8 +968,8 @@ function CombatModal({
   const [err, setErr] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
-  const voteActive = encounter?.phase === 'vote' && (encounter.vote?.active ?? false)
-  const voteDeadlineAt = encounter?.vote?.deadlineAt ?? 0
+  const voteActive = encounter?.phase === 'vote' && (room.currentVote != null)
+  const voteDeadlineAt = room.currentVote?.deadlineAt ?? 0
 
   useEffect(() => {
     if (!voteActive || voteDeadlineAt === 0) return
@@ -1106,11 +994,16 @@ function CombatModal({
   const isMyTurn =
     encounter.currentTurnKind === 'player' && encounter.currentTurnId === selfPublicId
 
-  const myVote = selfPublicId !== null ? encounter.vote.votes[selfPublicId] : undefined
-  const voteRemainingMs = Math.max(0, encounter.vote.deadlineAt - now)
+  const myVote = selfPublicId !== null && room.currentVote ? room.currentVote.votes[selfPublicId] : undefined
+  const voteRemainingMs = Math.max(0, voteDeadlineAt - now)
   const voteRemainingSec = Math.ceil(voteRemainingMs / 1000)
-  const voteYes = Object.entries(encounter.vote.votes).filter(([, v]) => v).length
-  const voteNo = Object.entries(encounter.vote.votes).filter(([, v]) => !v).length
+  const voteCounts: Record<string, number> = {}
+  if (room.currentVote) {
+    for (const opt of room.currentVote.options) voteCounts[opt.id] = 0
+    for (const choice of Object.values(room.currentVote.votes)) {
+      if (choice && voteCounts[choice] !== undefined) voteCounts[choice]++
+    }
+  }
 
   const activeAbilities: (Ability & { slot: number })[] = (
     selfPlayer?.stats.activeAbilities ?? []
@@ -1127,6 +1020,11 @@ function CombatModal({
       p.status !== 'left' &&
       p.stats.health.CurrentHealth > 0,
   )
+
+  const partyAll = room.players.filter(
+    (p) => p.status !== 'disconnected' && p.status !== 'left' && p.status !== 'ended',
+  )
+  const partyAlive = partyAll.filter((p) => p.stats.health.CurrentHealth > 0)
 
   const pendingAbility = pending && pending.type === 'ability' ? pending : null
   const needsTarget =
@@ -1179,12 +1077,12 @@ function CombatModal({
   const pickEnemy = (id: string) => void sendTarget({ kind: 'enemy', id })
   const pickAlly = (id: string) => void sendTarget({ kind: 'ally', id })
 
-  const sendVote = async (accept: boolean) => {
+  const sendVote = async (optionId: string) => {
     if (!roomToken) return
     setBusy(true)
     setErr(null)
     try {
-      await selectCombatVote(roomToken, accept)
+      await sendVoteOption(roomToken, optionId)
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'failed to vote')
     } finally {
@@ -1210,12 +1108,11 @@ function CombatModal({
     if (event.metaKey || event.ctrlKey || event.altKey) return
 
     if (isVote) {
-      if (event.key === '1') {
+      const options = room.currentVote?.options ?? []
+      const idx = numberKeyIndex(event.key)
+      if (idx >= 0 && idx < options.length) {
         event.preventDefault()
-        void sendVote(true)
-      } else if (event.key === '2') {
-        event.preventDefault()
-        void sendVote(false)
+        void sendVote(options[idx].id)
       }
       return
     }
@@ -1268,273 +1165,240 @@ function CombatModal({
         </header>
 
         <div className="combatmodal__body">
-          <section className="combatmodal__foe" aria-label="Enemies">
-            <div className="combatmodal__sectitle">
-              <span>foes</span>
-              <span className="combatmodal__sectitle-note">{enemies.length} standing</span>
-            </div>
-            {enemies.length === 0 ? (
-              <div className="combatmodal__empty">None remain.</div>
-            ) : (
-              <ul className="combatmodal__foelist">
-                {enemies.map((e) => {
-                  const pct = e.maxHealth > 0 ? Math.round((e.currentHealth / e.maxHealth) * 100) : 0
-                  const acting = isMyTurn && pendingTargetKind === 'enemy'
+          {isVote ? (
+            room.currentVote ? (
+            <div className="combatmodal__votebody">
+              <div className="combatmodal__voteheader">
+                <span className="combatmodal__votedesc">{room.currentVote.description}</span>
+                <div className="combatmodal__votetimer">
+                  <span className="combatmodal__votetimer-num">{voteRemainingSec}</span>
+                  <span className="combatmodal__votetimer-unit">s</span>
+                </div>
+              </div>
+              <div className="combatmodal__voteropts">
+                {room.currentVote.options.map((opt, i) => {
+                  const count = voteCounts[opt.id] ?? 0
+                  const maxVotes = Math.max(1, ...room.currentVote!.options.map((o) => voteCounts[o.id] ?? 0))
+                  const barPct = maxVotes > 0 ? count / maxVotes : 0
                   return (
-                    <li
-                      key={e.id}
-                      className={`combatmodal__foe${acting ? ' combatmodal__foe--acting' : ''}`}
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className="combatmodal__voteopt"
+                      disabled={busy}
+                      aria-pressed={myVote === opt.id}
+                      onClick={() => void sendVote(opt.id)}
                     >
-                      <div className="combatmodal__foe-top">
-                        <span className="combatmodal__foe-name">{e.name}</span>
-                        <span className="combatmodal__foe-tier">T{e.threatLevel}</span>
+                      <div className="combatmodal__voteopt-bar" style={{ transform: `scaleX(${barPct})` }} />
+                      <div className="combatmodal__voteopt-inner">
+                        <span className="combatmodal__voteopt-key">{i + 1}</span>
+                        <span className="combatmodal__voteopt-body">
+                          <span className="combatmodal__voteopt-name">{opt.name}</span>
+                          <span className="combatmodal__voteopt-desc">{opt.description}</span>
+                        </span>
+                        <span className="combatmodal__voteopt-count">{count}</span>
                       </div>
-                      <div className="combatmodal__foe-hp">
-                        <span
-                          className={`combatmodal__foe-fill${!e.alive ? ' combatmodal__foe-fill--down' : ''}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="combatmodal__foe-num">
-                        {e.alive ? `${e.currentHealth}/${e.maxHealth}` : 'down'}
-                      </span>
-                      {acting && (
-                        <button
-                          type="button"
-                          className="combatmodal__foe-target"
-                          disabled={busy}
-                          onClick={() => pickEnemy(e.id)}
-                        >
-                          engage
-                        </button>
-                      )}
-                    </li>
+                    </button>
                   )
                 })}
-              </ul>
-            )}
-          </section>
-
-          <section className="combatmodal__record" aria-label="Combat record">
-            <div className="combatmodal__sectitle">
-              <span>record</span>
-              <span className="combatmodal__sectitle-note">mechanical</span>
-            </div>
-            <ul className="combatmodal__log">
-              {encounter.log.map((line, i) => (
-                <li className="combatmodal__logline" key={i}>
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-
-        <footer className="combatmodal__controls">
-          {err && (
-            <p className="composer__error" role="alert">
-              {err}
-            </p>
-          )}
-
-          {isVote ? (
-            <div className="combat__vote">
-              <p className="combat__vote-rule">
-                Choose the party&apos;s course — a majority decides. {voteYes} for battle, {voteNo} for
-                the ambush.
-              </p>
-              <div className="combat__vote-actions">
-                <button
-                  type="button"
-                  className="btn combat__act"
-                  disabled={busy}
-                  aria-pressed={myVote === true}
-                  onClick={() => void sendVote(true)}
-                >
-                  <span className="combat__key">1</span>
-                  battle{myVote === true ? ' · chosen' : ''}
-                </button>
-                <button
-                  type="button"
-                  className="btn combat__act"
-                  disabled={busy}
-                  aria-pressed={myVote === false}
-                  onClick={() => void sendVote(false)}
-                >
-                  <span className="combat__key">2</span>
-                  ambush{myVote === false ? ' · chosen' : ''}
-                </button>
               </div>
-              <p className="combatmodal__wait">
+              <p className="combatmodal__votewait">
                 {myVote !== undefined
-                  ? `you chose ${myVote ? 'battle' : 'ambush'}`
-                  : `${voteRemainingSec}s to decide`}
+                  ? `you chose ${myVote}`
+                  : 'awaiting your voice'}
               </p>
             </div>
+            ) : (
+              <div className="combatmodal__votewait">gathering voices…</div>
+            )
           ) : (
-            <>
-              {!isMyTurn && <div className="combatmodal__wait">awaiting {turnName}…</div>}
-
+          <div className="combatgrid">
+            <div className="combatgrid__actions">
               {isMyTurn && !needsTarget && (
-                <div className="combat__actions">
+                <div className="combatgrid__actionsbody">
                   {actionList.map((action, i) => (
                     <button
                       type="button"
                       key={`${i}-${action.label}`}
-                      className="btn combat__act"
+                      className="combatgrid__act"
                       disabled={busy}
                       title={action.title}
                       onClick={action.invoke}
                     >
-                      <span className="combat__key">{i + 1}</span>
-                      {action.label}
+                      <span className="combatgrid__actkey">{i + 1}</span>
+                      <span className="combatgrid__actlabel">{action.label}</span>
                     </button>
                   ))}
                 </div>
               )}
 
               {isMyTurn && needsTarget && (
-                <div className="combat__targets">
-                  <span className="combat__targets-label">
-                    engage a target{pendingTargetKind === 'ally' ? ' (ally)' : ''}
-                  </span>
-                  {pendingTargetKind === 'enemy' &&
-                    enemies.map((e, i) => (
-                      <button
-                        type="button"
-                        key={e.id}
-                        className="btn combat__target"
-                        disabled={busy}
-                        onClick={() => pickEnemy(e.id)}
-                      >
-                        <span className="combat__key">{i + 1}</span>
-                        {e.name} · {e.currentHealth}/{e.maxHealth}
-                      </button>
-                    ))}
+                <div className="combatgrid__actionsbody">
                   {pendingTargetKind === 'ally' &&
                     allies.map((p, i) => (
                       <button
                         type="button"
                         key={p.playerPublicId}
-                        className="btn combat__target"
+                        className="combatgrid__act combatgrid__act--target"
                         disabled={busy}
                         onClick={() => pickAlly(p.playerPublicId)}
                       >
-                        <span className="combat__key">{i + 1}</span>
-                        {p.name} · {p.stats.health.CurrentHealth}/{p.stats.health.MaxHealth}
+                        <span className="combatgrid__actkey">{i + 1}</span>
+                        <span className="combatgrid__actlabel">{p.name}</span>
+                        <span className="combatgrid__acthp">{p.stats.health.CurrentHealth}/{p.stats.health.MaxHealth}</span>
                       </button>
                     ))}
+                  {pendingTargetKind === 'enemy' && (
+                    <p className="combatmodal__wait">select a foe above</p>
+                  )}
                   <button
                     type="button"
-                    className="btn combat__target"
+                    className="combatgrid__act combatgrid__act--cancel"
                     onClick={() => setPending(null)}
                   >
-                    cancel
+                    <span className="combatgrid__actlabel">cancel</span>
                   </button>
                 </div>
               )}
-            </>
+
+              {!isMyTurn && (
+                <div className="combatgrid__actionsbody combatgrid__actionsbody--idle">
+                  <p className="combatmodal__wait">awaiting {turnName}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="combatgrid__center">
+              <section className="combatarena__band combatarena__band--foe" aria-label="Foes">
+                <div className="combatarena__bandlabel">
+                  <span>foes</span>
+                  <span className="combatarena__note">
+                    {enemies.filter((e) => e.alive).length} standing
+                  </span>
+                </div>
+                <ul className="combatarena__row">
+                  {enemies.length === 0 ? (
+                    <li className="combatarena__empty">None remain.</li>
+                  ) : (
+                    enemies.map((e) => {
+                      const pct = e.maxHealth > 0 ? Math.round((e.currentHealth / e.maxHealth) * 100) : 0
+                      const isActingEnemy =
+                        encounter.currentTurnKind === 'enemy' && encounter.currentTurnId === e.id
+                      const isTargetable = isMyTurn && needsTarget && pendingTargetKind === 'enemy' && e.alive
+                      return (
+                        <li
+                          key={e.id}
+                          className={`combatcard${isActingEnemy ? ' combatcard--acting' : ''}${
+                            !e.alive ? ' combatcard--down' : ''
+                          }${isTargetable ? ' combatcard--targetable' : ''}`}
+                          onClick={isTargetable ? () => pickEnemy(e.id) : undefined}
+                          role={isTargetable ? 'button' : undefined}
+                          tabIndex={isTargetable ? 0 : undefined}
+                          onKeyDown={isTargetable ? (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pickEnemy(e.id); } } : undefined}
+                        >
+                          <div className="combatcard__top">
+                            <span className="combatcard__name">{e.name}</span>
+                            <span className="combatcard__tier">T{e.threatLevel}</span>
+                          </div>
+                          <div className="combatcard__face" aria-hidden="true">
+                            {e.alive ? '☠' : '✕'}
+                          </div>
+                          <div className="combatcard__hp">
+                            <span
+                              className={`combatcard__fill${
+                                !e.alive ? ' combatcard__fill--down' : ''
+                              }`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="combatcard__num">
+                            {e.alive ? `${e.currentHealth}/${e.maxHealth}` : 'down'}
+                          </span>
+                        </li>
+                      )
+                    })
+                  )}
+                </ul>
+              </section>
+
+              <section className="combatarena__band combatarena__band--party" aria-label="Your party">
+                <div className="combatarena__bandlabel">
+                  <span>your party</span>
+                  <span className="combatarena__note">
+                    {partyAlive.length}/{partyAll.length} standing
+                  </span>
+                </div>
+                <ul className="combatarena__row">
+                  {partyAll.map((p) => {
+                    const pct =
+                      p.stats.health.MaxHealth > 0
+                        ? Math.round((p.stats.health.CurrentHealth / p.stats.health.MaxHealth) * 100)
+                        : 0
+                    const isSelf = p.playerPublicId === selfPublicId
+                    const isActingHero =
+                      encounter.currentTurnKind === 'player' && encounter.currentTurnId === p.playerPublicId
+                    return (
+                      <li
+                        key={p.playerPublicId}
+                        className={`combatcard${isActingHero ? ' combatcard--acting' : ''}${
+                          isSelf ? ' combatcard--self' : ''
+                        }${p.stats.health.CurrentHealth <= 0 ? ' combatcard--down' : ''}`}
+                      >
+                        <div className="combatcard__top">
+                          <span className="combatcard__name">{p.name}</span>
+                          <span className="combatcard__tier">
+                            Lv.{p.stats.level}
+                            {isSelf ? ' · you' : ''}
+                          </span>
+                        </div>
+                        <div className="combatcard__face" aria-hidden="true">
+                          {p.stats.health.CurrentHealth > 0 ? '◆' : '✕'}
+                        </div>
+                        <div className="combatcard__hp">
+                          <span
+                            className={`combatcard__fill combatcard__fill--ally${
+                              p.stats.health.CurrentHealth <= 0 ? ' combatcard__fill--down' : ''
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="combatcard__num">
+                          {p.stats.health.CurrentHealth > 0
+                            ? `${p.stats.health.CurrentHealth}/${p.stats.health.MaxHealth}`
+                            : 'down'}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            </div>
+
+            <div className="combatgrid__log">
+              <ul className="combatgrid__loglist">
+                {encounter.log.map((line, i) => (
+                  <li className="combatgrid__logline" key={i}>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
           )}
-        </footer>
+        </div>
+
+        {err && (
+          <footer className="combatmodal__controls">
+            <p className="composer__error" role="alert">
+              {err}
+            </p>
+          </footer>
+        )}
       </div>
     </div>
   )
 }
 
-interface CurrentRoomCardProps {
-  room: RoomData
-  onOpenMap: () => void
-  onOpenInventory?: () => void
-  onOpenGear?: () => void
-}
-
-function CurrentRoomCard({ room, onOpenMap, onOpenInventory, onOpenGear }: CurrentRoomCardProps) {
-  const map = room.map
-  const currentRoom = room.currentRoom
-  const roomIndex = currentRoom.index
-
-  const exits = map?.rooms[roomIndex]?.exits
-  const neighbors = exits
-    ? (['north', 'south', 'east', 'west'] as const)
-        .filter((d) => exits[d] !== null)
-        .map((d) => {
-          const exit = exits[d]!
-          const neighborRoom = map?.rooms[exit.targetRoomId]
-          return { dir: d, isVisited: neighborRoom?.isVisited ?? false, type: neighborRoom?.type ?? 'unknown' }
-        })
-        .filter((n) => n.isVisited)
-    : []
-
-  return (
-    <section className="board currentroom" aria-label="Current room">
-      <div className="board__head">
-        <span className="board__title">Current room</span>
-        <span className="board__sub board__sub--muted">floor {room.floor}</span>
-      </div>
-      <div className="currentroom__body">
-        <span className={`currentroom__type currentroom__type--${currentRoom.type}`}>
-          {ROOM_LABELS[currentRoom.type] ?? currentRoom.type}
-        </span>
-        {neighbors.length > 0 && (
-          <ul className="currentroom__neighbors">
-            {neighbors.map((n) => (
-              <li className="currentroom__neighbor" key={n.dir}>
-                <span className="currentroom__dir">{n.dir}</span>
-                <span className={`currentroom__dot currentroom__dot--${n.type}`} />
-                <span className="currentroom__ntype">{ROOM_LABELS[n.type] ?? n.type}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-      <div className="currentroom__actions">
-        <button
-          type="button"
-          className="currentroom__mapbtn"
-          onClick={onOpenMap}
-          aria-label="Open descent map"
-          title="Open map (M)"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-            <line x1="8" y1="2" x2="8" y2="18" />
-            <line x1="16" y1="6" x2="16" y2="22" />
-          </svg>
-          <span>map</span>
-        </button>
-        {onOpenInventory && (
-          <button
-            type="button"
-            className="currentroom__mapbtn"
-            onClick={onOpenInventory}
-            aria-label="Open inventory"
-            title="Open inventory (I)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 8h18l-1.2 12.2a1 1 0 0 1-1 .8H5.2a1 1 0 0 1-1-.8L3 8z" />
-              <path d="M8 10V6a4 4 0 0 1 8 0v4" />
-            </svg>
-            <span>inventory</span>
-          </button>
-        )}
-        {onOpenGear && (
-          <button
-            type="button"
-            className="currentroom__mapbtn"
-            onClick={onOpenGear}
-            aria-label="Open gear and abilities"
-            title="Open gear & abilities (G)"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-            </svg>
-            <span>gear</span>
-          </button>
-        )}
-      </div>
-    </section>
-  )
-}
 
 interface MapRoom {
   index: number
@@ -1588,6 +1452,16 @@ function computePositions(map: MapPublicJSON): Map<number, { x: number; y: numbe
 
 const LEGEND_TYPES = ['grace', 'normal', 'boss', 'puzzle', 'miniboss', 'treasure'] as const
 
+function romanNumeral(n: number): string {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
+  const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I']
+  let result = ''
+  for (let i = 0; i < vals.length; i++) {
+    while (n >= vals[i]) { result += syms[i]; n -= vals[i] }
+  }
+  return result
+}
+
 interface Connector {
   key: string
   x1: number
@@ -1596,12 +1470,24 @@ interface Connector {
   y2: number
 }
 
-function MapCanvas({ map }: { map: MapPublicJSON }) {
+function MapCanvas({ map, onSelectRoom }: { map: MapPublicJSON; onSelectRoom?: (idx: number) => void }) {
   const [hovered, setHovered] = useState<MapRoom | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef({ dragging: false, startX: 0, startY: 0, panX: 0, panY: 0 })
   const [pan, setPan] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(1)
+  const [canvasSize, setCanvasSize] = useState({ w: 800, h: 600 })
+
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect
+      if (width > 0 && height > 0) setCanvasSize({ w: width, h: height })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const positions = computePositions(map)
   const visibleRooms = map.rooms
@@ -1625,11 +1511,11 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
   const spanX = maxGx - minGx
   const spanY = maxGy - minGy
 
-  const cellPct = 18
+  const cellPct = 14
   const paddingPct = (100 - (spanX + 1) * cellPct) / 2
   const paddingYPct = (100 - (spanY + 1) * cellPct) / 2
 
-  const roomPct = 12
+  const roomPct = 7
 
   const toLeft = (gx: number) => paddingPct + (gx - minGx) * cellPct + (cellPct - roomPct) / 2
   const toTop = (gy: number) => paddingYPct + (gy - minGy) * cellPct + (cellPct - roomPct) / 2
@@ -1654,10 +1540,12 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
       if (seenConnector.has(key)) continue
       seenConnector.add(key)
 
-      const cx1 = toCenterX(roomNode.gx)
-      const cy1 = toCenterY(roomNode.gy)
-      const cx2 = toCenterX(targetNode.gx)
-      const cy2 = toCenterY(targetNode.gy)
+      const srcW = roomNode.isCurrentRoom ? roomPct * 1.3 : roomPct
+      const tgtW = targetNode.isCurrentRoom ? roomPct * 1.3 : roomPct
+      const cx1 = toLeft(roomNode.gx) + srcW / 2
+      const cy1 = toTop(roomNode.gy) + srcW / 2
+      const cx2 = toLeft(targetNode.gx) + tgtW / 2
+      const cy2 = toTop(targetNode.gy) + tgtW / 2
       connectors.push({ key, x1: cx1, y1: cy1, x2: cx2, y2: cy2 })
     }
   }
@@ -1669,11 +1557,10 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
     const el = viewportRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
-    const canvasH = 40 * 16
     const cxPct = toCenterX(currentRoom.gx)
     const cyPct = toCenterY(currentRoom.gy)
     const targetPxX = (cxPct / 100) * rect.width
-    const targetPxY = (cyPct / 100) * canvasH
+    const targetPxY = (cyPct / 100) * rect.height
     setPan({ x: rect.width / 2 - targetPxX, y: rect.height / 2 - targetPxY })
   }, [currentRoom?.index])
 
@@ -1727,81 +1614,86 @@ function MapCanvas({ map }: { map: MapPublicJSON }) {
   }, [zoom, pan])
 
   return (
-    <div className="mapmodal__inner">
+    <div className="map__viewport"
+      ref={viewportRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onWheel={onWheel}
+    >
+      <svg className="map__svg-bg" width="100%" height="100%">
+        <defs>
+          <pattern id="celestialDots" patternUnits="userSpaceOnUse" width="16" height="16">
+            <circle cx="2" cy="2" fill="#735c00" opacity="0.3" r="0.6" />
+            <circle cx="10" cy="10" fill="#c084fc" opacity="0.25" r="0.4" />
+          </pattern>
+        </defs>
+        <rect fill="url(#celestialDots)" width="100%" height="100%" />
+      </svg>
       <div
-        className="map__viewport"
-        ref={viewportRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onWheel={onWheel}
+        className="map__canvas map__canvas--large"
+        style={{
+          transform: pan
+            ? `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
+            : undefined,
+          transformOrigin: '0 0',
+        }}
       >
-        <div
-          className="map__canvas map__canvas--large"
-          style={{
-            transform: pan
-              ? `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`
-              : undefined,
-            transformOrigin: '0 0',
-          }}
-        >
-          {connectors.map((c) => {
-            const isHoriz = c.y1 === c.y2
-            const left = Math.min(c.x1, c.x2)
-            const top = Math.min(c.y1, c.y2)
-            const w = isHoriz ? Math.abs(c.x2 - c.x1) : 2.5
-            const h = isHoriz ? 2.5 : Math.abs(c.y2 - c.y1)
-            return (
-              <div
-                key={c.key}
-                className="map__connector"
-                style={{
-                  left: `${left}%`,
-                  top: `${top}%`,
-                  width: `${w}%`,
-                  height: `${h}%`,
-                }}
-              />
-            )
-          })}
-          {nodes.map((node) => (
-            <button
-              type="button"
-              key={node.index}
-              className={`map__room map__room--${node.type}${
-                node.isCurrentRoom ? ' map__room--current' : ''
-              }${hovered?.index === node.index ? ' map__room--active' : ''}`}
+        {/* Connectors layer */}
+        {connectors.map((c) => {
+          const ax = (c.x1 / 100) * canvasSize.w
+          const ay = (c.y1 / 100) * canvasSize.h
+          const bx = (c.x2 / 100) * canvasSize.w
+          const by = (c.y2 / 100) * canvasSize.h
+          const dx = bx - ax
+          const dy = by - ay
+          const len = Math.sqrt(dx * dx + dy * dy)
+          const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+          return (
+            <div
+              key={c.key}
+              className="map__connector"
               style={{
-                left: `${toLeft(node.gx)}%`,
-                top: `${toTop(node.gy)}%`,
-                width: `${roomPct}%`,
-                aspectRatio: '1',
+                left: `${ax}px`,
+                top: `${ay}px`,
+                width: `${len}px`,
+                transformOrigin: '0 50%',
+                transform: `rotate(${angle}deg)`,
               }}
-              onMouseEnter={() => setHovered(node)}
-              onMouseLeave={() => setHovered(null)}
-              onFocus={() => setHovered(node)}
-              onBlur={() => setHovered(null)}
-              aria-label={ROOM_LABELS[node.type] ?? node.type}
-            >
-              <span className="map__room-label">{ROOM_LABELS[node.type] ?? node.type}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="map__legend" aria-hidden="true">
-        {LEGEND_TYPES.map((t) => (
-          <span className="map__legend-item" key={t}>
-            <span className={`map__legend-dot map__room--${t}`} />
-            <span className="map__legend-label">{ROOM_LABELS[t]}</span>
-          </span>
+            />
+          )
+        })}
+        {nodes.map((node) => (
+          <button
+            type="button"
+            key={node.index}
+            className={`map__room map__room--${node.type}${
+              node.isCurrentRoom ? ' map__room--current' : ''
+            }${hovered?.index === node.index ? ' map__room--active' : ''}`}
+            style={{
+              left: `${toLeft(node.gx)}%`,
+              top: `${toTop(node.gy)}%`,
+              width: `${node.isCurrentRoom ? roomPct * 1.3 : roomPct}%`,
+              aspectRatio: '1',
+            }}
+            onMouseEnter={() => setHovered(node)}
+            onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(node)}
+            onBlur={() => setHovered(null)}
+            onClick={() => onSelectRoom?.(node.index)}
+            aria-label={ROOM_LABELS[node.type] ?? node.type}
+          >
+            <span className="map__room-label">{node.isCurrentRoom ? `${romanNumeral(node.index + 1)} ✦` : romanNumeral(node.index + 1)}</span>
+          </button>
         ))}
       </div>
-      <div className="map__cover" role="status" aria-live="polite">
+      {/* Hover tooltip */}
+      <div className="map__tooltip">
         {hovered ? (
-          <span className="map__cover-name">{ROOM_LABELS[hovered.type] ?? hovered.type}</span>
+          <span className="map__tooltip-text">{ROOM_LABELS[hovered.type] ?? hovered.type}</span>
         ) : (
-          <span className="map__cover-name map__cover-name--idle">hover a room</span>
+          <span className="map__tooltip-text map__tooltip-text--idle">hover a chamber</span>
         )}
       </div>
     </div>
@@ -1834,6 +1726,10 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
     }
   }, [])
 
+  const currentIdx = room.map ? room.map.rooms.findIndex((r) => r.isCurrentRoom) : -1
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(currentIdx >= 0 ? currentIdx : null)
+  const selectedRoom = room.map && selectedIdx !== null ? room.map.rooms[selectedIdx] : null
+
   return (
     <div className="mapmodal__scrim" onClick={onClose}>
       <div
@@ -1844,54 +1740,163 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
         ref={dialogRef}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mapmodal__head">
-          <span className="mapmodal__title">Descent map</span>
-          <span className="mapmodal__sub">floor {room.floor}</span>
-          <button
-            ref={closeRef}
-            type="button"
-            className="mapmodal__close"
-            onClick={onClose}
-            aria-label="Close map"
-          >
-            close ✕
-          </button>
+        {/* Top bar */}
+        <header className="mapmodal__header">
+          <div className="mapmodal__header-left">
+            <span className="mapmodal__sigil">
+              <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', color: '#d4af37' }}>explore</span>
+            </span>
+            <div className="mapmodal__header-text">
+              <span className="mapmodal__eyebrow">the descent</span>
+              <h2 className="mapmodal__title">Celestial Cartography</h2>
+            </div>
+          </div>
+          <div className="mapmodal__header-right">
+            <span className="mapmodal__floor-badge">
+              <span className="mapmodal__floor-label">Floor</span>
+              <span className="mapmodal__floor-num">{romanNumeral(room.floor)}</span>
+            </span>
+            <span className="mapmodal__chamber-badge">
+              Chamber {currentIdx >= 0 ? currentIdx + 1 : '—'} / {room.map?.rooms.length ?? '—'}
+            </span>
+            <button
+              ref={closeRef}
+              type="button"
+              className="mapmodal__close"
+              onClick={onClose}
+              aria-label="Close map"
+            >
+              Close <span style={{ fontSize: '0.75rem' }}>✕</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main content: map + optional side panel */}
+        <div className="mapmodal__content">
+          {/* Map viewport */}
+          <div className="mapmodal__maparea">
+            {room.map && <MapCanvas map={room.map} onSelectRoom={setSelectedIdx} />}
+            {/* Legend overlay at bottom of map */}
+            <div className="mapmodal__legend">
+              {LEGEND_TYPES.map((t) => (
+                <span className="mapmodal__legend-item" key={t}>
+                  <span className={`mapmodal__legend-dot map__room--${t}`} />
+                  <span className="mapmodal__legend-label">{ROOM_LABELS[t]}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Side panel — room details */}
+          {selectedRoom && selectedIdx !== null && (
+            <aside className="mapmodal__side">
+              <div className="mapmodal__side-head">
+                <div className="mapmodal__side-title-row">
+                  <span className={`mapmodal__side-type mapmodal__side-type--${selectedRoom.type}`}>
+                    {ROOM_LABELS[selectedRoom.type] ?? selectedRoom.type}
+                  </span>
+                  <span className="mapmodal__side-idx">Chamber {selectedIdx + 1}</span>
+                </div>
+                <button type="button" className="mapmodal__side-close" onClick={() => setSelectedIdx(null)} aria-label="Close details">
+                  <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>close</span>
+                </button>
+              </div>
+
+              <div className="mapmodal__side-body">
+                {/* Stats */}
+                <div className="mapmodal__side-row">
+                  <span className="mapmodal__side-label">Difficulty</span>
+                  <span className="mapmodal__side-val">{selectedRoom.baseDifficulty}</span>
+                </div>
+                <div className="mapmodal__side-row">
+                  <span className="mapmodal__side-label">Depth Bonus</span>
+                  <span className="mapmodal__side-val">+{selectedRoom.distanceBonus}</span>
+                </div>
+
+                {/* Exits */}
+                {(() => {
+                  const exits = (['north', 'south', 'east', 'west'] as const)
+                    .filter((d) => selectedRoom.exits[d])
+                    .map((d) => ({ dir: d, exit: selectedRoom.exits[d]! }))
+                  if (exits.length === 0) return null
+                  return (
+                    <div className="mapmodal__side-section">
+                      <span className="mapmodal__side-section-label">Exits</span>
+                      <div className="mapmodal__side-exits">
+                        {exits.map(({ dir, exit }) => (
+                          <span key={dir} className={`mapmodal__side-exit${exit.unlocked ? '' : ' mapmodal__side-exit--locked'}`}>
+                            <span className="mapmodal__side-exit-dir">{dir.slice(0, 1).toUpperCase()}</span>
+                            {!exit.unlocked && <span className="material-symbols-outlined" style={{ fontSize: '0.625rem' }}>lock</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Enemies */}
+                {(() => {
+                  const alive = selectedRoom.enemies.filter((e) => e.alive)
+                  if (alive.length === 0) return null
+                  return (
+                    <div className="mapmodal__side-section">
+                      <span className="mapmodal__side-section-label">Hostiles</span>
+                      <div className="mapmodal__side-enemies">
+                        {alive.map((e) => (
+                          <div key={e.id} className="mapmodal__side-enemy">
+                            <div className="mapmodal__side-enemy-head">
+                              <span className="mapmodal__side-enemy-name">{e.name}</span>
+                              <span className="mapmodal__side-enemy-tier">T{e.threatLevel}</span>
+                            </div>
+                            <div className="mapmodal__side-hpbar">
+                              <div className="mapmodal__side-hpbar-fill" style={{ width: `${e.maxHealth > 0 ? (e.currentHealth / e.maxHealth) * 100 : 0}%` }} />
+                            </div>
+                            <span className="mapmodal__side-enemy-hp">{e.currentHealth} / {e.maxHealth}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {selectedRoom.isCurrentRoom && (
+                  <div className="mapmodal__side-current">
+                    <span className="material-symbols-outlined" style={{ fontSize: '0.75rem', color: '#f2ca50' }}>star</span>
+                    You are here
+                  </div>
+                )}
+              </div>
+            </aside>
+          )}
         </div>
-        {room.map && <MapCanvas map={room.map} />}
       </div>
     </div>
   )
 }
 
-interface ConfirmationModalProps {
-  type: 'unanimous' | 'majority'
-  votes: Record<string, boolean>
-  deadlineAt: number
-  durationMs: number
+interface VoteModalProps {
+  vote: VoteJSON
   totalVoters: number
   playerNameById: Map<string, string>
   selfPublicId: string | null
-  onVote: (accept: boolean) => void
+  onVote: (optionId: string) => void
 }
 
-function ConfirmationModal({
-  type,
-  votes,
-  deadlineAt,
-  durationMs,
+function VoteModal({
+  vote,
   totalVoters,
   playerNameById,
   selfPublicId,
   onVote,
-}: ConfirmationModalProps) {
+}: VoteModalProps) {
   const voteRef = useRef<HTMLDivElement>(null)
-  const confirmRef = useRef<HTMLButtonElement>(null)
+  const firstButtonRef = useRef<HTMLButtonElement>(null)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    confirmRef.current?.focus()
+    firstButtonRef.current?.focus()
 
     const tick = () => setNow(Date.now())
     const id = window.setInterval(tick, 250)
@@ -1901,114 +1906,97 @@ function ConfirmationModal({
     }
   }, [])
 
-  const myVote = selfPublicId !== null ? votes[selfPublicId] : undefined
+  const myVote = selfPublicId !== null ? vote.votes[selfPublicId] : undefined
   const hasSpoken = myVote !== undefined
-  const remainingMs = Math.max(0, deadlineAt - now)
+  const remainingMs = Math.max(0, vote.deadlineAt - now)
   const remainingSec = Math.ceil(remainingMs / 1000)
-  const pct = totalVoters > 0 && durationMs > 0 ? Math.min(100, (remainingMs / durationMs) * 100) : 0
+  const pct = totalVoters > 0 && vote.duration > 0 ? Math.min(100, (remainingMs / vote.duration) * 100) : 0
+  const totalVotesCast = Object.keys(vote.votes).length
 
-  const forwards = Object.entries(votes)
-    .filter(([, v]) => v)
-    .map(([id]) => playerNameById.get(id) ?? id)
-  const holds = Object.entries(votes)
-    .filter(([, v]) => !v)
-    .map(([id]) => playerNameById.get(id) ?? id)
-  const unspoken = Math.max(0, totalVoters - (forwards.length + holds.length))
+  const optionCounts: { id: string; name: string; description: string; count: number; voters: string[] }[] =
+    vote.options.map((opt) => ({
+      id: opt.id,
+      name: opt.name,
+      description: opt.description,
+      count: Object.values(vote.votes).filter((v) => v === opt.id).length,
+      voters: Object.entries(vote.votes)
+        .filter(([, v]) => v === opt.id)
+        .map(([id]) => playerNameById.get(id) ?? id),
+    }))
+
+  const maxCount = Math.max(1, ...optionCounts.map((o) => o.count))
+  const unspoken = Math.max(0, totalVoters - totalVotesCast)
 
   return (
     <div className="mapmodal__scrim">
       <div
-        className="mapmodal confirmmodal"
+        className="votemodal"
         role="dialog"
         aria-modal="true"
         aria-label="Party vote"
         ref={voteRef}
       >
-        <header className="confirmmodal__head">
-          <span className="confirmmodal__eyebrow">the descent</span>
-          <h2 className="confirmmodal__title">
-            {type === 'unanimous' ? 'moves as one' : 'the party decides'}
-          </h2>
-          <p className="confirmmodal__rule">
-            {type === 'unanimous'
-              ? 'silence is consent — only a spoken hold can refuse the turn.'
-              : 'the party moves, and a majority settles the course.'}
-          </p>
-          <div className="confirmmodal__clock" aria-label={`${remainingSec} seconds remain`}>
-            <span className="confirmmodal__clock-num">{remainingSec}</span>
-            <span className="confirmmodal__clock-unit">s remain</span>
+        <header className="votemodal__head">
+          <div className="votemodal__head-left">
+            <span className="votemodal__eyebrow">the descent</span>
+            <h2 className="votemodal__title">{vote.name}</h2>
+            <p className="votemodal__rule">{vote.description}</p>
+          </div>
+          <div className="votemodal__clock" aria-label={`${remainingSec} seconds remain`}>
+            <span className="votemodal__clock-num">{remainingSec}</span>
+            <span className="votemodal__clock-unit">s remain</span>
           </div>
           <div
-            className="confirmmodal__rod"
+            className="votemodal__rod"
             role="presentation"
             style={pct > 0 ? { width: `${pct}%` } : undefined}
           />
         </header>
 
-        <div className="confirmmodal__body">
-          <div className="confirmmodal__roll">
-            <section className="confirmmodal__col confirmmodal__col--yes">
-              <span className="confirmmodal__col-head">forward</span>
-              <span className="confirmmodal__col-count">{forwards.length}</span>
-              <div className="confirmmodal__names">
-                {forwards.length === 0 ? (
-                  <span className="confirmmodal__empty">none yet</span>
-                ) : (
-                  forwards.map((name) => (
-                    <span key={name} className="confirmmodal__name confirmmodal__name--yes">
-                      {name}
+        <div className="votemodal__body">
+          <div className="votemodal__options">
+            {optionCounts.map((opt, i) => {
+              const barPct = maxCount > 0 ? opt.count / maxCount : 0
+              return (
+                <button
+                  key={opt.id}
+                  ref={i === 0 ? firstButtonRef : undefined}
+                  type="button"
+                  className={`votemodal__opt${myVote === opt.id ? ' votemodal__opt--chosen' : ''}`}
+                  onClick={() => onVote(opt.id)}
+                >
+                  <div
+                    className="votemodal__opt-bar"
+                    style={{ transform: `scaleX(${barPct})` }}
+                  />
+                  <div className="votemodal__opt-inner">
+                    <span className="votemodal__opt-badge">{i + 1}</span>
+                    <span className="votemodal__opt-body">
+                      <span className="votemodal__opt-name">{opt.name}</span>
+                      <span className="votemodal__opt-desc">{opt.description}</span>
                     </span>
-                  ))
-                )}
-              </div>
-            </section>
-
-            <section className="confirmmodal__col confirmmodal__col--no">
-              <span className="confirmmodal__col-head">hold</span>
-              <span className="confirmmodal__col-count">{holds.length}</span>
-              <div className="confirmmodal__names">
-                {holds.length === 0 ? (
-                  <span className="confirmmodal__empty">none yet</span>
-                ) : (
-                  holds.map((name) => (
-                    <span key={name} className="confirmmodal__name confirmmodal__name--no">
-                      {name}
+                    <span className="votemodal__opt-meta">
+                      <span className="votemodal__opt-count">{opt.count}</span>
+                      <span className="votemodal__opt-voters">
+                        {opt.voters.join(', ')}
+                      </span>
                     </span>
-                  ))
-                )}
-              </div>
-            </section>
+                  </div>
+                </button>
+              )
+            })}
           </div>
+        </div>
 
-          {unspoken > 0 && (
-            <p className="confirmmodal__unspoken">
-              {unspoken} silent — counted as forward
+        <div className="votemodal__foot">
+          {hasSpoken && (
+            <p className="votemodal__hint">
+              you may change your voice while time holds
             </p>
           )}
-
-          <div className="confirmmodal__actions">
-            <button
-              ref={confirmRef}
-              type="button"
-              className="btn confirmmodal__choice confirmmodal__choice--yes"
-              onClick={() => onVote(true)}
-              aria-pressed={myVote === true}
-            >
-              forward
-            </button>
-            <button
-              type="button"
-              className="btn confirmmodal__choice confirmmodal__choice--no"
-              onClick={() => onVote(false)}
-              aria-pressed={myVote === false}
-            >
-              hold
-            </button>
-          </div>
-
-          {hasSpoken && (
-            <p className="confirmmodal__spoken">
-              you may change your voice while time holds.
+          {unspoken > 0 && (
+            <p className="votemodal__unspoken">
+              {unspoken} silent
             </p>
           )}
         </div>
@@ -3245,9 +3233,17 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                       </li>
                     )
                   })}
-                  <li className="sheet__row sheet__row--meta">
+                  <li className={`sheet__row sheet__row--meta${stats.skill_points > 0 ? ' sheet__row--unspent' : ''}`}>
                     <span className="sheet__row-k">Skill points</span>
-                    <span className="sheet__row-v">{stats.skill_points}</span>
+                    <span className="sheet__row-v">
+                      {stats.skill_points}
+                      {stats.skill_points > 0 && (
+                        <span className="sheet__unspent">
+                          <span className="sheet__unspent-dot" aria-hidden="true" />
+                          unspent
+                        </span>
+                      )}
+                    </span>
                   </li>
                 </ul>
               ) : (

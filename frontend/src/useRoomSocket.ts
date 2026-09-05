@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 import type { Socket } from 'socket.io-client'
 import type {
-  ConfirmationUpdatePayload,
   MessageUpdatePayload,
   RoomData,
   RoomMessage,
@@ -12,7 +11,6 @@ export interface RoomSocketState {
   room: RoomData | null
   connected: boolean
   error: string | null
-  confirmation: ConfirmationUpdatePayload | null
 }
 
 export const EXPEL_MESSAGE = 'You have been expelled from this expedition.'
@@ -36,11 +34,9 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
     room: null,
     connected: false,
     error: null,
-    confirmation: null,
   })
   const socketRef = useRef<Socket | null>(null)
   const kickedRef = useRef(false)
-  const confirmationRef = useRef<ConfirmationUpdatePayload | null>(null)
   const transcriptRef = useRef<{ messages: RoomMessage[]; resolverBusy: boolean }>({
     messages: [],
     resolverBusy: false,
@@ -50,7 +46,6 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
     if (!roomToken) return
 
     kickedRef.current = false
-    confirmationRef.current = null
     transcriptRef.current = { messages: [], resolverBusy: false }
     const socket = io({ auth: { token: `Bearer ${roomToken}` } })
     socketRef.current = socket
@@ -78,7 +73,6 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
           message: transcriptRef.current.messages,
           dungeonMasterState: transcriptRef.current.resolverBusy ? 'active' : 'idle',
         },
-        confirmation: confirmationRef.current,
       }))
     })
 
@@ -99,11 +93,6 @@ export function useRoomSocket(roomToken: string | null): RoomSocketState {
             }
           : s,
       )
-    })
-
-    socket.on('confirmation-update', (payload: ConfirmationUpdatePayload | null) => {
-      confirmationRef.current = payload
-      setState((s) => ({ ...s, confirmation: payload }))
     })
 
     socket.on('connect_error', (err) => {

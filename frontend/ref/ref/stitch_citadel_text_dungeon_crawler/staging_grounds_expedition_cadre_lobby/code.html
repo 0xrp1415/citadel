@@ -1,0 +1,652 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Citadel Scholomance - Staging Grounds // Cadre Lobby</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&amp;family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=JetBrains+Mono:wght@300;400;500;600&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "obsidian-deep": "#08070b",
+            "obsidian-base": "#0d0c12",
+            "grimoire-card": "#14121a",
+            "grimoire-elevated": "#1a1723",
+            "grimoire-border": "#2b2638",
+            "grimoire-border-gold": "#4a3c18",
+            "gold-ancient": "#d4af37",
+            "gold-glow": "#f3ca52",
+            "gold-dim": "#8a702b",
+            "astral-violet": "#8b5cf6",
+            "astral-violet-bright": "#c084fc",
+            "astral-deep": "#3b0764",
+            "crimson-hazard": "#dc2626",
+            "crimson-clotted": "#581010",
+            "parchment-bright": "#f3ede2",
+            "parchment-base": "#d8cfbe",
+            "parchment-dim": "#998f7e"
+          },
+          fontFamily: {
+            cinzel: ["Cinzel", "serif"],
+            playfair: ["Playfair Display", "serif"],
+            garamond: ["EB Garamond", "serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    /* Custom scrollbar and glow aesthetics */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0c12;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b2638;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4af37;
+    }
+    .rune-glow-gold {
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
+    }
+    .rune-glow-violet {
+      text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+    .box-glow-gold {
+      box-shadow: 0 0 20px -3px rgba(212, 175, 55, 0.35);
+    }
+    .box-glow-violet {
+      box-shadow: 0 0 20px -3px rgba(139, 92, 246, 0.25);
+    }
+    .bg-sigil-pattern {
+      background-image: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+    }
+  </style>
+</head>
+<body class="bg-obsidian-base text-parchment-base font-garamond h-screen overflow-hidden flex flex-col selection:bg-astral-deep selection:text-astral-violet-bright select-none">
+<!-- TOP HEADER -->
+<header class="shrink-0 h-16 bg-obsidian-deep/95 border-b border-grimoire-border flex items-center justify-between px-6 z-40 backdrop-blur-md">
+<!-- Left: Citadel Emblem & Title -->
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded border border-grimoire-border-gold bg-gradient-to-b from-grimoire-elevated to-obsidian-base flex items-center justify-center shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+<span class="material-symbols-outlined text-gold-glow text-2xl">auto_stories</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-cinzel font-bold text-lg tracking-[0.2em] text-gold-glow">CITADEL</span>
+<span class="text-gold-dim text-sm">§</span>
+</div>
+<div class="text-[10px] font-mono uppercase tracking-[0.25em] text-parchment-dim leading-none">
+          Tome VIII: The Umbral Arcanum
+        </div>
+</div>
+</div>
+<!-- Center: Navigation Tabs -->
+<nav class="hidden lg:flex items-center gap-2 bg-obsidian-base/80 p-1 border border-grimoire-border rounded-lg"><a class="px-2.5 py-1 text-xs font-mono tracking-wider text-parchment-dim hover:text-parchment-bright transition-colors rounded" href="#">THE GATE // INSCRIPTION</a><span class="text-gold-dim text-xs">◇</span><a class="px-2.5 py-1 text-xs font-mono tracking-wider text-parchment-dim hover:text-parchment-bright transition-colors rounded" href="#">CHAMBER NEXUS // MATCHMAKING</a><span class="text-gold-dim text-xs">◇</span><a class="px-3 py-1 text-xs font-mono font-semibold tracking-wider bg-gold-ancient/15 text-gold-glow border border-gold-ancient/50 rounded shadow-[0_0_12px_rgba(212,175,55,0.25)] flex items-center gap-1.5" href="#"><span class="w-1.5 h-1.5 rounded-full bg-gold-glow animate-pulse"></span>STAGING GROUNDS // CADRE LOBBY</a><span class="text-gold-dim text-xs">◇</span><a class="px-2.5 py-1 text-xs font-mono tracking-wider text-parchment-dim hover:text-parchment-bright transition-colors rounded" href="#">THE DESCENT // LIVE RUN</a><span class="text-gold-dim text-xs">◇</span><a class="px-2.5 py-1 text-xs font-mono tracking-wider text-parchment-dim hover:text-parchment-bright transition-colors rounded" href="#">TACTICAL ARCHIVE // FOLIO</a></nav>
+<!-- Right: Telemetry Indicators & Delver Profile -->
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-3 px-3 py-1 bg-grimoire-card border border-grimoire-border rounded">
+<!-- Aether Lantern -->
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-astral-violet-bright text-base">flare</span>
+<div class="text-left">
+<span class="text-[9px] font-mono uppercase text-parchment-dim block leading-none">Lantern</span>
+<span class="text-xs font-mono text-astral-violet-bright font-semibold">84% Arcane</span>
+</div>
+</div>
+<div class="w-px h-5 bg-grimoire-border"></div>
+<!-- Leyline -->
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-glow text-base">cyclone</span>
+<div class="text-left">
+<span class="text-[9px] font-mono uppercase text-parchment-dim block leading-none">Leyline</span>
+<span class="text-xs font-mono text-gold-glow font-semibold">Synchronized</span>
+</div>
+</div>
+</div>
+<!-- Avatar Badge -->
+<div class="w-9 h-9 rounded border border-grimoire-border-gold bg-grimoire-elevated flex items-center justify-center text-gold-glow shadow-[0_0_10px_rgba(212,175,55,0.2)]">
+<span class="material-symbols-outlined text-lg">shield_person</span>
+</div>
+</div>
+</header>
+<!-- CHAMBER BANNER (Telemetry Bar) -->
+<section class="shrink-0 bg-gradient-to-r from-obsidian-deep via-grimoire-card to-obsidian-deep border-b border-grimoire-border px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 relative">
+<div class="absolute inset-0 bg-sigil-pattern pointer-events-none opacity-40"></div>
+<!-- Left: Cipher Code & Copy Action -->
+<div class="flex items-center gap-3 relative z-10">
+<div class="w-9 h-9 rounded bg-obsidian-deep border border-grimoire-border flex items-center justify-center text-gold-ancient">
+<span class="material-symbols-outlined text-lg">key</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-mono uppercase tracking-[0.2em] text-parchment-dim">Sanctum Cipher</span>
+<span class="text-[10px] font-mono text-astral-violet-bright bg-astral-deep/40 px-1.5 py-0.5 rounded border border-astral-violet/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet animate-ping"></span>
+            SEALED
+          </span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-mono font-bold text-base tracking-widest text-gold-glow" id="cipherText">#K7X9-M2</span>
+<button class="px-2 py-0.5 text-[11px] font-mono tracking-wider text-parchment-dim hover:text-gold-glow bg-grimoire-elevated hover:bg-grimoire-border border border-grimoire-border hover:border-gold-dim rounded flex items-center gap-1 transition-all" onclick="copyCipher()">
+<span class="material-symbols-outlined text-xs">content_copy</span>
+<span id="copyFeedback" class="">Copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Center: Cadre Capacity & Quorum Timer -->
+<div class="flex items-center gap-6 relative z-10">
+<!-- Cadre capacity -->
+<div class="flex items-center gap-3">
+<div class="flex flex-col text-left">
+<span class="text-[10px] font-mono uppercase tracking-widest text-parchment-dim">Cadre Inscription</span>
+<div class="flex items-baseline gap-1">
+<span class="font-cinzel font-bold text-xl text-parchment-bright">3</span>
+<span class="text-gold-dim text-sm">/</span>
+<span class="text-parchment-dim text-sm font-cinzel">4</span>
+<span class="text-[11px] font-mono text-gold-glow ml-1 uppercase">Delvers Sworn</span>
+</div>
+</div>
+</div>
+<div class="w-px h-8 bg-grimoire-border hidden sm:block"></div>
+<!-- Quorum Timer -->
+<div class="flex items-center gap-2.5">
+<div class="relative w-8 h-8 flex items-center justify-center">
+<svg class="w-8 h-8 -rotate-90">
+<circle cx="16" cy="16" fill="none" r="13" stroke="#2b2638" stroke-width="2.5"></circle>
+<circle cx="16" cy="16" fill="none" r="13" stroke="#d4af37" stroke-dasharray="81.68" stroke-dashoffset="20.42" stroke-linecap="round" stroke-width="2.5"></circle>
+</svg>
+<span class="absolute font-mono text-[9px] text-gold-glow font-bold">75%</span>
+</div>
+<div class="text-left">
+<span class="text-[10px] font-mono uppercase tracking-wider text-parchment-dim block leading-none">Resonance Lock</span>
+<span class="text-xs font-mono text-astral-violet-bright font-medium">3 Quorum Ties</span>
+</div>
+</div>
+</div>
+<!-- Right: Peril Hazard Index & Commander -->
+<div class="flex items-center gap-5 relative z-10">
+<div class="flex items-center gap-2 bg-crimson-clotted/30 border border-crimson-hazard/40 px-2.5 py-1 rounded">
+<span class="material-symbols-outlined text-crimson-hazard text-base">skull</span>
+<div class="text-left">
+<span class="text-[9px] font-mono uppercase text-crimson-hazard/80 block leading-tight">Peril Hazard Index</span>
+<span class="text-xs font-mono font-bold text-crimson-hazard tracking-wider">TIER VII • ABYSSAL</span>
+</div>
+</div>
+<div class="hidden md:flex flex-col text-right">
+<span class="text-[9px] font-mono uppercase tracking-widest text-parchment-dim">Arch-Delver Host</span>
+<span class="font-mono text-xs font-bold text-gold-glow">VEX_MORTIS_IX</span>
+</div>
+</div>
+</section>
+<!-- MAIN VIEWPORT CONTENT (Split Left 2/3 Grid + Right 1/3 Drawer/Vox) -->
+<main class="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-12 gap-3 p-4 bg-obsidian-base">
+<!-- LEFT / CENTER: DELVERS ROSTER (2x2) & READINESS BAROMETER (8 Cols) -->
+<section class="xl:col-span-8 flex flex-col gap-3 min-h-0">
+<!-- 2x2 Delver Slot Cards Grid -->
+<div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3">
+<!-- SLOT I: HOST (VEX_MORTIS_IX) -->
+<article class="bg-grimoire-card border border-grimoire-border hover:border-grimoire-border-gold transition-all duration-300 rounded-lg p-3.5 flex flex-col justify-between relative overflow-hidden group shadow-lg">
+<div class="absolute top-0 right-0 w-32 h-32 bg-gold-ancient/5 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-gold-glow animate-pulse"></span>
+<span class="text-[11px] font-mono tracking-widest text-gold-glow uppercase font-semibold">Folio Slot I // Primus</span>
+</div>
+<span class="px-2 py-0.5 bg-gold-ancient text-obsidian-deep font-mono text-[10px] font-bold tracking-wider uppercase rounded shadow-[0_0_10px_rgba(212,175,55,0.4)]">
+                HOST • READY
+              </span>
+</div>
+<!-- Delver Identity -->
+<div class="flex gap-3.5 mt-3 items-center">
+<div class="relative w-20 h-24 rounded border border-grimoire-border-gold overflow-hidden shrink-0 bg-obsidian-deep shadow-md flex flex-col items-center justify-center group-hover:border-gold-glow transition-colors"><div class="absolute inset-0 bg-gradient-to-b from-grimoire-elevated via-obsidian-deep to-obsidian-deep pointer-events-none opacity-80"></div><span class="text-2xl text-gold-glow select-none relative z-10">☩</span><span class="font-cinzel text-xs font-bold text-gold-ancient tracking-widest relative z-10 mt-1">VM</span><span class="absolute bottom-1 left-1 font-mono text-[10px] text-gold-glow font-bold bg-obsidian-deep/90 border border-grimoire-border-gold/60 px-1 rounded z-10">LV 44</span></div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<h3 class="font-cinzel text-lg font-bold text-parchment-bright tracking-wide truncate">VEX_MORTIS_IX</h3>
+<span class="material-symbols-outlined text-gold-glow text-base" title="Host Commander">verified</span>
+</div>
+<span class="font-mono text-xs text-parchment-dim uppercase tracking-wider">Kinetic Bulwark</span>
+<!-- Gauges -->
+<div class="mt-2 space-y-1.5 bg-obsidian-deep/80 p-2 rounded border border-grimoire-border">
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-crimson-hazard">favorite</span> Vitality Shield
+                      </span>
+<span class="text-parchment-bright font-semibold">1,840 / 1,840</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-crimson-clotted to-crimson-hazard w-full"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-gold-glow">shield</span> Iron Aegis VIII
+                      </span>
+<span class="text-gold-glow font-semibold">100% Ward</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-gold-dim to-gold-glow w-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-grimoire-border flex items-center justify-between text-[11px] font-mono text-parchment-dim">
+<span class="">Attunement: Kinetic Crucible</span>
+<span class="text-gold-glow font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> Tether Locked
+            </span>
+</div>
+</article>
+<!-- SLOT II: VALENTINA HEX -->
+<article class="bg-grimoire-card border border-grimoire-border hover:border-astral-violet/50 transition-all duration-300 rounded-lg p-3.5 flex flex-col justify-between relative overflow-hidden group shadow-lg">
+<div class="absolute top-0 right-0 w-32 h-32 bg-astral-violet/5 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-astral-violet"></span>
+<span class="text-[11px] font-mono tracking-widest text-astral-violet-bright uppercase font-semibold">Folio Slot II</span>
+</div>
+<span class="px-2 py-0.5 bg-astral-deep text-astral-violet-bright border border-astral-violet/40 font-mono text-[10px] font-bold tracking-wider uppercase rounded shadow-[0_0_10px_rgba(139,92,246,0.3)]">
+                READY
+              </span>
+</div>
+<!-- Delver Identity -->
+<div class="flex gap-3.5 mt-3 items-center">
+<div class="relative w-20 h-24 rounded border border-astral-violet/40 overflow-hidden shrink-0 bg-obsidian-deep shadow-md flex flex-col items-center justify-center group-hover:border-astral-violet transition-colors"><div class="absolute inset-0 bg-gradient-to-b from-astral-deep/40 via-obsidian-deep to-obsidian-deep pointer-events-none opacity-80"></div><span class="text-2xl text-astral-violet-bright select-none relative z-10">✦</span><span class="font-cinzel text-xs font-bold text-astral-violet-bright tracking-widest relative z-10 mt-1">VH</span><span class="absolute bottom-1 left-1 font-mono text-[10px] text-astral-violet-bright font-bold bg-obsidian-deep/90 border border-astral-violet/40 px-1 rounded z-10">LV 41</span></div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<h3 class="font-cinzel text-lg font-bold text-parchment-bright tracking-wide truncate">VALENTINA HEX</h3>
+</div>
+<span class="font-mono text-xs text-astral-violet-bright uppercase tracking-wider">Weave Stitcher</span>
+<!-- Gauges -->
+<div class="mt-2 space-y-1.5 bg-obsidian-deep/80 p-2 rounded border border-grimoire-border">
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-astral-violet">auto_fix_high</span> Echo Aether
+                      </span>
+<span class="text-astral-violet-bright font-semibold">980 / 980</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-astral-deep via-astral-violet to-astral-violet-bright w-full"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-gold-glow">grain</span> Astral Resonance
+                      </span>
+<span class="text-gold-glow font-semibold">100% Echo</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-astral-violet to-gold-glow w-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-grimoire-border flex items-center justify-between text-[11px] font-mono text-parchment-dim">
+<span class="">Attunement: Astral Weave</span>
+<span class="text-astral-violet-bright font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> Tether Locked
+            </span>
+</div>
+</article>
+<!-- SLOT III: BRAN THE MUTE -->
+<article class="bg-grimoire-card border border-grimoire-border hover:border-grimoire-border-gold transition-all duration-300 rounded-lg p-3.5 flex flex-col justify-between relative overflow-hidden group shadow-lg">
+<div class="absolute top-0 right-0 w-32 h-32 bg-gold-ancient/5 rounded-full blur-2xl pointer-events-none"></div>
+<div>
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-gold-dim"></span>
+<span class="text-[11px] font-mono tracking-widest text-gold-glow uppercase font-semibold">Folio Slot III</span>
+</div>
+<span class="px-2 py-0.5 bg-astral-deep text-astral-violet-bright border border-astral-violet/40 font-mono text-[10px] font-bold tracking-wider uppercase rounded">
+                READY
+              </span>
+</div>
+<!-- Delver Identity -->
+<div class="flex gap-3.5 mt-3 items-center">
+<div class="relative w-20 h-24 rounded border border-grimoire-border-gold overflow-hidden shrink-0 bg-obsidian-deep shadow-md flex flex-col items-center justify-center group-hover:border-gold-glow transition-colors"><div class="absolute inset-0 bg-gradient-to-b from-grimoire-elevated via-obsidian-deep to-obsidian-deep pointer-events-none opacity-80"></div><span class="text-2xl text-gold-glow select-none relative z-10">⚚</span><span class="font-cinzel text-xs font-bold text-gold-ancient tracking-widest relative z-10 mt-1">BM</span><span class="absolute bottom-1 left-1 font-mono text-[10px] text-gold-glow font-bold bg-obsidian-deep/90 border border-grimoire-border-gold/60 px-1 rounded z-10">LV 39</span></div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<h3 class="font-cinzel text-lg font-bold text-parchment-bright tracking-wide truncate">BRAN THE MUTE</h3>
+</div>
+<span class="font-mono text-xs text-gold-glow uppercase tracking-wider">Bio-Flask Engine</span>
+<!-- Gauges -->
+<div class="mt-2 space-y-1.5 bg-obsidian-deep/80 p-2 rounded border border-grimoire-border">
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-crimson-hazard">favorite</span> Vitriol Vitality
+                      </span>
+<span class="text-parchment-bright font-semibold">1,620 / 1,620</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-crimson-clotted to-crimson-hazard w-full"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between text-[10px] font-mono mb-1">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-gold-glow">local_fire_department</span> Vessel Pressure
+                      </span>
+<span class="text-gold-glow font-semibold">MAX Vigor</span>
+</div>
+<div class="w-full h-1.5 bg-grimoire-card rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-gold-dim to-gold-glow w-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-grimoire-border flex items-center justify-between text-[11px] font-mono text-parchment-dim">
+<span class="">Attunement: Alchemical Vigor</span>
+<span class="text-gold-glow font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span> Tether Locked
+            </span>
+</div>
+</article>
+<!-- SLOT IV: VACANT / AWAITING COMPANION -->
+<article class="bg-obsidian-deep/90 border border-dashed border-grimoire-border hover:border-astral-violet/60 transition-all duration-300 rounded-lg p-3.5 flex flex-col justify-between relative group">
+<!-- Header -->
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border/60">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-crimson-hazard/60 animate-ping"></span>
+<span class="text-[11px] font-mono tracking-widest text-parchment-dim uppercase font-semibold">Folio Slot IV</span>
+</div>
+<span class="px-2 py-0.5 bg-grimoire-elevated text-parchment-dim font-mono text-[10px] tracking-wider uppercase rounded border border-grimoire-border">
+              VACANT
+            </span>
+</div>
+<!-- Pulsing Leyline Center Graphic -->
+<div class="flex flex-col items-center justify-center my-auto py-3 text-center">
+<div class="relative w-16 h-16 flex items-center justify-center mb-2">
+<div class="absolute inset-0 rounded-full border border-astral-violet/30 animate-ping opacity-30"></div>
+<div class="w-12 h-12 rounded-full bg-grimoire-elevated border border-astral-violet/50 flex items-center justify-center text-astral-violet-bright shadow-[0_0_16px_rgba(139,92,246,0.3)]">
+<span class="material-symbols-outlined text-2xl animate-spin" style="animation-duration: 8s;">radar</span>
+</div>
+</div>
+<h4 class="font-cinzel text-base font-bold text-parchment-bright">Awaiting Companion...</h4>
+<p class="font-garamond text-xs text-parchment-dim max-w-xs mt-1 leading-snug">
+              Searching subterranean leylines for resonant fourth soul.
+            </p>
+<button class="mt-3 px-3 py-1.5 bg-gradient-to-r from-astral-deep to-grimoire-elevated hover:from-astral-violet/40 hover:to-grimoire-card text-astral-violet-bright border border-astral-violet/40 rounded text-xs font-mono tracking-wider uppercase flex items-center gap-1.5 transition-all shadow-md active:scale-95" onclick="copyCipher()">
+<span class="material-symbols-outlined text-sm">share</span>
+<span class="">Dispatch Invocation</span>
+</button>
+</div>
+<!-- Footer status -->
+<div class="pt-2 border-t border-grimoire-border/60 flex items-center justify-between text-[11px] font-mono text-parchment-dim">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-astral-violet">tune</span> Leyline: #08
+            </span>
+<span class="text-astral-violet-bright animate-pulse">Pinging...</span>
+</div>
+</article>
+</div>
+<!-- CADRE READINESS BAROMETER BELOW ROSTER -->
+<section class="shrink-0 bg-grimoire-card border border-grimoire-border-gold/60 rounded-lg p-3 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+<!-- Circular 75% Gauge & Status -->
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="relative w-14 h-14 shrink-0 flex items-center justify-center">
+<svg class="w-14 h-14 -rotate-90">
+<circle cx="28" cy="28" fill="none" r="23" stroke="#1a1723" stroke-width="4"></circle>
+<circle class="drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]" cx="28" cy="28" fill="none" r="23" stroke="#d4af37" stroke-dasharray="144.5" stroke-dashoffset="36.1" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-mono text-xs text-gold-glow font-bold leading-none">75%</span>
+</div>
+</div>
+<div class="text-left">
+<div class="flex items-center gap-2">
+<span class="font-cinzel font-bold text-sm text-parchment-bright tracking-wider">CADRE READINESS BAROMETER</span>
+<span class="text-xs font-mono text-gold-glow font-semibold">(3/4 ATTUNED)</span>
+</div>
+<p class="text-xs text-parchment-dim font-garamond mt-0.5">
+              Minimal threshold for descent reached. Fourth soul recommended for lethal hazard abatement.
+            </p>
+</div>
+</div>
+<!-- Survival Odds Card -->
+<div class="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto bg-obsidian-deep px-3 py-2 rounded border border-grimoire-border">
+<div class="text-right">
+<span class="text-[9px] font-mono uppercase tracking-widest text-parchment-dim block">Cadre Survival Odds</span>
+<div class="font-mono text-lg font-bold text-gold-glow tracking-tight leading-tight">41.2%</div>
+<span class="text-[9px] font-mono text-crimson-hazard block">Mortality Risk: Elevated</span>
+</div>
+<div class="w-9 h-9 rounded bg-crimson-clotted/40 border border-crimson-hazard/40 flex items-center justify-center text-crimson-hazard">
+<span class="material-symbols-outlined text-lg">shield_with_heart</span>
+</div>
+</div>
+</section>
+</section>
+<!-- RIGHT 1/3 COLUMN: HOST CONTROLS & TELEPATHIC VOX (4 Cols) -->
+<aside class="xl:col-span-4 flex flex-col gap-3 min-h-0">
+<!-- HOST SETTINGS DRAWER -->
+<section class="shrink-0 bg-grimoire-card border border-grimoire-border rounded-lg p-3 shadow-lg">
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gold-glow text-base">settings_suggest</span>
+<h3 class="font-cinzel font-bold text-sm text-parchment-bright tracking-wider">CHAMBER RITES</h3>
+</div>
+<span class="text-[10px] font-mono uppercase tracking-widest text-astral-violet-bright bg-astral-deep/50 px-1.5 py-0.5 rounded border border-astral-violet/30">Host Authority</span>
+</div>
+<div class="space-y-2 mt-2.5">
+<!-- Chamber Visibility -->
+<div class="flex items-center justify-between p-2 bg-obsidian-deep/80 rounded border border-grimoire-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-parchment-dim text-base">lock</span>
+<div class="text-left">
+<span class="text-xs font-garamond text-parchment-bright block leading-tight">Visibility</span>
+<span class="text-[10px] font-mono text-parchment-dim">Passkey Required</span>
+</div>
+</div>
+<button class="px-2.5 py-1 bg-gold-ancient/20 hover:bg-gold-ancient/30 text-gold-glow border border-gold-ancient/40 rounded text-[11px] font-mono font-bold uppercase transition-all" id="visibilityBtn" onclick="toggleVisibility()">
+              Private
+            </button>
+</div>
+<!-- Cadre Limit -->
+<div class="flex items-center justify-between p-2 bg-obsidian-deep/80 rounded border border-grimoire-border">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-parchment-dim text-base">group</span>
+<div class="text-left">
+<span class="text-xs font-garamond text-parchment-bright block leading-tight">Cadre Bound</span>
+<span class="text-[10px] font-mono text-parchment-dim">Max Party Limit</span>
+</div>
+</div>
+<span class="px-2 py-0.5 bg-grimoire-elevated text-parchment-bright font-mono text-xs font-bold border border-grimoire-border rounded">
+              4 Max
+            </span>
+</div>
+<!-- Stratum Threshold Selection -->
+<div class="flex items-center justify-between p-2 bg-obsidian-deep/80 rounded border border-grimoire-border hover:border-grimoire-border-gold transition-colors cursor-pointer group">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-glow text-base">explore</span>
+<div class="text-left">
+<span class="text-xs font-garamond text-parchment-bright block leading-tight">Stratum Threshold</span>
+<span class="text-[10px] font-mono text-astral-violet-bright">Basal Seam // Floor VII</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-parchment-dim group-hover:text-gold-glow text-base transition-colors">navigate_next</span>
+</div>
+</div>
+</section>
+<!-- TELEPATHIC VOX FREQUENCY (Party Text Channel) -->
+<section class="flex-1 min-h-0 bg-grimoire-card border border-grimoire-border rounded-lg p-3 shadow-lg flex flex-col justify-between">
+<!-- Vox Header -->
+<div class="flex items-center justify-between pb-2 border-b border-grimoire-border shrink-0">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-astral-violet-bright text-base">psychology</span>
+<h3 class="font-cinzel font-bold text-sm text-parchment-bright tracking-wider">TELEPATHIC VOX</h3>
+</div>
+<div class="flex items-center gap-1.5 text-[10px] font-mono text-astral-violet-bright">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet animate-ping"></span>
+            RESONANCE STEADY
+          </div>
+</div>
+<!-- Chat Log Feed -->
+<div class="flex-1 overflow-y-auto space-y-2 py-2 pr-1 text-xs" id="chatFeed">
+<!-- Message 1: Valentina -->
+<div class="p-2 rounded bg-obsidian-deep/70 border border-grimoire-border/70">
+<div class="flex items-baseline justify-between mb-1">
+<span class="font-mono text-[11px] font-bold text-astral-violet-bright tracking-wider">Valentina Hex</span>
+<span class="font-mono text-[9px] text-parchment-dim">14:02</span>
+</div>
+<p class="text-parchment-base font-garamond leading-relaxed">
+              Ward primed for the Basal Seam. Keep clear of the outer runes when the gate snaps open.
+            </p>
+</div>
+<!-- Message 2: Bran -->
+<div class="p-2 rounded bg-obsidian-deep/70 border border-grimoire-border/70">
+<div class="flex items-baseline justify-between mb-1">
+<span class="font-mono text-[11px] font-bold text-gold-glow tracking-wider">Bran the Mute</span>
+<span class="font-mono text-[9px] text-parchment-dim">14:03</span>
+</div>
+<p class="text-parchment-base font-garamond italic leading-relaxed">
+              ••• [Taps heavy glass vitriol flask three times against brass chestplate in grim confirmation]
+            </p>
+</div>
+<!-- Message 3: Host / You -->
+<div class="p-2 rounded bg-obsidian-deep/70 border border-grimoire-border-gold/40">
+<div class="flex items-baseline justify-between mb-1">
+<span class="font-mono text-[11px] font-bold text-gold-glow tracking-wider">Vex_Mortis_IX (You)</span>
+<span class="font-mono text-[9px] text-parchment-dim">14:04</span>
+</div>
+<p class="text-parchment-bright font-garamond leading-relaxed">
+              Awaiting fourth anchor. If no resonance appears in sixty pulses, we cast off three-sworn.
+            </p>
+</div>
+</div>
+<!-- Vox Input Form -->
+<form class="shrink-0 pt-2 border-t border-grimoire-border flex items-center gap-2" onsubmit="handleSendVox(event)">
+<input class="flex-1 bg-obsidian-deep border border-grimoire-border focus:border-gold-dim rounded px-2.5 py-1.5 text-xs font-mono text-parchment-bright placeholder:text-parchment-dim/60 focus:outline-none" id="voxInputField" placeholder="Inscribe psychic dispatch..." type="text">
+<button class="w-8 h-8 rounded bg-astral-deep hover:bg-astral-violet/30 border border-astral-violet/50 text-astral-violet-bright flex items-center justify-center transition-colors shrink-0" type="submit">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</form>
+</section>
+</aside>
+</main>
+<!-- BOTTOM ACTION DOCK -->
+<footer class="shrink-0 bg-obsidian-deep border-t border-grimoire-border px-6 py-3 flex items-center justify-between z-40">
+<!-- Left Action: Disband Chamber -->
+<div class="flex items-center gap-3">
+<button class="px-3.5 py-2 bg-grimoire-card hover:bg-crimson-clotted text-parchment-dim hover:text-crimson-hazard border border-grimoire-border hover:border-crimson-hazard/50 rounded font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 group" onclick="handleDisband()">
+<span class="material-symbols-outlined text-sm group-hover:rotate-90 transition-transform">close</span>
+<span class="">Disband Chamber // Leave</span>
+</button>
+<span class="text-[11px] font-mono text-parchment-dim hidden md:inline">Tether severance incurs no mana debt</span>
+</div>
+<!-- Right Action: Cast Off Into The Depths -->
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex flex-col text-right">
+<span class="text-[9px] font-mono uppercase tracking-widest text-parchment-dim">Descent Quorum</span>
+<span class="text-xs font-mono text-gold-glow font-bold">ALL DELVERS BOUND &amp; ARMED</span>
+</div>
+<button class="px-6 py-2.5 bg-gradient-to-r from-gold-ancient via-gold-glow to-gold-ancient hover:brightness-110 text-obsidian-deep font-cinzel font-bold text-sm tracking-[0.15em] uppercase rounded flex items-center gap-2 shadow-[0_0_24px_rgba(212,175,55,0.45)] hover:shadow-[0_0_32px_rgba(212,175,55,0.7)] hover:-translate-y-0.5 active:translate-y-0 transition-all" id="castOffBtn" onclick="castOffExpedition()">
+<span class="material-symbols-outlined text-lg">auto_awesome</span>
+<span class="">Cast Off Into The Depths</span>
+<span class="material-symbols-outlined text-lg">arrow_downward</span>
+</button>
+</div>
+</footer>
+<!-- Interactivity Scripts -->
+<script>
+    function copyCipher() {
+      const cipher = '#K7X9-M2';
+      navigator.clipboard.writeText(cipher).then(() => {
+        const feedback = document.getElementById('copyFeedback');
+        if (feedback) {
+          feedback.innerText = 'Copied!';
+          setTimeout(() => {
+            feedback.innerText = 'Copy';
+          }, 2000);
+        }
+      }).catch(() => {
+        alert('Chamber Cipher: ' + cipher);
+      });
+    }
+
+    function toggleVisibility() {
+      const btn = document.getElementById('visibilityBtn');
+      if (btn.innerText.trim() === 'PRIVATE') {
+        btn.innerText = 'PUBLIC';
+        btn.classList.remove('bg-gold-ancient/20', 'text-gold-glow', 'border-gold-ancient/40');
+        btn.classList.add('bg-astral-violet/20', 'text-astral-violet-bright', 'border-astral-violet/40');
+      } else {
+        btn.innerText = 'PRIVATE';
+        btn.classList.remove('bg-astral-violet/20', 'text-astral-violet-bright', 'border-astral-violet/40');
+        btn.classList.add('bg-gold-ancient/20', 'text-gold-glow', 'border-gold-ancient/40');
+      }
+    }
+
+    function handleSendVox(event) {
+      event.preventDefault();
+      const input = document.getElementById('voxInputField');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const chatFeed = document.getElementById('chatFeed');
+      const newBubble = document.createElement('div');
+      newBubble.className = 'p-2 rounded bg-obsidian-deep/70 border border-grimoire-border-gold/40 animate-fade-in';
+      newBubble.innerHTML = `
+        <div class="flex items-baseline justify-between mb-1">
+          <span class="font-mono text-[11px] font-bold text-gold-glow tracking-wider">Vex_Mortis_IX (You)</span>
+          <span class="font-mono text-[9px] text-parchment-dim">Just now</span>
+        </div>
+        <p class="text-parchment-bright font-garamond leading-relaxed">${escapeHtml(text)}</p>
+      `;
+      chatFeed.appendChild(newBubble);
+      input.value = '';
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      const p = document.createElement('p');
+      p.innerText = str;
+      return p.innerHTML;
+    }
+
+    function handleDisband() {
+      if (confirm("Sever the leyline resonance and disband this staging chamber?")) {
+        window.location.reload();
+      }
+    }
+
+    function castOffExpedition() {
+      const btn = document.getElementById('castOffBtn');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-base">cyclone</span><span>Unraveling Reality...</span>`;
+      btn.disabled = true;
+      setTimeout(() => {
+        alert("The celestial ward breaks open. The Cadre descends into Floor VII: Basal Seam.");
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      }, 1400);
+    }
+  </script>
+
+
+</body></html>

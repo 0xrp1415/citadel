@@ -1,16 +1,16 @@
 import { Fragment, useEffect } from 'react'
-import { createRootRoute, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
+import { Link, createRootRoute, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth'
-import { LedgerFrame } from '../components/LedgerFrame'
-import { PageHead } from '../components/PageHead'
 import { STAGES, readStage, setStage, stageIndexForPath, stagePath } from '../stages'
+import type { StageIndex } from '../stages'
+import { getRoomToken } from '../roomSession'
 
 export const Route = createRootRoute({
   component: Root,
 })
 
 function Root() {
-  const { status } = useAuth()
+  const { status, user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const activeIndex = stageIndexForPath(location.pathname) ?? 0
@@ -33,52 +33,81 @@ function Root() {
     }
 
     const stored = readStage()
-    if (current !== stored) {
-      navigate({ to: stagePath(stored) })
+    const hasRoom = !!getRoomToken()
+    const effective = hasRoom && stored < 2 ? 2 : stored
+    if (current !== effective) {
+      setStage(effective as StageIndex)
+      navigate({ to: stagePath(effective as StageIndex) })
     }
   }, [status, location.pathname, navigate])
 
   if (status === 'loading') {
     return (
       <div className="app">
-        <main className="page">
-          <LedgerFrame>
-            <PageHead
-              kicker="records of the citadel · office of the descent"
-              title="The Citadel"
-              wordmark
-              officer="Opening the record…"
-            />
-          </LedgerFrame>
-        </main>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p className="officer">Communing with the Nexus…</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="app">
+      <header className="header">
+        <div className="header__inner">
+          <Link className="header__brand" to={status === 'authenticated' ? '/chamber' : '/'} aria-label="Citadel">
+            <div className="header__brand-text">
+              <span className="header__citadel">CITADEL</span>
+            </div>
+          </Link>
+
+          <nav className="header__nav" aria-label="Stages">
+            {STAGES.map((stage, i) => {
+              const state = i < activeIndex ? 'past' : i > activeIndex ? 'future' : 'active'
+              return (
+                <Fragment key={stage.path}>
+                  {i > 0 && <span className="header__nav-divider" aria-hidden="true">◇</span>}
+                  <Link
+                    to={stagePath(i as StageIndex)}
+                    className={`header__nav-link header__nav-link--${state}`}
+                    aria-current={state === 'active' ? 'page' : undefined}
+                  >
+                    <span>{stage.label}</span>
+                    {state === 'active' && <span className="header__nav-sub">// {stage.sublabel}</span>}
+                  </Link>
+                </Fragment>
+              )
+            })}
+          </nav>
+
+          <div className="header__right">
+            {user && (
+              <div className="header__user">
+                <div className="header__user-info">
+                  <span className="header__user-label">Cognomen Seal</span>
+                  <span className="header__user-name">{user.name}</span>
+                </div>
+                <div className="header__avatar">
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>person</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
       <main className="page">
         <Outlet />
       </main>
-      <footer className="waypoint">
-        <div className="waypoint__inner">
-          {STAGES.map((stage, i) => {
-            const state = i < activeIndex ? 'past' : i > activeIndex ? 'future' : 'active'
-            return (
-              <Fragment key={stage.path}>
-                {i > 0 && <span className="waypoint__track" aria-hidden="true" />}
-                <span
-                  className={`waypoint__item waypoint__item--${state}`}
-                  aria-current={state === 'active' ? 'step' : undefined}
-                >
-                  <span className="waypoint__marker" aria-hidden="true">
-                    {i + 1}
-                  </span>
-                  <span className="waypoint__label">{stage.label}</span>
-                </span>
-              </Fragment>
-            )
-          })}
+
+      <footer className="footer">
+        <div className="footer__left">
+          <span>© MMXXIV Citadel Scholomance • In Umbra Sapientia</span>
+        </div>
+        <div className="footer__right">
+          <span>Celestial Seal Validated</span>
+          <span className="material-symbols-outlined" style={{ color: '#8a702b', fontSize: '1rem' }}>fingerprint</span>
+          <span className="footer__wards">Wards Active</span>
         </div>
       </footer>
     </div>

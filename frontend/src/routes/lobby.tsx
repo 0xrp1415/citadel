@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth'
 import { LedgerFrame } from '../components/LedgerFrame'
-import { PageHead } from '../components/PageHead'
 import { Fleuron } from '../components/Fleuron'
 import { PermitCopy } from '../components/PermitCopy'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
 import { setStage } from '../stages'
 import {
-  createRoom,
   generateSeed,
-  joinRoom,
   kickPlayer,
   leaveRoom,
   sendAction,
@@ -23,7 +20,6 @@ import {
   decodeRoomToken,
   getInviteCode,
   getRoomToken,
-  saveRoomSession,
 } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 
@@ -59,21 +55,19 @@ function isGhost(status: PlayerPublic['status']): boolean {
 }
 
 function Lobby() {
-  const { user, token } = useAuth()
+  useAuth()
   const navigate = useNavigate()
 
   const [roomToken, setRoomToken] = useState<string | null>(() => getRoomToken())
   const [inviteCode, setInviteCode] = useState<string | null>(() => getInviteCode())
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const [partySize, setPartySize] = useState(4)
   const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
-  const [joinCode, setJoinCode] = useState('')
   const [seed, setSeed] = useState(() => generateSeed())
-  const [createOpen, setCreateOpen] = useState(false)
 
   const { room, connected, error: socketError } = useRoomSocket(roomToken)
 
@@ -81,14 +75,18 @@ function Lobby() {
     if (socketError && isFatalRoomSocketError(socketError)) {
       clearRoomSession()
       setRoomToken(null)
-      setInviteCode(null)
-      setError(socketError)
     }
   }, [socketError])
 
   useEffect(() => {
-    if (room?.status === 'in-run') {
+    if (!roomToken) {
       setStage(2)
+    }
+  }, [roomToken])
+
+  useEffect(() => {
+    if (room?.status === 'in-run') {
+      setStage(3)
       navigate({ to: '/run' })
     }
   }, [room?.status, navigate])
@@ -112,47 +110,6 @@ function Lobby() {
   const me = room?.players.find((p) => p.playerId === selfPlayerId)
   const isHost = (me?.playerPublicId ?? null) === (room?.hostPublicId ?? null)
   const hasGhosts = room?.players.some((p) => isGhost(p.status)) ?? false
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault()
-    if (!token) return
-    setError(null)
-    setBusy(true)
-    try {
-      const res = await createRoom(
-        { maxPlayers: partySize, seed: seed.trim(), mapSize, difficulty },
-        user?.name ?? 'Prisoner',
-        token,
-      )
-      saveRoomSession(res.hash, res.inviteCode)
-      setRoomToken(res.hash)
-      setInviteCode(res.inviteCode)
-      setPartySize(res.room.config.maxPlayers)
-      setSeed(res.room.config.seed)
-    } catch (err) {
-      setError(errorMessage(err))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleJoin(e: FormEvent) {
-    e.preventDefault()
-    if (!token) return
-    setError(null)
-    setBusy(true)
-    try {
-      const res = await joinRoom(joinCode, user?.name ?? 'Prisoner', token)
-      saveRoomSession(res.hash, res.room.inviteCode)
-      setRoomToken(res.hash)
-      setInviteCode(res.room.inviteCode)
-      setPartySize(res.room.config.maxPlayers)
-    } catch (err) {
-      setError(errorMessage(err))
-    } finally {
-      setBusy(false)
-    }
-  }
 
   async function handleReady() {
     if (!roomToken) return
@@ -287,12 +244,14 @@ function Lobby() {
 
   return (
     <LedgerFrame wide>
-      <PageHead
-        waypoint
-        kicker="trailhead · staging grounds"
-        title="The Staging Grounds"
-        officer={officer}
-      />
+      <div className="pagehead__heading">
+        <h1 className="pagehead__title">
+          <span className="pagehead__title-label">Staging Grounds</span>
+          <span className="pagehead__title-sep">//</span>
+          <span className="pagehead__title-sub">Cadre Lobby</span>
+        </h1>
+        {officer && <p className="pagehead__subtitle">{officer}</p>}
+      </div>
 
       {roomToken ? (
         <LiveRoom
@@ -321,87 +280,21 @@ function Lobby() {
           onSeedChange={handleSeedChange}
         />
       ) : (
-        <>
-          {error && (
-            <p className="intake__error" role="alert">
-              {error}
+        <div className="grounds">
+          <div className="panel">
+            <div className="panel__head">
+              <span className="panel__title">No expedition on file</span>
+            </div>
+            <p className="register__lede">
+              Return to the Chamber Nexus to forge or join a descent.
             </p>
-          )}
-          <div className="grounds">
-            <section className="panel" aria-label="The trailhead">
-              <div className="panel__head">
-                <span className="panel__title">The trailhead</span>
-                <span className="panel__sub">staging grounds</span>
-              </div>
-              <p className="register__lede">
-                Register a descent and hand out permits, or answer a permit already on the board. The
-                party gathers at the trailhead.
-              </p>
-              <div className="intake__actions intake__actions--stacked">
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={() => setCreateOpen(true)}
-                >
-                  Plan an expedition
-                </button>
-              </div>
-            </section>
-
-            <section className="panel" aria-label="Join a party">
-              <div className="panel__head">
-                <span className="panel__title">Join a party</span>
-                <span className="panel__sub">by permit</span>
-              </div>
-              <form onSubmit={handleJoin} className="register" noValidate>
-                <p className="register__lede">
-                  A permit opens a slot in an expedition already on the board.
-                </p>
-                <div className="field">
-                  <label className="field__label" htmlFor="join-code">
-                    Permit code
-                  </label>
-                  <input
-                    id="join-code"
-                    className="input"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="ABC123"
-                    maxLength={6}
-                    required
-                    style={{ letterSpacing: '0.3em' }}
-                  />
-                </div>
-                <div className="intake__actions intake__actions--stacked">
-                  <button
-                    type="submit"
-                    className="btn"
-                    disabled={busy || joinCode.trim().length === 0}
-                  >
-                    Enter by permit
-                  </button>
-                </div>
-              </form>
-            </section>
+            <div className="intake__actions">
+              <Link to="/chamber" className="btn btn--primary" onClick={() => setStage(1)}>
+                Chamber Nexus
+              </Link>
+            </div>
           </div>
-          <div className="intake__actions">
-            <Link to="/" className="btn btn--ghost" onClick={() => setStage(0)}>
-              Back to the trailhead
-            </Link>
-          </div>
-
-          {createOpen && (
-            <CreateGameModal
-              name={user?.name ?? 'Unnamed'}
-              partySize={partySize}
-              busy={busy}
-              error={error}
-              onPartySize={setPartySize}
-              onSubmit={handleCreate}
-              onClose={() => setCreateOpen(false)}
-            />
-          )}
-        </>
+        </div>
       )}
     </LedgerFrame>
   )
@@ -482,82 +375,6 @@ function FileCardModal({ num, label, closeLabel, ariaLabel, onClose, children }:
         <div className="filecard__sheet">{children}</div>
       </div>
     </div>
-  )
-}
-
-interface CreateGameModalProps {
-  name: string
-  partySize: number
-  busy: boolean
-  error: string | null
-  onPartySize: (size: number) => void
-  onSubmit: (event: FormEvent) => void
-  onClose: () => void
-}
-
-function CreateGameModal({
-  name,
-  partySize,
-  busy,
-  error,
-  onPartySize,
-  onSubmit,
-  onClose,
-}: CreateGameModalProps) {
-  return (
-    <FileCardModal
-      num="LEDGER"
-      label="plan an expedition · lead the party"
-      closeLabel="planner"
-      ariaLabel="Plan an expedition"
-      onClose={onClose}
-    >
-      <header className="filecard__head">
-        <span className="filecard__kicker">the expedition ledger</span>
-        <h2 className="filecard__name">{name}</h2>
-        <div className="filecard__tags">
-          <span className="board__tag board__tag--host">lead</span>
-        </div>
-      </header>
-
-      <form onSubmit={onSubmit} className="register" noValidate>
-        <p className="register__lede">
-          Register a descent and hand out permits. The party gathers at the trailhead.
-        </p>
-        <div className="field">
-          <label className="field__label" htmlFor="modal-party-size">
-            Party size
-          </label>
-          <select
-            id="modal-party-size"
-            className="select"
-            value={partySize}
-            disabled={busy}
-            onChange={(e) => onPartySize(Number(e.target.value))}
-          >
-            {PARTY_SIZES.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
-        {error && (
-          <p className="intake__error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="intake__actions intake__actions--stacked">
-          <button
-            type="submit"
-            className="btn btn--primary"
-            disabled={busy}
-          >
-            Register the expedition
-          </button>
-        </div>
-      </form>
-    </FileCardModal>
   )
 }
 
@@ -855,127 +672,338 @@ function LiveRoom({
     }, 3000)
   }
 
+  const hostPlayer = room?.players.find((p) => p.playerPublicId === room?.hostPublicId)
+  const playerCount = room?.totalPlayers ?? 0
+  const maxPlayers = room?.config.maxPlayers ?? 4
+
   return (
     <div className="grounds">
-      <section className="board" aria-label="The party">
-        <div className="board__head">
-          <span className="board__title">The party</span>
-          <span className="board__sub">
-            {room ? `party size · ${room.totalPlayers}/${room.config.maxPlayers}` : 'party size · —'}
-          </span>
-        </div>
-        <ol className="board__list">
-          {slots.map((player, i) =>
-            player ? (
-              <li
-                key={player.playerId}
-                className={player.playerId === selfPlayerId ? 'board__row board__row--you' : 'board__row'}
-              >
-                <span className="board__no">{String(i + 1).padStart(2, '0')}</span>
-                <span className="board__name">{player.name}</span>
-                {player.playerPublicId === room?.hostPublicId && (
-                  <span className="board__tag board__tag--host">lead</span>
-                )}
-                {player && player.playerPublicId !== room?.hostPublicId && (
-                  <span className={`board__tag board__tag--${player.status}`}>
-                    {statusLabel(player.status)}
-                  </span>
-                )}
-                {player.playerId === selfPlayerId && (
-                  <span className="board__tag board__tag--you">you</span>
-                )}
-                {player.status === 'disconnected' && player.disconnectedAt != null && (
-                  <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
-                )}
-              </li>
+      <div className="chamber-banner">
+          <div className="chamber-banner__cipher">
+            <div className="chamber-banner__icon">
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>key</span>
+            </div>
+            <span className="chamber-banner__label">Cipher Code</span>
+            {inviteCode ? (
+              <PermitCopy code={inviteCode} className="chamber-banner__copy" />
             ) : (
-              <li key={`empty-${i}`} className="board__empty">
-                space available
-              </li>
-            ),
-          )}
-        </ol>
-        {!connected && (
-          <div className="board__foot">
-            <p>The line is down — the board is not live. The connection is being retried.</p>
+              <span className="chamber-banner__code">————</span>
+            )}
           </div>
-        )}
-      </section>
 
-      <section className="panel" aria-label="The descent">
-        <div className="panel__head">
-          <span className="panel__title">The descent</span>
-          {isHost && (
-            <button
-              type="button"
-              className="panel__gear"
-              aria-label="Manage the expedition"
-              title="Manage the expedition"
-              disabled={!connected}
-              onClick={() => setManageOpen(true)}
-            >
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-                <path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.55 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88L2.67 14.5a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.39.32.61.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.1.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z" />
-              </svg>
-            </button>
+          <div className="chamber-banner__center">
+            <div className="chamber-banner__quorum">
+              <span className="chamber-banner__cadre">{playerCount}</span>
+              <span className="chamber-banner__cadre-sep">/</span>
+              <span className="chamber-banner__cadre-max">{maxPlayers}</span>
+              <span className="chamber-banner__cadre-label">cadre</span>
+            </div>
+            <div className="chamber-banner__divider" />
+            <div className="chamber-banner__quorum">
+              <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', color: '#c084fc' }}>schedule</span>
+              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5625rem', color: '#9d9280' }}>
+                awaiting quorum
+              </span>
+            </div>
+          </div>
+
+          {hostPlayer && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.625rem', color: '#9d9280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                led by
+              </span>
+              <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.75rem', fontWeight: 700, color: '#f2ca50' }}>
+                {hostPlayer.name}
+              </span>
+            </div>
           )}
         </div>
 
-        <div className="permit">
-          <span className="permit__label">Permit nº</span>
-          {inviteCode ? (
-            <PermitCopy code={inviteCode} className="permit__code-copy" />
-          ) : (
-            <span className="permit__code">——</span>
-          )}
-          <span className="permit__note">click to copy — share it with your party</span>
+      <div className="staging">
+        <div className="staging__main">
+           <div className="delver-grid">
+            {slots.map((player, i) =>
+              player ? (
+                <div
+                  key={player.playerId}
+                  className={`delver ${player.playerPublicId === room?.hostPublicId ? 'delver--gold' : 'delver--violet'}`}
+                >
+                  <div className={`corner-accent corner-accent--tl ${player.playerPublicId === room?.hostPublicId ? 'corner-accent--gold' : 'corner-accent--violet'}`} />
+                  <div className={`corner-accent corner-accent--tr ${player.playerPublicId === room?.hostPublicId ? 'corner-accent--gold' : 'corner-accent--violet'}`} />
+                  <div className="delver__halo" />
+                  <div className="delver__head">
+                    <div className="delver__head-left">
+                      <span className="delver__slot">slot {String(i + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div className="delver__tag-group">
+                      {player.playerPublicId === room?.hostPublicId && (
+                        <span className="delver__tag delver__tag--host">host</span>
+                      )}
+                      {player.status === 'ready' && (
+                        <span className="delver__tag delver__tag--ready">ready</span>
+                      )}
+                      {player.status !== 'ready' && player.status !== 'disconnected' && (
+                        <span className="delver__tag delver__tag--idle">not ready</span>
+                      )}
+                      {player.status === 'disconnected' && (
+                        <>
+                          <span className="delver__tag delver__tag--vacant">off trail</span>
+                          {player.disconnectedAt != null && (
+                            <DisconnectCountdown disconnectedAt={player.disconnectedAt} />
+                          )}
+                        </>
+                      )}
+                      {player.playerId === selfPlayerId && (
+                        <span className="delver__tag delver__tag--self">you</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="delver__body">
+                    <span className="delver__name"><span className="delver__name-label">Name:</span> {player.name}</span>
+                  </div>
+                  {slots.length <= 3 && (
+                    <div className="delver__sheet">
+                      <div className="delver__sheet-row">
+                        <span className="material-symbols-outlined delver__sheet-icon">paid</span>
+                        <span className="delver__sheet-label">Gold</span>
+                        <span className="delver__sheet-value">{player.stats.gold}</span>
+                      </div>
+                      <div className="delver__sheet-row">
+                        <span className="material-symbols-outlined delver__sheet-icon">auto_awesome</span>
+                        <span className="delver__sheet-label">Abilities</span>
+                        <span className="delver__sheet-value">{player.stats.abilities.length}</span>
+                      </div>
+                      <div className="delver__sheet-row">
+                        <span className="material-symbols-outlined delver__sheet-icon">inventory_2</span>
+                        <span className="delver__sheet-label">Items</span>
+                        <span className="delver__sheet-value">{player.stats.items.length}</span>
+                      </div>
+                      <div className="delver__sheet-row">
+                        <span className="material-symbols-outlined delver__sheet-icon">star</span>
+                        <span className="delver__sheet-label">XP</span>
+                        <span className="delver__sheet-value">{player.stats.experience}</span>
+                      </div>
+                      <div className="delver__sheet-divider" />
+                      <div className="delver__stat-grid">
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">STR</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.strength}</span>
+                        </div>
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">DEX</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.dexterity}</span>
+                        </div>
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">INT</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.intelligence}</span>
+                        </div>
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">WIS</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.wisdom}</span>
+                        </div>
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">AGI</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.agility}</span>
+                        </div>
+                        <div className="delver__stat-cell">
+                          <span className="delver__stat-cell-k">HP</span>
+                          <span className="delver__stat-cell-v">{player.stats.base_stats.hp}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {slots.length > 3 && slots.length <= 6 && (
+                    <div className="delver__stat-grid">
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">STR</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.strength}</span>
+                      </div>
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">DEX</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.dexterity}</span>
+                      </div>
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">INT</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.intelligence}</span>
+                      </div>
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">WIS</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.wisdom}</span>
+                      </div>
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">AGI</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.agility}</span>
+                      </div>
+                      <div className="delver__stat-cell">
+                        <span className="delver__stat-cell-k">HP</span>
+                        <span className="delver__stat-cell-v">{player.stats.base_stats.hp}</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="delver__stats">
+                    <div className="delver__bar">
+                      <div
+                        className="delver__bar-fill"
+                        style={{
+                          width: `${(player.stats.health.CurrentHealth / player.stats.health.MaxHealth) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div key={`empty-${i}`} className="delver delver--empty">
+                  <div className="delver-empty">
+                    <div className="delver-empty__pulse">
+                      <div className="delver-empty__pulse-ring" />
+                      <div className="delver-empty__pulse-core">
+                        <span className="material-symbols-outlined delver-empty__pulse-core-icon">
+                          radar
+                        </span>
+                      </div>
+                    </div>
+                    <span className="delver-empty__title">vacant slot</span>
+                    <span className="delver-empty__sub">
+                      awaiting a delver to fill this position
+                    </span>
+                  </div>
+                </div>
+              )
+            )}
+           </div>
         </div>
 
-        {actionError && (
-          <p className="intake__error" role="alert">
-            {actionError}
-          </p>
-        )}
-
-        <div className="intake__actions intake__actions--stacked grounds__actions">
-          {isHost ? (
-            <>
-              <div className="grounds__castoff">
-                <button className="btn btn--primary" disabled={busy || !connected} onClick={onStart}>
-                  Cast off
-                </button>
-                {hasGhosts && (
-                  <button
-                    className="btn btn--danger"
-                    disabled={busy || !connected}
-                    onClick={onConfirmStart}
-                  >
-                    Purge &amp; cast off
-                  </button>
-                )}
+        <div className="staging__side">
+          <div className="rites">
+            <div className="rites__head">
+              <span className="rites__title">
+                <span className="material-symbols-outlined rites__title-icon">info</span>
+                Chamber Stats
+              </span>
+            </div>
+            <div className="rites__body">
+              <div className="rites__row">
+                <div className="rites__row-left">
+                  <span className="material-symbols-outlined rites__row-icon">group</span>
+                  <div>
+                    <span className="rites__row-name">Cadre Limit</span>
+                    <span className="rites__row-sub">{maxPlayers} delvers</span>
+                  </div>
+                </div>
+                <span className="rites__value">{maxPlayers}</span>
               </div>
-            </>
-          ) : (
-            <>
+              <div className="rites__row">
+                <div className="rites__row-left">
+                  <span className="material-symbols-outlined rites__row-icon">terrain</span>
+                  <div>
+                    <span className="rites__row-name">Difficulty</span>
+                    <span className="rites__row-sub">{difficulty}</span>
+                  </div>
+                </div>
+                <span className="rites__value">{difficulty}</span>
+              </div>
+              <div className="rites__row">
+                <div className="rites__row-left">
+                  <span className="material-symbols-outlined rites__row-icon">map</span>
+                  <div>
+                    <span className="rites__row-name">Map Size</span>
+                    <span className="rites__row-sub">{mapSize}</span>
+                  </div>
+                </div>
+                <span className="rites__value">{mapSize}</span>
+              </div>
+              <div className="rites__row">
+                <div className="rites__row-left">
+                  <span className="material-symbols-outlined rites__row-icon">casino</span>
+                  <div>
+                    <span className="rites__row-name">Run Seed</span>
+                    <span className="rites__row-sub">{seed}</span>
+                  </div>
+                </div>
+                <span className="rites__value">{seed}</span>
+              </div>
+            </div>
+            {isHost && (
               <button
-                className="btn"
+                type="button"
+                className="rites__settings"
+                onClick={() => setManageOpen(true)}
+              >
+                <span className="material-symbols-outlined rites__settings-icon">settings</span>
+                settings
+              </button>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {actionError && (
+        <div className="intake__error" role="alert" style={{ margin: '0 0.75rem' }}>
+          {actionError}
+        </div>
+      )}
+
+      <Fleuron small />
+
+      <div className="dock">
+        <div className="dock__left">
+          <button
+            type="button"
+            className="dock__disband"
+            disabled={busy}
+            onClick={onLeave}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '0.875rem' }}>logout</span>
+            Disband Chamber // Leave
+          </button>
+          {!connected && (
+            <span className="dock__note">connection lost — reconnecting</span>
+          )}
+        </div>
+        <div className="dock__right">
+          {isHost ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {hasGhosts && (
+                <button
+                  type="button"
+                  className="btn btn--danger"
+                  style={{ fontSize: '0.625rem', padding: '0.5rem 1rem' }}
+                  disabled={busy || !connected}
+                  onClick={onConfirmStart}
+                >
+                  Purge &amp; cast off
+                </button>
+              )}
+              <button
+                className="dock__cast"
+                disabled={busy || !connected}
+                onClick={onStart}
+              >
+                <span className="material-symbols-outlined dock__cast-icon">sailing</span>
+                Cast Off Into The Depths
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ textAlign: 'right' }}>
+                <span className="dock__quorum-label">your status</span>
+                <span className="dock__quorum-value">{statusLabel(me?.status ?? 'joined')}</span>
+              </div>
+              <button
+                className="dock__cast"
                 disabled={busy || !connected || me?.status === 'joined'}
                 onClick={onReady}
               >
-                {me?.status === 'ready' ? 'Stand down' : 'Geared up'}
+                <span className="material-symbols-outlined dock__cast-icon">
+                  {me?.status === 'ready' ? 'remove_circle' : 'check_circle'}
+                </span>
+                {me?.status === 'ready' ? 'Stand Down' : 'Geared Up'}
               </button>
-            </>
+            </div>
           )}
-          <button className="btn btn--ghost" disabled={busy} onClick={onLeave}>
-            Sign out of this expedition
-          </button>
-          <Link to="/" className="btn btn--ghost" onClick={() => setStage(0)}>
-            Back to the trailhead
-          </Link>
         </div>
-
-        <Fleuron small className="grounds__fleuron" />
-      </section>
+      </div>
 
       {isHost && room?.status === 'lobby' && manageOpen && (
         <ManageModal

@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChamberRouteImport } from './routes/chamber'
 import { Route as LobbyRouteImport } from './routes/lobby'
 import { Route as RunRouteImport } from './routes/run'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChamberRoute = ChamberRouteImport.update({
+  id: '/chamber',
+  path: '/chamber',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LobbyRoute = LobbyRouteImport.update({
@@ -31,30 +37,34 @@ const RunRoute = RunRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lobby' | '/run'
+  fullPaths: '/' | '/chamber' | '/lobby' | '/run'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lobby' | '/run'
-  id: '__root__' | '/' | '/lobby' | '/run'
+  to: '/' | '/chamber' | '/lobby' | '/run'
+  id: '__root__' | '/' | '/chamber' | '/lobby' | '/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChamberRoute: typeof ChamberRoute
   LobbyRoute: typeof LobbyRoute
   RunRoute: typeof RunRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chamber': {
+      id: '/chamber'
+      path: '/chamber'
+      fullPath: '/chamber'
+      preLoaderRoute: typeof ChamberRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lobby': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChamberRoute: ChamberRoute,
   LobbyRoute: LobbyRoute,
   RunRoute: RunRoute,
 }

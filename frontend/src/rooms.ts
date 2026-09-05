@@ -162,13 +162,20 @@ export interface MessageUpdatePayload {
   messages: RoomMessage[]
 }
 
-export type ConfirmationType = 'unanimous' | 'majority'
+export interface VoteOption {
+  id: string
+  name: string
+  description: string
+}
 
-export interface ConfirmationUpdatePayload {
-  type: ConfirmationType
-  votes: Record<string, boolean>
+export interface VoteJSON {
+  id: string
+  name: string
+  description: string
+  options: VoteOption[]
+  votes: Record<string, string>
+  duration: number
   deadlineAt: number
-  durationMs: number
 }
 
 export interface RoomData {
@@ -184,6 +191,7 @@ export interface RoomData {
   dungeonMasterState?: 'idle' | 'active'
   hostPublicId: string | null
   encounter?: EncounterPublicState | null
+  currentVote?: VoteJSON | null
 }
 
 export type EncounterPhase = '' | 'vote' | 'combat'
@@ -216,13 +224,6 @@ export interface EncounterEnemy {
   defending: boolean
 }
 
-export interface EncounterVoteState {
-  active: boolean
-  deadlineAt: number
-  durationMs: number
-  votes: Record<string, boolean>
-}
-
 export interface EncounterPublicState {
   active: boolean
   phase: EncounterPhase
@@ -234,7 +235,6 @@ export interface EncounterPublicState {
   playerTargets: Record<string, CombatTarget>
   log: string[]
   enemies: EncounterEnemy[]
-  vote: EncounterVoteState
 }
 
 export interface CreateRoomResult {
@@ -337,8 +337,8 @@ export async function selectCombatAction(
   await sendAction(roomToken, 'combat_select_action', action)
 }
 
-export async function selectCombatVote(roomToken: string, accept: boolean): Promise<void> {
-  await sendAction(roomToken, 'combat_vote', { accept })
+export async function sendVoteOption(roomToken: string, optionId: string): Promise<void> {
+  await sendAction(roomToken, 'vote', { optionId })
 }
 
 export async function selectCombatTarget(

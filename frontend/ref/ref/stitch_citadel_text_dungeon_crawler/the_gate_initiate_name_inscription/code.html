@@ -1,0 +1,399 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Citadel // Inscription Desk</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&amp;family=EB+Garamond:ital,wght@0,400..800;1,400..800&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "abyss-void": "#0c0b0f",
+            "grimoire-dark": "#121017",
+            "grimoire-surface": "#181520",
+            "grimoire-raised": "#221c2e",
+            "grimoire-border": "#312a3f",
+            "primary": "#f2ca50",
+            "primary-container": "#d4af37",
+            "burnished-gold-patina": "#8a702b",
+            "burnished-gold-bright": "#fbe18d",
+            "astral-violet": "#c084fc",
+            "astral-deep": "#3b0764",
+            "parchment-light": "#ece4d4",
+            "parchment-muted": "#cfc4b0",
+            "parchment-aged": "#9d9280"
+          },
+          fontFamily: {
+            cinzel: ["Cinzel", "serif"],
+            headline: ["Playfair Display", "serif"],
+            body: ["EB Garamond", "serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      background-color: #0c0b0f;
+      color: #ece4d4;
+      font-family: 'EB Garamond', serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .occult-glow-gold {
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.18), inset 0 0 15px rgba(212, 175, 55, 0.08);
+    }
+    .occult-border {
+      border: 1px solid rgba(212, 175, 55, 0.35);
+    }
+    .occult-input-border {
+      border: 1px solid rgba(212, 175, 55, 0.45);
+    }
+    .occult-input-border:focus {
+      border-color: #f2ca50;
+      box-shadow: 0 0 20px rgba(242, 202, 80, 0.35);
+    }
+    @keyframes slowspin {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes counterspin {
+      from { transform: translate(-50%, -50%) rotate(360deg); }
+      to { transform: translate(-50%, -50%) rotate(0deg); }
+    }
+    .anim-spin-slow {
+      animation: slowspin 180s linear infinite;
+    }
+    .anim-spin-rev {
+      animation: counterspin 120s linear infinite;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between bg-abyss-void text-parchment-light relative overflow-hidden selection:bg-astral-deep selection:text-astral-violet">
+<!-- Background Ambience & Sacred Occult Seal Watermark -->
+<div class="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+<!-- Radial Gradients for deep mystical glow -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] bg-astral-deep/20 rounded-full blur-[140px]"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[100px]"></div>
+<!-- Outer Sacred Geometry Ring -->
+<svg class="absolute top-1/2 left-1/2 w-[940px] h-[940px] text-burnished-gold-patina/20 anim-spin-slow pointer-events-none" fill="none" viewBox="0 0 500 500">
+<circle cx="250" cy="250" r="242" stroke="currentColor" stroke-dasharray="3 6" stroke-width="0.8"></circle>
+<circle cx="250" cy="250" r="236" stroke="currentColor" stroke-width="0.4"></circle>
+<circle cx="250" cy="250" r="185" stroke="currentColor" stroke-dasharray="8 8" stroke-width="0.75"></circle>
+<circle cx="250" cy="250" r="140" stroke="currentColor" stroke-width="0.6"></circle>
+<polygon points="250,30 440,360 60,360" stroke="currentColor" stroke-width="0.65"></polygon>
+<polygon points="250,470 60,140 440,140" stroke="currentColor" stroke-width="0.65"></polygon>
+<circle cx="250" cy="30" fill="currentColor" r="3.5"></circle>
+<circle cx="440" cy="360" fill="currentColor" r="3.5"></circle>
+<circle cx="60" cy="360" fill="currentColor" r="3.5"></circle>
+<circle cx="250" cy="470" fill="currentColor" r="3.5"></circle>
+<circle cx="60" cy="140" fill="currentColor" r="3.5"></circle>
+<circle cx="440" cy="140" fill="currentColor" r="3.5"></circle>
+</svg>
+<!-- Inner Occult Compass Ring -->
+<svg class="absolute top-1/2 left-1/2 w-[620px] h-[620px] text-astral-violet/15 anim-spin-rev pointer-events-none" fill="none" viewBox="0 0 400 400">
+<circle cx="200" cy="200" r="195" stroke="currentColor" stroke-dasharray="1 5" stroke-width="0.7"></circle>
+<rect height="250" stroke="currentColor" stroke-width="0.5" transform="rotate(45 200 200)" width="250" x="75" y="75"></rect>
+<rect height="250" stroke="currentColor" stroke-width="0.5" width="250" x="75" y="75"></rect>
+<circle cx="200" cy="200" r="95" stroke="currentColor" stroke-dasharray="4 8" stroke-width="0.5"></circle>
+</svg>
+</div>
+<!-- HEADER -->
+<header class="relative z-20 w-full bg-[#100e16]/95 border-b border-[#2d263b] backdrop-blur-xl px-8 py-3.5 flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.85)]">
+<!-- Brand / Citadel Seal -->
+<div class="flex items-center gap-3.5">
+<div class="w-10 h-10 rounded-full bg-[#181520] border border-[#d4af37]/40 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.25)]">
+<span class="material-symbols-outlined text-primary text-[22px]">auto_stories</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-cinzel text-xl font-bold tracking-[0.18em] text-primary uppercase">Citadel</span>
+<span class="text-burnished-gold-patina text-base font-serif">§</span>
+</div>
+<span class="font-mono text-[10px] text-parchment-aged tracking-[0.25em] uppercase">Tome VIII: The Umbral Arcanum</span>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="hidden md:flex items-center gap-1.5 p-1 bg-[#0c0a10] border border-[#262033] rounded-md"><a class="px-3 py-1.5 bg-primary-container text-[#141218] font-cinzel text-xs font-bold uppercase tracking-[0.18em] rounded shadow-[0_0_14px_rgba(212,175,55,0.4)] flex items-center gap-1.5" href="#"><span class="">The Gate // Inscription</span></a><span class="text-burnished-gold-patina/50 px-1 text-xs">◇</span><a class="px-3 py-1.5 text-parchment-aged hover:text-parchment-light font-cinzel text-xs font-semibold uppercase tracking-[0.18em] rounded transition-colors" href="#">Chamber Nexus // Matchmaking</a><span class="text-burnished-gold-patina/50 px-1 text-xs">◇</span><a class="px-3 py-1.5 text-parchment-aged hover:text-parchment-light font-cinzel text-xs font-semibold uppercase tracking-[0.18em] rounded transition-colors" href="#">Staging Grounds // Cadre Lobby</a><span class="text-burnished-gold-patina/50 px-1 text-xs">◇</span><a class="px-3 py-1.5 text-parchment-aged hover:text-parchment-light font-cinzel text-xs font-semibold uppercase tracking-[0.18em] rounded transition-colors" href="#">The Descent // Live Run</a><span class="text-burnished-gold-patina/50 px-1 text-xs">◇</span><a class="px-3 py-1.5 text-parchment-aged hover:text-parchment-light font-cinzel text-xs font-semibold uppercase tracking-[0.18em] rounded transition-colors" href="#">Tactical Archive // Folio</a></nav>
+<!-- Telemetry Badges & Profile -->
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center gap-3.5 px-3 py-1 bg-[#15121c] border border-[#2a2436] rounded-md shadow-inner">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-astral-violet text-[16px]">flare</span>
+<div class="flex flex-col">
+<span class="font-mono text-[9px] uppercase tracking-wider text-parchment-aged">Aether Lantern</span>
+<span class="font-mono text-xs font-bold text-astral-violet">84% Arcane</span>
+</div>
+</div>
+<div class="w-px h-6 bg-[#2b2438]"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]">cyclone</span>
+<div class="flex flex-col">
+<span class="font-mono text-[9px] uppercase tracking-wider text-parchment-aged">Leyline</span>
+<span class="font-mono text-xs font-bold text-burnished-gold-bright">Synchronized</span>
+</div>
+</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/60 flex items-center justify-center text-primary shadow-[0_0_10px_rgba(212,175,55,0.3)] cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+</div>
+</header>
+<!-- MAIN VIEWPORT (No Scroll Desktop Grid) -->
+<main class="relative z-10 flex-1 flex items-center justify-center px-6 lg:px-12 py-4">
+<div class="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-12 gap-8 items-center">
+<!-- LEFT TELEMETRY PANEL -->
+<aside class="hidden xl:flex xl:col-span-3 flex-col gap-4">
+<!-- Telemetry Card -->
+<div class="bg-grimoire-surface/90 border border-grimoire-border p-5 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.7)] backdrop-blur-md relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+<div class="flex items-center justify-between text-parchment-aged border-b border-[#2b253b] pb-2.5 mb-3">
+<span class="font-cinzel text-xs tracking-[0.2em] uppercase text-primary">Scholastic Telemetry</span>
+<span class="material-symbols-outlined text-astral-violet text-[18px]">all_inclusive</span>
+</div>
+<div class="space-y-3">
+<div>
+<div class="flex items-baseline justify-between mb-1">
+<span class="font-mono text-xs text-parchment-muted tracking-wider uppercase">Active Delvers</span>
+<span class="font-cinzel text-2xl text-primary font-bold">418</span>
+</div>
+<div class="w-full bg-abyss-void h-1.5 rounded-full overflow-hidden border border-[#2d253c]">
+<div class="bg-gradient-to-r from-primary-container to-primary h-full w-[68%] shadow-[0_0_8px_rgba(212,175,55,0.6)]"></div>
+</div>
+<span class="font-body text-xs text-parchment-aged italic mt-1 block">Covenant initiates tethered to sanctum</span>
+</div>
+<div class="pt-2 border-t border-[#262033] flex items-center justify-between">
+<span class="font-mono text-[11px] text-parchment-aged uppercase tracking-wider">Sanctum Res</span>
+<span class="font-mono text-xs text-astral-violet font-semibold tracking-widest flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet animate-ping"></span>
+                99.82% PURE
+              </span>
+</div>
+</div>
+</div>
+<!-- Leyline Latency Card -->
+<div class="bg-grimoire-surface/90 border border-grimoire-border p-5 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.7)] backdrop-blur-md">
+<div class="flex items-center justify-between text-parchment-aged border-b border-[#2b253b] pb-2 mb-2.5">
+<span class="font-cinzel text-xs tracking-[0.2em] uppercase text-primary">Subterranean Ley</span>
+<span class="material-symbols-outlined text-burnished-gold-patina text-[18px]">sensors</span>
+</div>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-cinzel text-2xl text-parchment-light font-bold">14<span class="text-xs font-mono font-normal text-parchment-aged ml-1">ms</span></span>
+<span class="font-mono text-[11px] text-primary tracking-widest uppercase ml-auto bg-primary/10 border border-primary/30 px-2 py-0.5 rounded">Harmonized</span>
+</div>
+<p class="font-body text-xs text-parchment-muted italic mt-2 leading-relaxed">
+            Low-flux resonance node confirmed beneath Outer Cloisters. Zero impedance detected.
+          </p>
+</div>
+<!-- Rule / Notice Box -->
+<div class="p-3.5 rounded-md bg-[#121017]/90 border border-[#2b253b] flex items-start gap-2.5 shadow-md">
+<span class="text-primary font-serif text-lg leading-none mt-0.5">§</span>
+<p class="font-mono text-[10px] text-parchment-aged uppercase tracking-wider leading-relaxed">
+            ARCHIVAL RULE 44: Names pledged may not be unwritten once the wax seal seals the parchment.
+          </p>
+</div>
+</aside>
+<!-- CENTER INSCRIPTION DESK (Modal Card) -->
+<div class="xl:col-span-6 w-full flex flex-col items-center">
+<div class="w-full max-w-lg bg-grimoire-surface/95 border border-[#d4af37]/45 rounded-xl p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.9),0_0_30px_rgba(212,175,55,0.15)] backdrop-blur-2xl relative overflow-hidden">
+<!-- Subtle Top Gold Glow Line -->
+<div class="absolute top-0 left-10 right-10 h-px bg-gradient-to-r from-transparent via-[#f2ca50] to-transparent"></div>
+<!-- Header Sigil Badge -->
+<div class="flex flex-col items-center text-center">
+<div class="inline-flex items-center gap-2 px-4 py-1 bg-[#100d16] border border-astral-violet/30 rounded-full shadow-[0_0_12px_rgba(192,132,252,0.18)]">
+<span class="text-primary text-[10px]">✦</span>
+<span class="font-mono text-[11px] text-astral-violet uppercase tracking-[0.25em] font-semibold">COVENANT INSCRIPTION // STEP 01</span>
+<span class="text-primary text-[10px]">✦</span>
+</div>
+<div class="mt-4 mb-2 flex items-center justify-center gap-2.5">
+<span class="text-primary text-xl select-none font-serif">❦</span>
+<h1 class="font-cinzel text-2xl md:text-3xl text-parchment-light font-bold tracking-wider">
+                Inscribe Your Cognomen
+              </h1>
+<span class="text-primary text-xl select-none font-serif">❧</span>
+</div>
+<p class="font-body text-base text-parchment-muted max-w-sm mx-auto leading-relaxed">
+              Enter your sworn arcanist moniker to bind your soul-thread to the subterranean leyline.
+            </p>
+<!-- Decorative Divider -->
+<div class="w-full flex items-center justify-center gap-3 my-4">
+<div class="h-px bg-gradient-to-r from-transparent via-[#8a702b]/60 to-[#8a702b]/20 flex-1"></div>
+<span class="text-burnished-gold-patina text-xs font-mono select-none">◇─── § ───◇</span>
+<div class="h-px bg-gradient-to-l from-transparent via-[#8a702b]/60 to-[#8a702b]/20 flex-1"></div>
+</div>
+</div>
+<!-- Form Area -->
+<form class="flex flex-col gap-5 w-full mt-1" id="inscriptionForm" onsubmit="event.preventDefault(); proceedInscription();">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between px-1">
+<label class="font-cinzel text-xs text-parchment-aged uppercase tracking-[0.2em] font-semibold flex items-center gap-1.5" for="cognomen">
+<span class="material-symbols-outlined text-primary text-[14px]">edit_note</span>
+                  Arcane Moniker
+                </label>
+<span class="font-mono text-[10px] text-burnished-gold-patina lowercase italic">limit: xxvi chars</span>
+</div>
+<!-- Input Container -->
+<div class="relative flex items-center">
+<div class="absolute left-4 flex items-center pointer-events-none text-primary/70">
+<span class="material-symbols-outlined text-[20px]">token</span>
+</div>
+<input autocomplete="off" class="w-full h-13 pl-12 pr-12 bg-abyss-void/90 text-parchment-light font-mono text-sm placeholder:text-parchment-aged/50 placeholder:font-body placeholder:italic rounded-md occult-input-border focus:outline-none transition-all uppercase tracking-widest py-3" id="cognomen" maxlength="26" placeholder="e.g. MORVATH_THE_SEER" required="" spellcheck="false" type="text">
+<div class="absolute right-4 flex items-center pointer-events-none">
+<span class="w-2 h-4 bg-primary/80 animate-pulse" id="terminalCursor"></span>
+</div>
+</div>
+<!-- Realtime Hash Echo -->
+<div class="flex items-center justify-between px-1 mt-1 font-mono text-[11px]">
+<span class="text-parchment-aged tracking-wider">HASH: <span class="text-primary font-bold" id="hashEcho">0x7F...UNBOUND</span></span>
+<span class="text-astral-violet tracking-widest uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet"></span>
+                  Sigil: Primed
+                </span>
+</div>
+</div>
+<!-- CTA & Protocol Badge -->
+<div class="flex flex-col gap-3.5 items-center mt-1">
+<button class="w-full h-13 bg-gradient-to-r from-[#d4af37] via-[#f2ca50] to-[#d4af37] hover:from-[#e6ca65] hover:to-[#ffe088] text-[#141218] font-cinzel text-sm font-bold uppercase tracking-[0.22em] rounded-md shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_28px_rgba(212,175,55,0.7)] flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.99] cursor-pointer py-3.5" id="submitBtn" type="submit">
+<span class="">Confirm Cognomen &amp; Proceed</span>
+<span class="text-base font-bold">→</span>
+</button>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0f0d14]/90 border border-[#2b253b] rounded text-center">
+<span class="w-1.5 h-1.5 rounded-full bg-burnished-gold-patina"></span>
+<span class="font-mono text-[10px] text-parchment-aged uppercase tracking-[0.14em]">
+                  Protocol: Ephemeral In-Memory Session // No Database Tether
+                </span>
+</div>
+</div>
+</form>
+<!-- Security Footer Meta -->
+<div class="mt-6 pt-3.5 border-t border-[#262033] flex items-center justify-between text-parchment-aged font-mono text-[10px]">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-burnished-gold-patina">lock_clock</span>
+<span class="uppercase tracking-wider">AES-GCM 256-Void</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-astral-violet">auto_mode</span>
+<span class="uppercase tracking-wider">Entropy Seed: Sync</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT TELEMETRY PANEL -->
+<aside class="hidden xl:flex xl:col-span-3 flex-col gap-4">
+<!-- Celestial Mechanics Card -->
+<div class="bg-grimoire-surface/90 border border-grimoire-border p-5 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.7)] backdrop-blur-md relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-astral-violet/50 to-transparent"></div>
+<div class="flex items-center justify-between text-parchment-aged border-b border-[#2b253b] pb-2.5 mb-3">
+<span class="font-cinzel text-xs tracking-[0.2em] uppercase text-primary">Celestial Mechanics</span>
+<span class="material-symbols-outlined text-primary text-[18px]">brightness_7</span>
+</div>
+<div class="space-y-2">
+<span class="font-mono text-[10px] text-parchment-aged uppercase tracking-wider block">Current Epoch</span>
+<div class="font-cinzel text-2xl text-parchment-light font-bold">#419-Ω</div>
+<div class="inline-block px-2.5 py-0.5 bg-astral-deep/60 border border-astral-violet/30 rounded font-mono text-[10px] text-astral-violet uppercase tracking-widest">
+              Umbral Convergence
+            </div>
+</div>
+<div class="w-full flex items-center justify-between mt-3 pt-2.5 border-t border-[#262033] text-parchment-aged">
+<span class="font-mono text-[11px] uppercase tracking-wider">Conjunction Phase</span>
+<span class="font-mono text-xs text-primary font-semibold">T-03h 12m</span>
+</div>
+</div>
+<!-- Wards Status Card -->
+<div class="bg-grimoire-surface/90 border border-grimoire-border p-5 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.7)] backdrop-blur-md">
+<div class="flex items-center justify-between text-parchment-aged border-b border-[#2b253b] pb-2 mb-3">
+<span class="font-cinzel text-xs tracking-[0.2em] uppercase text-primary">Wards Status</span>
+<span class="material-symbols-outlined text-burnished-gold-patina text-[18px]">shield_with_house</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-2.5">
+<div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(212,175,55,0.8)] animate-pulse"></div>
+<div class="flex flex-col">
+<span class="font-cinzel text-xs text-parchment-light font-semibold tracking-wide">Sanctum Barrier Alpha</span>
+<span class="font-mono text-[10px] text-parchment-aged">Intact // Zero Penetration</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5">
+<div class="w-2.5 h-2.5 rounded-full bg-astral-violet shadow-[0_0_8px_rgba(192,132,252,0.8)]"></div>
+<div class="flex flex-col">
+<span class="font-cinzel text-xs text-parchment-light font-semibold tracking-wide">Astral Sentry Orbit</span>
+<span class="font-mono text-[10px] text-parchment-aged">Stationary in Sector IX</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Gate Keeper Sentry Notice -->
+<div class="p-3.5 rounded-md bg-[#121017]/90 border border-[#2b253b] flex items-center gap-2.5 shadow-md">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<span class="font-mono text-[10px] text-parchment-muted tracking-wider uppercase">
+            Scholomance Gate Node: Active &amp; Attentive
+          </span>
+</div>
+</aside>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="relative z-20 w-full bg-[#0a090e] border-t border-[#201b2a] py-3 px-8 flex flex-col md:flex-row items-center justify-between text-parchment-aged font-mono text-xs">
+<div class="flex items-center gap-2">
+<span class="tracking-[0.18em] uppercase">© MMXXIV Citadel Scholomance • In Umbra Sapientia</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-parchment-muted">Celestial Seal Validated</span>
+<span class="material-symbols-outlined text-burnished-gold-patina text-[16px]">fingerprint</span>
+<span class="text-primary font-semibold">Wards Active</span>
+</div>
+</footer>
+<!-- Script for Moniker Hashing & Submission Feedback -->
+<script>
+    (function() {
+      const input = document.getElementById('cognomen');
+      const hashEcho = document.getElementById('hashEcho');
+      const cursor = document.getElementById('terminalCursor');
+      const btn = document.getElementById('submitBtn');
+
+      function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+          hash |= 0;
+        }
+        return '0x' + (Math.abs(hash).toString(16).toUpperCase().padStart(6, '0'));
+      }
+
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.trim().toUpperCase();
+        if (val.length > 0) {
+          hashEcho.innerText = simpleHash(val) + '_CONVERGED';
+          cursor.classList.add('bg-astral-violet');
+          cursor.classList.remove('bg-primary/80');
+        } else {
+          hashEcho.innerText = '0x7F...UNBOUND';
+          cursor.classList.add('bg-primary/80');
+          cursor.classList.remove('bg-astral-violet');
+        }
+      });
+
+      window.proceedInscription = function() {
+        const val = input.value.trim();
+        if (!val) return;
+        
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">cyclone</span><span>Communing with Nexus...</span>';
+        btn.classList.add('pointer-events-none', 'opacity-90');
+
+        setTimeout(() => {
+          btn.innerHTML = '<span>Leyline Bound // Welcomed, ' + val.toUpperCase() + '</span>';
+          btn.classList.remove('from-[#d4af37]', 'to-[#d4af37]', 'hover:from-[#e6ca65]');
+          btn.classList.add('bg-astral-violet', 'text-[#0c0b0f]');
+        }, 1200);
+      };
+    })();
+  </script>
+
+
+</body></html>

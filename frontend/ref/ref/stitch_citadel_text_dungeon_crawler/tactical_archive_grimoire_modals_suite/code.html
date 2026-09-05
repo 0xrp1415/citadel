@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CITADEL — Tactical Archive: The Umbral Arcanum</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&amp;family=EB+Garamond:ital,wght@0,400..700;1,400..700&amp;family=JetBrains+Mono:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "void-bg": "#0c0a10",
+          "surface-dim": "#110e17",
+          "surface": "#14111c",
+          "surface-container-low": "#181423",
+          "surface-container": "#1d182b",
+          "surface-container-high": "#231e34",
+          "surface-container-highest": "#2b2540",
+          "grimoire-card": "rgba(22, 18, 32, 0.88)",
+          "parchment-light": "#f4ede0",
+          "parchment": "#ede4d3",
+          "parchment-ivory": "#ded4be",
+          "parchment-muted": "#a69c8a",
+          "parchment-dim": "#6e6656",
+          "aged-gold": "#d4af37",
+          "aged-gold-bright": "#f3cb53",
+          "aged-gold-dim": "#8f7626",
+          "astral-violet": "#8b5cf6",
+          "astral-violet-bright": "#a78bfa",
+          "astral-violet-deep": "#4c1d95",
+          "blood-crimson": "#dc2626",
+          "blood-crimson-dim": "#7f1d1d",
+          "brass-border": "rgba(212, 175, 55, 0.28)",
+          "brass-border-subtle": "rgba(212, 175, 55, 0.12)",
+          "violet-border": "rgba(139, 92, 246, 0.3)"
+        },
+        fontFamily: {
+          cinzel: ["Cinzel", "serif"],
+          serif: ["EB Garamond", "Georgia", "serif"],
+          mono: ["JetBrains Mono", "monospace"]
+        }
+      }
+    }
+  };
+</script>
+<style>
+  @layer base {
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #0c0a10;
+      color: #ede4d3;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0c0a10;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #231e34;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d4af37;
+    }
+  }
+
+  .sigil-matrix {
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.07) 0%, transparent 65%),
+      linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
+  }
+
+  .gold-glow {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.14), inset 0 0 10px rgba(212, 175, 55, 0.05);
+  }
+
+  .violet-glow {
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.2);
+  }
+
+  .folio-tab-active {
+    background: linear-gradient(180deg, rgba(212, 175, 55, 0.18) 0%, rgba(35, 30, 52, 0.8) 100%);
+    border-color: #d4af37;
+    color: #f4ede0;
+    box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
+  }
+</style>
+</head>
+<body class="bg-void-bg font-serif text-parchment antialiased selection:bg-aged-gold selection:text-void-bg sigil-matrix min-h-screen flex flex-col">
+<!-- 1. EXACT TOP HEADER NAVIGATION -->
+<header class="sticky top-0 z-50 border-b border-brass-border bg-[#100d18]/95 backdrop-blur-md">
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+<!-- Left Brand -->
+<div class="flex items-center gap-3 shrink-0">
+<div class="w-10 h-10 border border-aged-gold/60 bg-surface-container-low flex items-center justify-center rounded-sm relative shadow-[0_0_12px_rgba(212,175,55,0.2)]">
+<span class="font-cinzel text-aged-gold font-bold text-lg">§</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-astral-violet animate-ping opacity-85"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-cinzel text-base tracking-[0.25em] font-bold text-parchment-light uppercase leading-none">CITADEL</span>
+<span class="text-aged-gold text-xs font-mono">§</span>
+</div>
+<span class="font-mono text-[9px] tracking-[0.22em] text-astral-violet-bright uppercase mt-1">TOME VIII: THE UMBRAL ARCANUM</span>
+</div>
+</div>
+<!-- Center Navigation Links -->
+<nav class="hidden xl:flex items-center gap-1 border border-brass-border-subtle p-1 rounded-sm bg-surface-dim/90">
+<a class="px-3 py-1.5 font-mono text-[11px] tracking-wider text-parchment-muted hover:text-parchment-light hover:bg-surface-container-high transition-all flex items-center gap-1.5 rounded-sm" href="#">
+<span class="material-symbols-outlined text-[13px] text-parchment-dim">history_edu</span>
+        THE GATE // INSCRIPTION
+      </a>
+<a class="px-3 py-1.5 font-mono text-[11px] tracking-wider text-parchment-muted hover:text-parchment-light hover:bg-surface-container-high transition-all flex items-center gap-1.5 rounded-sm" href="#">
+<span class="material-symbols-outlined text-[13px] text-parchment-dim">join_inner</span>
+        CHAMBER NEXUS // MATCHMAKING
+      </a>
+<a class="px-3 py-1.5 font-mono text-[11px] tracking-wider text-parchment-muted hover:text-parchment-light hover:bg-surface-container-high transition-all flex items-center gap-1.5 rounded-sm" href="#">
+<span class="material-symbols-outlined text-[13px] text-parchment-dim">group_work</span>
+        STAGING GROUNDS // CADRE LOBBY
+      </a>
+<a class="px-3 py-1.5 font-mono text-[11px] tracking-wider text-parchment-muted hover:text-parchment-light hover:bg-surface-container-high transition-all flex items-center gap-1.5 rounded-sm" href="#">
+<span class="material-symbols-outlined text-[13px] text-parchment-dim">explore</span>
+        THE DESCENT // LIVE RUN
+      </a>
+<!-- Active Tab -->
+<a class="px-3 py-1.5 font-mono text-[11px] tracking-wider text-parchment-light bg-surface-container-high font-semibold border border-aged-gold/80 rounded-sm shadow-[0_0_12px_rgba(212,175,55,0.25)] flex items-center gap-1.5 relative" href="#">
+<span class="w-1.5 h-1.5 rounded-full bg-aged-gold-bright animate-pulse"></span>
+<span class="material-symbols-outlined text-[13px] text-aged-gold">menu_book</span>
+        TACTICAL ARCHIVE // FOLIO
+      </a>
+</nav>
+<!-- Right Status Telemetry -->
+<div class="flex items-center gap-3.5 shrink-0">
+<!-- Lantern Telemetry -->
+<div class="hidden sm:flex items-center gap-2.5 px-3 py-1.5 border border-brass-border-subtle bg-surface-dim/80 rounded-sm">
+<span class="material-symbols-outlined text-aged-gold text-base animate-pulse">light_mode</span>
+<div class="flex flex-col text-left">
+<span class="font-mono text-[9px] uppercase tracking-widest text-parchment-dim">AETHER LANTERN</span>
+<span class="font-mono text-[11px] font-semibold text-aged-gold tracking-wider">84% ARCANE</span>
+</div>
+</div>
+<!-- Leyline Status -->
+<div class="hidden md:flex flex-col text-right">
+<span class="font-mono text-[9px] uppercase tracking-widest text-astral-violet-bright flex items-center justify-end gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet inline-block"></span>
+          LEYLINE SYNC
+        </span>
+<span class="font-mono text-[10px] text-parchment-muted tracking-wider">SYNCHRONIZED</span>
+</div>
+<div class="h-8 w-px bg-brass-border-subtle hidden md:block"></div>
+<!-- Cognomen Seal -->
+<div class="flex items-center gap-2.5 border border-brass-border px-3 py-1.5 rounded-sm bg-surface-container-low shadow-[0_0_10px_rgba(139,92,246,0.15)]">
+<div class="w-6 h-6 rounded-sm bg-astral-violet-deep/60 border border-astral-violet/50 flex items-center justify-center text-astral-violet-bright font-mono text-xs font-bold">
+          ψ
+        </div>
+<div class="flex flex-col">
+<span class="font-mono text-[8px] uppercase tracking-widest text-aged-gold">COGNOMEN SEAL</span>
+<span class="font-mono text-[11px] font-semibold text-parchment-light tracking-wider">VEX_MORTIS_IX</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- 2. CHAMBER CONTEXT BAR (Under Header) -->
+<div class="border-b border-brass-border-subtle bg-[#120f1b]/95">
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+<!-- Left telemetry tokens -->
+<div class="flex flex-wrap items-center gap-3 sm:gap-6">
+<div class="flex items-center gap-1.5 text-parchment-muted">
+<span class="text-parchment-dim text-[10px]">CIPHER:</span>
+<span class="text-aged-gold font-semibold tracking-wider">#K7X9-M2</span>
+<button class="text-[10px] px-1 py-0.2 text-astral-violet-bright hover:text-parchment border border-violet-border rounded-sm ml-0.5 hover:bg-astral-violet-deep/30 transition-all flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[10px]">content_copy</span>COPY
+        </button>
+</div>
+<div class="flex items-center gap-2 text-parchment-muted">
+<span class="text-parchment-dim text-[10px]">CADRE INSCRIPTION:</span>
+<span class="text-parchment-light font-medium tracking-wide">3 / 4 DELVERS SWORN</span>
+<span class="w-1.5 h-1.5 rounded-full bg-aged-gold"></span>
+</div>
+<div class="flex items-center gap-1.5 text-parchment-muted">
+<span class="text-parchment-dim text-[10px]">STATUS:</span>
+<span class="text-astral-violet-bright flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock</span>
+          RESONANCE LOCK
+        </span>
+</div>
+</div>
+<!-- Right environmental tokens -->
+<div class="flex flex-wrap items-center gap-4 text-parchment-muted">
+<div class="flex items-center gap-1.5">
+<span class="text-parchment-dim text-[10px]">PERIL HAZARD:</span>
+<span class="px-2 py-0.5 bg-blood-crimson/15 border border-blood-crimson/40 text-red-400 text-[10px] font-semibold tracking-widest rounded-sm">
+          TIER VII • ABYSSAL
+        </span>
+</div>
+<div class="flex items-center gap-1.5 text-aged-gold-bright">
+<span class="material-symbols-outlined text-xs">arrow_downward</span>
+<span class="text-[11px] tracking-wider">STRATUM VII: BASAL SEAM (-720M)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PAGE BANNER & FOLIO TAB SELECTOR -->
+<section class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-brass-border-subtle">
+<div>
+<div class="flex items-center gap-2.5 mb-2">
+<span class="font-mono text-[10px] uppercase tracking-[0.25em] text-aged-gold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-astral-violet-bright">auto_stories</span>
+          EX LIBRIS EXPEDITIONIS · ARCANE CODEX
+        </span>
+<span class="h-px w-6 bg-brass-border"></span>
+<span class="font-mono text-[10px] text-astral-violet-bright">TOME VIII · UMBRAL ARCANUM</span>
+</div>
+<h1 class="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wider text-parchment-light flex items-center gap-3">
+        TACTICAL ARCHIVE MATRIX
+        <span class="font-serif text-sm sm:text-base italic text-astral-violet-bright font-normal font-serif hidden sm:inline-block">
+          (Arcana V Subterranea)
+        </span>
+</h1>
+<p class="font-serif text-sm sm:text-base text-parchment-muted mt-2 max-w-3xl leading-relaxed">
+        An esoteric compendium of Arcanist soul-ledgers, astrolabe cartography, sanctified relic cabinets, and vanguard consensus rites. Bound in velvet dusk for deep-vault excursions.
+      </p>
+</div>
+<!-- Tab Filter / Folio Switcher Bar -->
+<div class="flex flex-wrap gap-1.5 p-1.5 bg-surface-dim border border-brass-border rounded-sm shadow-lg">
+<a class="folio-tab-active px-3 py-1.5 text-xs font-mono tracking-wider border rounded-sm flex items-center gap-1.5 transition-all" href="#dossier-folio">
+<span class="text-aged-gold text-[10px]">✦</span>
+<span>I. ARCANIST DOSSIER</span>
+</a>
+<a class="px-3 py-1.5 text-xs font-mono tracking-wider border border-brass-border-subtle hover:border-aged-gold text-parchment-muted hover:text-parchment-light bg-surface-container hover:bg-surface-container-high rounded-sm flex items-center gap-1.5 transition-all" href="#cartography-folio">
+<span class="text-astral-violet-bright text-[10px]">✧</span>
+<span>II. ASTROLABE</span>
+</a>
+<a class="px-3 py-1.5 text-xs font-mono tracking-wider border border-brass-border-subtle hover:border-aged-gold text-parchment-muted hover:text-parchment-light bg-surface-container hover:bg-surface-container-high rounded-sm flex items-center gap-1.5 transition-all" href="#loadout-folio">
+<span class="text-aged-gold text-[10px]">⚚</span>
+<span>III. RELIQUARY</span>
+</a>
+<a class="px-3 py-1.5 text-xs font-mono tracking-wider border border-brass-border-subtle hover:border-aged-gold text-parchment-muted hover:text-parchment-light bg-surface-container hover:bg-surface-container-high rounded-sm flex items-center gap-1.5 transition-all" href="#quorum-folio">
+<span class="text-astral-violet-bright text-[10px]">⚖</span>
+<span>IV. CONSENSUS</span>
+</a>
+<a class="px-3 py-1.5 text-xs font-mono tracking-wider border border-brass-border-subtle hover:border-aged-gold text-parchment-muted hover:text-parchment-light bg-surface-container hover:bg-surface-container-high rounded-sm flex items-center gap-1.5 transition-all" href="#arena-folio">
+<span class="text-blood-crimson text-[10px]">⚔</span>
+<span>V. RITE ARENA</span>
+</a>
+</div>
+</div>
+</section>
+<!-- MAIN GRIMOIRE MODALS / FOLIOS CONTAINER -->
+<main class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10 flex-grow">
+<!-- ==========================================
+       ROW 1: FOLIO I (DOSSIER) & FOLIO II (ASTROLABE)
+       ========================================== -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+<!-- FOLIO I: ARCANIST SOUL-LEDGER -->
+<section class="lg:col-span-5 bg-grimoire-card border border-brass-border rounded-sm shadow-2xl relative flex flex-col justify-between overflow-hidden" id="dossier-folio">
+<!-- Card Header -->
+<div class="px-6 py-3.5 border-b border-brass-border flex items-center justify-between bg-surface-dim/95">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-astral-violet shadow-[0_0_8px_#8b5cf6]"></span>
+<span class="font-cinzel text-xs tracking-[0.2em] font-semibold text-parchment-light uppercase">FOLIO I — ARCANIST SOUL LEDGER</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-[9px] px-2 py-0.5 bg-astral-violet-deep/50 border border-violet-border text-astral-violet-bright rounded-sm">ASTRAL PACT</span>
+<span class="font-mono text-[10px] text-aged-gold tracking-widest">#HEX-9941</span>
+</div>
+</div>
+<!-- Dossier Content -->
+<div class="p-6 sm:p-7 space-y-6">
+<!-- Title & Occult Sigil Monogram -->
+<div class="flex items-start justify-between border-b border-brass-border-subtle pb-5 gap-4">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-astral-violet-bright">DECREE &amp; CELESTIAL TITLE</span>
+<span class="text-xs text-aged-gold">⚜</span>
+</div>
+<h2 class="font-cinzel text-2xl sm:text-3xl font-bold text-parchment-light tracking-wide">
+              Corvus · Valentina Hex
+            </h2>
+<p class="font-serif text-sm italic text-aged-gold-bright mt-1 flex items-center gap-1.5">
+<span class="text-astral-violet-bright">✦</span>
+              Dross-Elf · IV Degree Astral Cartographer · Void Scribe
+            </p>
+</div>
+<!-- Pure CSS Occult Sigil Monogram (No raster images) -->
+<div class="w-14 h-14 border-2 border-aged-gold bg-surface-container rounded-sm flex items-center justify-center relative shadow-[0_0_12px_rgba(212,175,55,0.2)] shrink-0">
+<div class="w-10 h-10 border border-astral-violet rotate-45 flex items-center justify-center">
+<span class="font-cinzel font-bold text-base text-aged-gold-bright -rotate-45">VH</span>
+</div>
+<span class="absolute -bottom-1 text-[8px] font-mono bg-void-bg px-1 text-astral-violet-bright border border-violet-border">IV°</span>
+</div>
+</div>
+<!-- Resonance Badge / Alignment -->
+<div class="flex items-center justify-between px-3.5 py-2 bg-surface-dim/80 border border-brass-border-subtle rounded-sm">
+<span class="font-mono text-[11px] text-parchment-muted flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-aged-gold">auto_awesome</span>
+            ASTRAL SURGE CAPACITY
+          </span>
+<span class="font-mono text-xs font-semibold text-astral-violet-bright bg-astral-violet-deep/40 px-2 py-0.5 border border-violet-border rounded-sm">
+            92% ALIGNED
+          </span>
+</div>
+<!-- Hex Disciplines & Attributes (STR, DEX, INT, WIS, AGI, VIT) -->
+<div class="space-y-2.5">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-muted block">
+            DISCIPLINES &amp; OCCULT RESONANCE
+          </span>
+<div class="grid grid-cols-2 gap-2.5">
+<!-- STR -->
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-parchment-light flex items-center gap-1">
+<span class="text-aged-gold text-[10px]">ᛟ</span>STR
+                </span>
+<span class="font-mono text-[11px] text-parchment-muted">18 / 25</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-aged-gold" style="width: 72%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-parchment-dim mt-1 block">Kinetic Bearing</span>
+</div>
+<!-- DEX -->
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-parchment-light flex items-center gap-1">
+<span class="text-aged-gold text-[10px]">ᚨ</span>DEX
+                </span>
+<span class="font-mono text-[11px] text-parchment-muted">32 / 40</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-aged-gold" style="width: 80%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-parchment-dim mt-1 block">Alchemical Reflex</span>
+</div>
+<!-- INT (Highlighted Astral) -->
+<div class="p-2.5 bg-surface-container border border-astral-violet/60 bg-astral-violet-deep/20 rounded-sm shadow-[0_0_10px_rgba(139,92,246,0.15)]">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-astral-violet-bright flex items-center gap-1">
+<span class="text-aged-gold text-[10px]">ᛏ</span>INT
+                </span>
+<span class="font-mono text-[11px] text-astral-violet-bright font-bold">38 / 40</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-astral-violet to-aged-gold-bright" style="width: 95%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-astral-violet-bright/80 mt-1 block">Aetheric Resonance</span>
+</div>
+<!-- WIS -->
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-parchment-light flex items-center gap-1">
+<span class="text-aged-gold text-[10px]">ᚱ</span>WIS
+                </span>
+<span class="font-mono text-[11px] text-parchment-muted">34 / 40</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-aged-gold" style="width: 85%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-parchment-dim mt-1 block">Occult Erudition</span>
+</div>
+<!-- AGI -->
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-parchment-light flex items-center gap-1">
+<span class="text-aged-gold text-[10px]">ᛉ</span>AGI
+                </span>
+<span class="font-mono text-[11px] text-parchment-muted">28 / 35</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-aged-gold" style="width: 80%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-parchment-dim mt-1 block">Traverse Cadence</span>
+</div>
+<!-- VIT -->
+<div class="p-2.5 bg-surface-container border border-blood-crimson/40 rounded-sm">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-mono text-xs font-semibold text-red-400 flex items-center gap-1">
+<span class="text-red-400 text-[10px]">ᛈ</span>VIT
+                </span>
+<span class="font-mono text-[11px] text-parchment-muted">76 / 85</span>
+</div>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-blood-crimson" style="width: 89%;"></div>
+</div>
+<span class="font-serif text-[10px] italic text-parchment-dim mt-1 block">Corporeal Vitality</span>
+</div>
+</div>
+</div>
+<!-- Sanctified Grimoire Relics (4 Slots) -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-muted">SANCTIFIED ATTIRE &amp; RELICS</span>
+<span class="font-mono text-[10px] text-aged-gold">4 / 4 ATTUNED</span>
+</div>
+<div class="grid grid-cols-2 gap-2.5">
+<div class="p-2.5 bg-surface-container-high/60 border border-aged-gold/80 rounded-sm shadow-[0_0_8px_rgba(212,175,55,0.15)]">
+<span class="font-mono text-[8px] uppercase tracking-widest text-aged-gold block">MAINHAND</span>
+<span class="font-cinzel text-xs font-semibold text-parchment-light block mt-0.5">Obsidian Focus Rod</span>
+<span class="font-mono text-[9px] text-astral-violet-bright mt-0.5 block">+14 Occult · +9 Int</span>
+</div>
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<span class="font-mono text-[8px] uppercase tracking-widest text-parchment-dim block">OFFHAND</span>
+<span class="font-cinzel text-xs font-semibold text-parchment-light block mt-0.5">Star-Warding Sigil</span>
+<span class="font-mono text-[9px] text-parchment-muted mt-0.5 block">+8% Arcane Null</span>
+</div>
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<span class="font-mono text-[8px] uppercase tracking-widest text-parchment-dim block">VESTMENT</span>
+<span class="font-cinzel text-xs font-semibold text-parchment-light block mt-0.5">Eclipse Weave Robes</span>
+<span class="font-mono text-[9px] text-parchment-muted mt-0.5 block">+12 Ward · Slip</span>
+</div>
+<div class="p-2.5 bg-surface-container border border-brass-border-subtle rounded-sm">
+<span class="font-mono text-[8px] uppercase tracking-widest text-parchment-dim block">AMULET</span>
+<span class="font-cinzel text-xs font-semibold text-parchment-light block mt-0.5">Amulet of Eclipse</span>
+<span class="font-mono text-[9px] text-parchment-muted mt-0.5 block">+15% Frost Null</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dossier Footer -->
+<div class="px-6 py-3 bg-surface-dim/95 border-t border-brass-border-subtle flex items-center justify-between text-xs">
+<span class="font-serif italic text-parchment-muted flex items-center gap-1.5">
+<span class="text-aged-gold">✦</span>
+          Lineage signature bound with Nocturnal Ink.
+        </span>
+<span class="font-mono text-[10px] text-aged-gold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-aged-gold animate-ping"></span>
+          EXPEDITION READY
+        </span>
+</div>
+</section>
+<!-- FOLIO II: CELESTIAL ASTROLABE CARTOGRAPHY -->
+<section class="lg:col-span-7 bg-grimoire-card border border-brass-border rounded-sm shadow-2xl flex flex-col justify-between overflow-hidden" id="cartography-folio">
+<!-- Card Header -->
+<div class="px-6 py-3.5 border-b border-brass-border flex flex-wrap items-center justify-between gap-3 bg-surface-dim/95">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-astral-violet shadow-[0_0_8px_#8b5cf6]"></span>
+<span class="font-cinzel text-xs tracking-[0.2em] font-semibold text-parchment-light uppercase">FOLIO II — CELESTIAL ASTROLABE CARTOGRAPHY</span>
+</div>
+<div class="flex items-center gap-3 font-mono text-[11px]">
+<span class="text-astral-violet-bright">STRATUM IV [VOID SANCTUM]</span>
+<span class="text-parchment-dim">•</span>
+<span class="text-aged-gold">-340 METERS AETH</span>
+</div>
+</div>
+<!-- Map Control & Interactive Vector Chart -->
+<div class="p-6 space-y-5">
+<div class="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-brass-border-subtle pb-3">
+<div class="flex items-center gap-2 font-mono text-[11px]">
+<span class="text-parchment-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-aged-gold">layers</span>
+              LEYLINE DEPTH:
+            </span>
+<div class="inline-flex border border-brass-border-subtle rounded-sm bg-surface-container">
+<button class="px-2.5 py-0.5 hover:bg-surface-container-high text-parchment-muted hover:text-parchment transition-all">-</button>
+<span class="px-3 py-0.5 text-parchment-light font-cinzel text-xs flex items-center gap-1 border-x border-brass-border-subtle">
+<span class="text-astral-violet-bright text-xs">✦</span>
+                Tier IV : Starless Abyss Floor
+              </span>
+<button class="px-2.5 py-0.5 hover:bg-surface-container-high text-parchment-muted hover:text-parchment transition-all">+</button>
+</div>
+</div>
+<button class="px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-aged-gold-bright border border-brass-border hover:border-aged-gold bg-surface-container hover:bg-surface-container-high rounded-sm transition-all flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-xs">my_location</span>
+            ALIGN ASTROLABE
+          </button>
+</div>
+<!-- Vector Astrolabe Map (SVG) -->
+<div class="relative w-full h-[330px] bg-[#0c0a13] border border-brass-border-subtle rounded-sm flex items-center justify-center overflow-hidden">
+<svg class="w-full h-full" viewbox="0 0 720 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="24" id="astrolabe-grid-dots" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#8b5cf6" opacity="0.25" r="0.75"></circle>
+</pattern>
+<radialgradient cx="50%" cy="50%" id="abyss-gradient" r="65%">
+<stop offset="15%" stop-color="#231738" stop-opacity="0.55"></stop>
+<stop offset="65%" stop-color="#120e1d" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#08070d" stop-opacity="1"></stop>
+</radialgradient>
+<filter id="vector-glow-purple">
+<fegaussianblur in="SourceGraphic" result="blur" stddeviation="3.5"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<filter id="vector-glow-gold">
+<fegaussianblur in="SourceGraphic" result="blur" stddeviation="2.5"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+</defs>
+<!-- Background -->
+<rect fill="url(#astrolabe-grid-dots)" height="100%" width="100%"></rect>
+<rect fill="url(#abyss-gradient)" height="100%" width="100%"></rect>
+<!-- Concentric Astrolabe Rings -->
+<circle cx="360" cy="150" fill="none" opacity="0.25" r="140" stroke="#d4af37" stroke-dasharray="2 6" stroke-width="0.75"></circle>
+<circle cx="360" cy="150" fill="none" opacity="0.3" r="95" stroke="#8b5cf6" stroke-dasharray="4 4" stroke-width="0.75"></circle>
+<circle cx="360" cy="150" fill="none" opacity="0.15" r="45" stroke="#ede4d3" stroke-width="0.5"></circle>
+<!-- Crosshairs -->
+<line opacity="0.2" stroke="#d4af37" stroke-width="0.5" x1="360" x2="360" y1="10" y2="290"></line>
+<line opacity="0.2" stroke="#d4af37" stroke-width="0.5" x1="160" x2="560" y1="150" y2="150"></line>
+<!-- Leyline Conduit Paths -->
+<line opacity="0.85" stroke="#d4af37" stroke-width="2" x1="120" x2="240" y1="150" y2="150"></line>
+<line opacity="0.95" stroke="#a78bfa" stroke-width="2.5" x1="240" x2="360" y1="150" y2="90"></line>
+<line opacity="0.35" stroke="#ded4be" stroke-width="1.2" x1="240" x2="360" y1="150" y2="210"></line>
+<line stroke="#f3cb53" stroke-dasharray="3 3" stroke-width="2" x1="360" x2="480" y1="90" y2="90"></line>
+<line opacity="0.3" stroke="#ded4be" stroke-width="1.2" x1="360" x2="480" y1="210" y2="210"></line>
+<line opacity="0.85" stroke="#dc2626" stroke-dasharray="3 3" stroke-width="2" x1="480" x2="580" y1="90" y2="150"></line>
+<line opacity="0.85" stroke="#dc2626" stroke-dasharray="3 3" stroke-width="2" x1="480" x2="580" y1="210" y2="150"></line>
+<line opacity="0.45" stroke="#8b5cf6" stroke-dasharray="2 4" stroke-width="1.5" x1="580" x2="660" y1="150" y2="150"></line>
+<!-- Node I (Entry Chamber) -->
+<circle cx="120" cy="150" fill="#151120" r="11" stroke="#d4af37" stroke-width="1.5"></circle>
+<text fill="#ede4d3" font-family="Cinzel" font-size="10" font-weight="700" text-anchor="middle" x="120" y="154">I</text>
+<!-- Node II (Transit Nexus) -->
+<circle cx="240" cy="150" fill="#151120" r="11" stroke="#d4af37" stroke-width="1.5"></circle>
+<text fill="#ede4d3" font-family="Cinzel" font-size="10" font-weight="700" text-anchor="middle" x="240" y="154">II</text>
+<!-- Active Operator Node (Valentina Hex) -->
+<circle cx="360" cy="90" fill="#25163f" filter="url(#vector-glow-purple)" r="17" stroke="#a78bfa" stroke-width="2"></circle>
+<circle cx="360" cy="90" fill="#f3cb53" r="6"></circle>
+<text fill="#c4b5fd" font-family="JetBrains Mono" font-size="9" font-weight="700" text-anchor="middle" x="360" y="65">VALENTINA [NEXUS]</text>
+<!-- Node IV (Lower Sump) -->
+<circle cx="360" cy="210" fill="#151120" opacity="0.8" r="10" stroke="#ded4be" stroke-width="1"></circle>
+<text fill="#a69c8a" font-family="Cinzel" font-size="9" text-anchor="middle" x="360" y="213">IV</text>
+<!-- Node V (Alchemical Shrine) -->
+<circle cx="480" cy="90" fill="#151120" r="13" stroke="#d4af37" stroke-dasharray="2 2" stroke-width="1.5"></circle>
+<text fill="#f3cb53" font-family="Cinzel" font-size="10" font-weight="700" text-anchor="middle" x="480" y="94">V</text>
+<!-- Node VI (Bone Crypt) -->
+<circle cx="480" cy="210" fill="#151120" opacity="0.6" r="10" stroke="#ded4be" stroke-width="1"></circle>
+<text fill="#ded4be" font-family="Cinzel" font-size="9" text-anchor="middle" x="480" y="213">VI</text>
+<!-- Crucible Overlord Node (Boss) -->
+<circle cx="580" cy="150" fill="#2b1118" r="17" stroke="#dc2626" stroke-width="2.5"></circle>
+<polygon fill="#dc2626" points="580,140 588,155 572,155"></polygon>
+<text fill="#fca5a5" font-family="JetBrains Mono" font-size="9" font-weight="700" text-anchor="middle" x="580" y="180">CRUCIBLE OVERLORD</text>
+<!-- Unplotted Astral Rift -->
+<circle cx="660" cy="150" fill="#110d18" r="10" stroke="#8b5cf6" stroke-dasharray="2 3" stroke-width="1.5"></circle>
+<text fill="#a78bfa" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="660" y="153">✦</text>
+</svg>
+<!-- Vector Overlay HUD indicators -->
+<div class="absolute bottom-2.5 left-3.5 font-mono text-[10px] text-astral-violet-bright tracking-wider flex items-center gap-1.5 bg-surface-dim/85 px-2 py-0.5 border border-brass-border-subtle rounded-sm">
+<span class="text-aged-gold">⚝</span>
+            COORDINATES: φ 360.090 // ASTRAL CONDUIT VEIL
+          </div>
+<div class="absolute top-2.5 right-3.5 font-mono text-[10px] text-red-400 tracking-wider flex items-center gap-1.5 bg-surface-dim/85 px-2 py-0.5 border border-blood-crimson/40 rounded-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-blood-crimson inline-block animate-ping"></span>
+            ABYSSAL PERIL: SEVERE
+          </div>
+</div>
+<!-- Astrolabe Legend -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs border-t border-brass-border-subtle">
+<div class="flex items-center gap-2">
+<div class="w-3.5 h-3.5 rounded-full border border-astral-violet bg-surface-container flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-astral-violet"></span>
+</div>
+<div class="flex flex-col">
+<span class="font-cinzel text-parchment-light text-[11px]">Active Node</span>
+<span class="font-mono text-[9px] text-astral-violet-bright">Operative nexus</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3.5 h-3.5 rounded-full border border-blood-crimson bg-surface-container flex items-center justify-center">
+<span class="w-1.5 h-1.5 bg-blood-crimson"></span>
+</div>
+<div class="flex flex-col">
+<span class="font-cinzel text-parchment-light text-[11px]">Crucible Overlord</span>
+<span class="font-mono text-[9px] text-parchment-dim">Hostile construct</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3.5 h-3.5 rounded-full border border-dashed border-aged-gold bg-surface-container flex items-center justify-center"></div>
+<div class="flex flex-col">
+<span class="font-cinzel text-parchment-light text-[11px]">Alchemical Shrine</span>
+<span class="font-mono text-[9px] text-aged-gold-bright">Sanctum boon</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3.5 h-3.5 rounded-full border border-dotted border-astral-violet bg-surface-container flex items-center justify-center text-[8px] text-astral-violet-bright">✦</div>
+<div class="flex flex-col">
+<span class="font-cinzel text-parchment-light text-[11px]">Astral Veil</span>
+<span class="font-mono text-[9px] text-parchment-dim">Unplotted rift</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Astrolabe Footer -->
+<div class="px-6 py-3 bg-surface-dim/95 border-t border-brass-border-subtle flex items-center justify-between text-xs">
+<span class="font-serif italic text-parchment-muted flex items-center gap-1.5">
+<span class="text-aged-gold">✦</span>
+          Astrolabe calibrated against the Celestial Zenith.
+        </span>
+<span class="font-mono text-[10px] text-aged-gold">CHART INTEGRITY 99.1%</span>
+</div>
+</section>
+</div>
+<!-- ==========================================
+       ROW 2: FOLIO III (SANCTIFIED RELIQUARY & CURIO)
+       ========================================== -->
+<section class="bg-grimoire-card border border-brass-border rounded-sm shadow-2xl overflow-hidden" id="loadout-folio">
+<!-- Header -->
+<div class="px-6 py-4 border-b border-brass-border flex flex-wrap items-center justify-between gap-4 bg-surface-dim/95">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-aged-gold shadow-[0_0_8px_#d4af37]"></span>
+<span class="font-cinzel text-xs tracking-[0.2em] font-semibold text-parchment-light uppercase">FOLIO III — SANCTIFIED RELIQUARY &amp; CURIO CABINET</span>
+</div>
+<div class="flex items-center gap-6 font-mono text-[11px]">
+<span class="text-parchment-muted">ATTUNED CAPACITY: <strong class="text-parchment-light font-bold">14 / 20 RELICS</strong></span>
+<span class="text-parchment-dim">•</span>
+<span class="text-aged-gold-bright flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">monetization_on</span>
+          CURRENCY: <strong>3,420 AETHER GRAINS</strong>
+</span>
+</div>
+</div>
+<!-- Dual Ledger: Harness Matrix vs Curio Candidates -->
+<div class="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left: Currently Harnessed Matrix -->
+<div class="lg:col-span-5 space-y-4">
+<div class="flex items-center justify-between border-b border-brass-border-subtle pb-2">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-astral-violet-bright">HARNESSED RELIC MATRIX</span>
+<span class="font-mono text-[10px] text-aged-gold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">swap_horiz</span>
+            SELECT TO SWAP
+          </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- Active Relic Card -->
+<div class="p-3.5 bg-surface-container border border-aged-gold rounded-sm relative shadow-[0_0_12px_rgba(212,175,55,0.15)]">
+<div class="flex justify-between items-start mb-1.5">
+<span class="font-mono text-[9px] uppercase tracking-widest text-aged-gold flex items-center gap-1">
+<span class="text-astral-violet-bright">✦</span>SLOT I · MAIN
+              </span>
+<span class="text-[9px] font-mono px-1.5 py-0.2 bg-aged-gold/20 text-aged-gold-bright border border-aged-gold/50">ACTIVE</span>
+</div>
+<h3 class="font-cinzel text-sm text-parchment-light font-bold">Obsidian Focus Rod</h3>
+<p class="font-serif italic text-xs text-aged-gold mt-0.5">+14 Occult · +9 Int</p>
+<span class="font-mono text-[9px] text-astral-violet-bright uppercase block mt-2">ARCANE MYTHIC</span>
+</div>
+<!-- Offhand -->
+<div class="p-3.5 bg-surface-dim/80 border border-brass-border-subtle hover:border-astral-violet/50 transition-all rounded-sm">
+<div class="flex justify-between items-start mb-1.5">
+<span class="font-mono text-[9px] uppercase tracking-widest text-parchment-dim">SLOT II · OFFHAND</span>
+<span class="text-[9px] font-mono text-parchment-dim">BOUND</span>
+</div>
+<h3 class="font-cinzel text-sm text-parchment-light font-medium">Star-Warding Sigil</h3>
+<p class="font-serif italic text-xs text-parchment-muted mt-0.5">+8% Arcane Null</p>
+<span class="font-mono text-[9px] text-parchment-dim uppercase block mt-2">CELESTIAL RARE</span>
+</div>
+<!-- Attire -->
+<div class="p-3.5 bg-surface-dim/80 border border-brass-border-subtle hover:border-astral-violet/50 transition-all rounded-sm">
+<div class="flex justify-between items-start mb-1.5">
+<span class="font-mono text-[9px] uppercase tracking-widest text-parchment-dim">SLOT III · ATTIRE</span>
+<span class="text-[9px] font-mono text-parchment-dim">BOUND</span>
+</div>
+<h3 class="font-cinzel text-sm text-parchment-light font-medium">Eclipse Weave Robes</h3>
+<p class="font-serif italic text-xs text-parchment-muted mt-0.5">+12 Ward · Shadow Slip</p>
+<span class="font-mono text-[9px] text-parchment-dim uppercase block mt-2">GRIMOIRE WEAVE</span>
+</div>
+<!-- Amulet -->
+<div class="p-3.5 bg-surface-dim/80 border border-brass-border-subtle hover:border-astral-violet/50 transition-all rounded-sm">
+<div class="flex justify-between items-start mb-1.5">
+<span class="font-mono text-[9px] uppercase tracking-widest text-parchment-dim">SLOT IV · AMULET</span>
+<span class="text-[9px] font-mono text-parchment-dim">BOUND</span>
+</div>
+<h3 class="font-cinzel text-sm text-parchment-light font-medium">Amulet of the Eclipse</h3>
+<p class="font-serif italic text-xs text-parchment-muted mt-0.5">+15% Frost Null</p>
+<span class="font-mono text-[9px] text-parchment-dim uppercase block mt-2">CELESTIAL RARE</span>
+</div>
+</div>
+<div class="p-3 bg-surface-dim border border-brass-border-subtle rounded-sm flex items-center justify-between text-xs">
+<span class="font-serif italic text-astral-violet-bright flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs text-aged-gold">blur_on</span>
+            Attunement Resonance:
+          </span>
+<span class="font-mono text-[11px] text-aged-gold font-semibold">FROST-VOID HARMONY (+12% SPELL DMG)</span>
+</div>
+</div>
+<!-- Right: Curio Candidates Grid / Equipment Deck -->
+<div class="lg:col-span-7 space-y-4">
+<div class="flex items-center justify-between border-b border-brass-border-subtle pb-2">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-astral-violet-bright">CURIO CABINET CANDIDATES</span>
+<span class="font-mono text-[10px] text-parchment-muted">FILTER: ARCANIST · SORT: POTENCY</span>
+</div>
+<div class="space-y-2.5">
+<!-- Candidate 1 -->
+<div class="p-3.5 bg-surface-container border border-aged-gold rounded-sm flex items-center justify-between gap-4 shadow-[0_0_12px_rgba(212,175,55,0.1)]">
+<div class="flex items-start gap-3">
+<span class="w-1.5 h-10 bg-gradient-to-b from-astral-violet to-aged-gold-bright shrink-0 mt-0.5 rounded-full"></span>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-light font-bold">Archon Warping Spire</h4>
+<span class="text-[9px] font-mono px-1.5 py-0.2 uppercase text-aged-gold-bright bg-astral-violet-deep/60 border border-violet-border">ARCANE MYTHIC</span>
+</div>
+<p class="font-serif italic text-xs text-parchment-muted mt-1">+18 Int · +22% Critical Surge · -4 Str Toll</p>
+</div>
+</div>
+<button class="px-3.5 py-1.5 text-xs font-mono tracking-wider text-void-bg bg-aged-gold hover:bg-aged-gold-bright transition-all rounded-sm font-bold shrink-0 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-xs">auto_fix_high</span>
+              EQUIP RELIC
+            </button>
+</div>
+<!-- Candidate 2 -->
+<div class="p-3.5 bg-surface-dim/80 border border-brass-border-subtle hover:border-astral-violet/50 transition-all rounded-sm flex items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-1.5 h-10 bg-astral-violet shrink-0 mt-0.5 rounded-full"></span>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-light font-semibold">Glacial Catalyst Wand</h4>
+<span class="text-[9px] font-mono px-1.5 py-0.2 uppercase text-astral-violet-bright bg-surface-container-highest">CELESTIAL RARE</span>
+</div>
+<p class="font-serif italic text-xs text-parchment-muted mt-1">+11 Int · +14% Frost Attunement</p>
+</div>
+</div>
+<button class="px-3 py-1.5 text-xs font-mono tracking-wider text-parchment-light border border-brass-border-subtle hover:border-aged-gold bg-surface-container hover:text-aged-gold transition-all rounded-sm shrink-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">sync_alt</span>
+              SWAP
+            </button>
+</div>
+<!-- Candidate 3 -->
+<div class="p-3.5 bg-surface-dim/80 border border-brass-border-subtle hover:border-brass-border transition-all rounded-sm flex items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-1.5 h-10 bg-red-400 shrink-0 mt-0.5 rounded-full"></span>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-light font-semibold">Dross Dust Cleaver</h4>
+<span class="text-[9px] font-mono px-1.5 py-0.2 uppercase text-red-400 bg-surface-container-highest">ALCHEMICAL</span>
+</div>
+<p class="font-serif italic text-xs text-parchment-muted mt-1">+16 Str · +8 Agi · -5 Int Damping</p>
+</div>
+</div>
+<button class="px-3 py-1.5 text-xs font-mono tracking-wider text-parchment-light border border-brass-border-subtle hover:border-brass-border bg-surface-container hover:text-aged-gold transition-all rounded-sm shrink-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">sync_alt</span>
+              SWAP
+            </button>
+</div>
+<!-- Candidate 4 -->
+<div class="p-3.5 bg-surface-dim/50 border border-brass-border-subtle hover:border-brass-border transition-all rounded-sm flex items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-1.5 h-10 bg-parchment-dim shrink-0 mt-0.5 rounded-full"></span>
+<div>
+<div class="flex items-center gap-2">
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-muted font-medium">Standard Cadet Stave</h4>
+<span class="text-[9px] font-mono px-1.5 py-0.2 uppercase text-parchment-dim bg-surface-container-highest">APPRENTICE</span>
+</div>
+<p class="font-serif italic text-xs text-parchment-dim mt-1">+4 Int · Basic Apprentice Binding</p>
+</div>
+</div>
+<button class="px-3 py-1.5 text-xs font-mono tracking-wider text-parchment-muted border border-brass-border-subtle hover:border-brass-border bg-surface-dim transition-all rounded-sm shrink-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">sync_alt</span>
+              SWAP
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ==========================================
+       ROW 3: FOLIO IV (CONSENSUS) & FOLIO V (RITE ARENA)
+       ========================================== -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+<!-- FOLIO IV: OCCULT CONSENSUS CIRCLE (VOTING RATIFICATION) -->
+<section class="lg:col-span-5 bg-grimoire-card border border-brass-border rounded-sm shadow-2xl flex flex-col justify-between overflow-hidden" id="quorum-folio">
+<!-- Card Header -->
+<div class="px-6 py-3.5 border-b border-brass-border flex items-center justify-between bg-surface-dim/95">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-aged-gold shadow-[0_0_8px_#d4af37]"></span>
+<span class="font-cinzel text-xs tracking-[0.2em] font-semibold text-parchment-light uppercase">FOLIO IV — OCCULT CONSENSUS CIRCLE</span>
+</div>
+<div class="flex items-center gap-2 text-astral-violet-bright font-mono text-xs">
+<span class="material-symbols-outlined text-sm text-aged-gold">hourglass_bottom</span>
+<span>00:14 REMAINING</span>
+</div>
+</div>
+<!-- Voting Body -->
+<div class="p-6 space-y-5">
+<div class="border-b border-brass-border-subtle pb-4">
+<div class="flex items-center justify-between mb-1">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-astral-violet-bright">STRATEGIC FORK · VAULT VA</span>
+<span class="text-xs font-mono text-aged-gold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">lock_open</span>
+              SEALED RITE
+            </span>
+</div>
+<h3 class="font-cinzel text-lg sm:text-xl font-bold text-parchment-light">
+            Subterranean Seismic Shift Ratification
+          </h3>
+<p class="font-serif text-sm italic text-parchment-muted mt-1 leading-relaxed">
+            The foundations shudder with ancient ward dissonance. Six vanguard adepts must cast their soul-marks before the iron sluice seals forever.
+          </p>
+</div>
+<!-- Decision Options -->
+<div class="space-y-3.5">
+<!-- Option 1: Ratified -->
+<div class="p-4 bg-surface-container border border-aged-gold rounded-sm relative overflow-hidden space-y-3 shadow-[0_0_12px_rgba(212,175,55,0.12)]">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-mono text-[9px] uppercase tracking-widest text-aged-gold flex items-center gap-1.5 mb-0.5">
+<span class="text-astral-violet-bright">✦</span>DECISION I · THE DEEP SMELTERS
+                </span>
+<h4 class="font-cinzel text-base font-bold text-parchment-light">Descend to Sunken Foundry</h4>
+</div>
+<span class="px-2 py-0.5 text-[10px] font-mono text-aged-gold-bright bg-surface-container-high border border-brass-border flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">verified</span>YOUR VOTE
+              </span>
+</div>
+<p class="font-serif italic text-xs text-parchment-muted">Spoil Multiplier: 2.4x · Peril: Magmatic Heat &amp; Steam Sentry</p>
+<div class="space-y-1">
+<div class="flex justify-between font-mono text-[11px]">
+<span class="text-aged-gold-bright font-medium">4 / 6 VOTES CAST</span>
+<span class="text-aged-gold-bright font-bold">67% MAJORITY RATIFIED</span>
+</div>
+<div class="w-full h-1.5 bg-surface-dim rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-aged-gold to-astral-violet" style="width: 67%;"></div>
+</div>
+</div>
+</div>
+<!-- Option 2: Standby -->
+<div class="p-4 bg-surface-dim/80 border border-brass-border-subtle hover:border-brass-border transition-all rounded-sm space-y-3">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-mono text-[9px] uppercase tracking-widest text-parchment-dim block mb-0.5">
+                  DECISION II · THE VAULT TRENCH
+                </span>
+<h4 class="font-cinzel text-base font-semibold text-parchment-muted">Breached Vault Bypass</h4>
+</div>
+<span class="font-mono text-[10px] text-parchment-dim">STANDBY</span>
+</div>
+<p class="font-serif italic text-xs text-parchment-dim">Spoil Multiplier: 1.1x · Peril: Minor Sentinel Patrol</p>
+<div class="space-y-1">
+<div class="flex justify-between font-mono text-[11px]">
+<span class="text-parchment-dim">2 / 6 VOTES</span>
+<span class="text-parchment-dim">33%</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-parchment-dim" style="width: 33%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-3 bg-surface-dim border border-brass-border-subtle rounded-sm flex items-center justify-between text-xs">
+<span class="font-serif text-astral-violet-bright italic flex items-center gap-1.5">
+<span class="text-aged-gold">✦</span>
+            Ratified by: Valentina, Silas, Krok, Vane
+          </span>
+<button class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-parchment-muted hover:text-parchment-light border border-brass-border-subtle hover:border-brass-border transition-all rounded-sm">
+            ABSTAIN
+          </button>
+</div>
+</div>
+<!-- Quorum Footer -->
+<div class="px-6 py-3 bg-surface-dim/95 border-t border-brass-border-subtle text-xs flex justify-between items-center">
+<span class="font-serif italic text-parchment-muted flex items-center gap-1.5">
+<span class="text-aged-gold">⚜</span>
+          Consensus binding under Citadel Charter §44.
+        </span>
+<span class="font-mono text-[10px] text-astral-violet-bright">QUORUM VALID</span>
+</div>
+</section>
+<!-- FOLIO V: COMBAT ARENA ENGAGEMENT (TACTICAL DUEL) -->
+<section class="lg:col-span-7 bg-grimoire-card border border-brass-border rounded-sm shadow-2xl flex flex-col justify-between overflow-hidden" id="arena-folio">
+<!-- Header -->
+<div class="px-6 py-3.5 border-b border-brass-border flex flex-wrap items-center justify-between gap-4 bg-surface-dim/95">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-blood-crimson shadow-[0_0_8px_#dc2626]"></span>
+<span class="font-cinzel text-xs tracking-[0.2em] font-semibold text-parchment-light uppercase">FOLIO V — MYSTICAL DUEL &amp; RITE ARENA</span>
+</div>
+<div class="flex items-center gap-3 font-mono text-xs">
+<span class="text-aged-gold-bright flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">hourglass_top</span>
+            ROUND 03
+          </span>
+<span class="text-parchment-dim">•</span>
+<span class="px-2 py-0.5 border border-violet-border bg-astral-violet-deep/40 text-astral-violet-bright text-[10px] tracking-widest uppercase rounded-sm">
+            ARCANE DUEL LOCK
+          </span>
+</div>
+</div>
+<!-- Combat Content -->
+<div class="p-6 space-y-5">
+<!-- Adversary Array -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between border-b border-brass-border-subtle pb-1">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs">swords</span>
+              ADVERSARY ARRAY · HOSTILE MECH-GOLEMS
+            </span>
+<span class="font-mono text-[10px] text-parchment-dim">RANGE: 8 PACES</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+<!-- Sentinel Prime (Boss) -->
+<div class="p-3 bg-surface-dim border border-blood-crimson/60 rounded-sm space-y-2 shadow-[0_0_12px_rgba(220,38,38,0.12)]">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-light font-bold">Sentinel Prime · Mech</h4>
+<span class="font-serif italic text-xs text-parchment-muted">Level VI Overlord Core</span>
+</div>
+<span class="font-mono text-[9px] text-red-400 border border-blood-crimson/50 px-1.5 py-0.5 uppercase bg-blood-crimson/15 rounded-sm">
+                  LOCKED
+                </span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-mono text-[10px]">
+<span class="text-parchment-dim">HULL INTEGRITY</span>
+<span class="text-red-400 font-semibold">420 / 600 HP (70%)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-blood-crimson" style="width: 70%;"></div>
+</div>
+</div>
+<div class="flex gap-2 pt-0.5 font-mono text-[9px]">
+<span class="px-1.5 py-0.5 bg-astral-violet-deep/50 text-astral-violet-bright border border-violet-border rounded-sm">[CHILLED -20%]</span>
+<span class="px-1.5 py-0.5 bg-surface-container text-red-400 border border-blood-crimson/40 rounded-sm">[ARMOR CRACK -12%]</span>
+</div>
+</div>
+<!-- Sentinel Scout -->
+<div class="p-3 bg-surface-dim/80 border border-brass-border-subtle rounded-sm space-y-2">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-cinzel text-sm sm:text-base text-parchment-light font-semibold">Sentinel Scout · Drone</h4>
+<span class="font-serif italic text-xs text-parchment-muted">Level IV Flank Unit</span>
+</div>
+<span class="font-mono text-[9px] text-parchment-dim uppercase">STANDBY</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-mono text-[10px]">
+<span class="text-parchment-dim">HULL INTEGRITY</span>
+<span class="text-parchment-muted">110 / 180 HP (61%)</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-aged-gold" style="width: 61%;"></div>
+</div>
+</div>
+<div class="flex gap-2 pt-0.5 font-mono text-[9px]">
+<span class="px-1.5 py-0.5 bg-surface-container text-aged-gold border border-brass-border-subtle rounded-sm">[OPTIC FLARE STUN 1R]</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Expedition Operatives Formation Alpha -->
+<div class="space-y-2">
+<div class="flex items-center justify-between border-b border-brass-border-subtle pb-1">
+<span class="font-mono text-[10px] uppercase tracking-[0.2em] text-astral-violet-bright">
+              EXPEDITION OPERATIVES · FORMATION ALPHA
+            </span>
+<span class="font-mono text-[10px] text-aged-gold-bright flex items-center gap-1">
+<span class="text-astral-violet-bright">✦</span>
+              ACTIVE TURN: VALENTINA HEX
+            </span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<!-- Valentina -->
+<div class="p-2.5 bg-surface-container-high border border-aged-gold rounded-sm shadow-[0_0_8px_rgba(212,175,55,0.15)]">
+<span class="font-cinzel text-xs font-bold text-parchment-light flex items-center justify-between">
+                Valentina Hex<span class="text-[9px] text-astral-violet-bright">✦</span>
+</span>
+<span class="font-mono text-[10px] text-aged-gold-bright block mt-0.5">76 / 85 HP</span>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden mt-1.5">
+<div class="h-full bg-gradient-to-r from-aged-gold to-astral-violet" style="width: 89%;"></div>
+</div>
+<span class="font-mono text-[9px] text-aged-gold-bright block mt-1 font-semibold">TURN READY</span>
+</div>
+<!-- Krok -->
+<div class="p-2.5 bg-surface-dim border border-brass-border-subtle rounded-sm">
+<span class="font-cinzel text-xs text-parchment-muted block">Krok Shield</span>
+<span class="font-mono text-[10px] text-parchment-dim block mt-0.5">180 / 190 HP</span>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden mt-1.5">
+<div class="h-full bg-parchment-muted" style="width: 94%;"></div>
+</div>
+<span class="font-mono text-[9px] text-parchment-dim block mt-1">GUARDING</span>
+</div>
+<!-- Silas -->
+<div class="p-2.5 bg-surface-dim border border-brass-border-subtle rounded-sm">
+<span class="font-cinzel text-xs text-parchment-muted block">Silas Null</span>
+<span class="font-mono text-[10px] text-parchment-dim block mt-0.5">62 / 90 HP</span>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden mt-1.5">
+<div class="h-full bg-astral-violet" style="width: 68%;"></div>
+</div>
+<span class="font-mono text-[9px] text-astral-violet-bright block mt-1">CHANNELING</span>
+</div>
+<!-- Vane -->
+<div class="p-2.5 bg-surface-dim border border-brass-border-subtle rounded-sm">
+<span class="font-cinzel text-xs text-parchment-muted block">Vane Shadow</span>
+<span class="font-mono text-[10px] text-parchment-dim block mt-0.5">88 / 95 HP</span>
+<div class="w-full h-1 bg-surface-dim rounded-full overflow-hidden mt-1.5">
+<div class="h-full bg-parchment-muted" style="width: 92%;"></div>
+</div>
+<span class="font-mono text-[9px] text-parchment-dim block mt-1">SHADOWED</span>
+</div>
+</div>
+</div>
+<!-- Action Deck -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-0.5">
+<button class="p-2.5 bg-surface-container hover:bg-surface-container-high border border-brass-border transition-all text-left rounded-sm group">
+<span class="font-cinzel text-xs sm:text-sm font-semibold text-parchment-light group-hover:text-aged-gold-bright flex items-center gap-1.5">
+<span class="text-aged-gold text-xs">ᛟ</span>I. Lance of Sunder
+            </span>
+<span class="font-serif italic text-xs text-parchment-muted block mt-0.5">Kinetic Strike · 0 Grains</span>
+</button>
+<button class="p-2.5 bg-surface-container hover:bg-surface-container-high border border-aged-gold transition-all text-left rounded-sm group shadow-[0_0_10px_rgba(212,175,55,0.12)]">
+<span class="font-cinzel text-xs sm:text-sm font-bold text-aged-gold-bright flex items-center gap-1.5">
+<span class="text-astral-violet-bright text-xs">✦</span>II. Shatter Frost Spire
+            </span>
+<span class="font-serif italic text-xs text-astral-violet-bright block mt-0.5">Arcane Toll · 24 Grains</span>
+</button>
+<button class="p-2.5 bg-surface-container hover:bg-surface-container-high border border-brass-border transition-all text-left rounded-sm group">
+<span class="font-cinzel text-xs sm:text-sm font-semibold text-parchment-light group-hover:text-aged-gold-bright flex items-center gap-1.5">
+<span class="text-aged-gold text-xs">✧</span>III. Evasive Astral Ward
+            </span>
+<span class="font-serif italic text-xs text-parchment-muted block mt-0.5">+40% Reflex Parrying</span>
+</button>
+</div>
+<!-- Chronicle Arcana Transcript -->
+<div class="p-3 bg-surface-dim border border-brass-border-subtle rounded-sm font-mono text-xs space-y-1.5">
+<div class="flex items-center justify-between border-b border-brass-border-subtle pb-1">
+<span class="text-[9px] uppercase tracking-widest text-astral-violet-bright flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">history_edu</span>
+              CHRONICLE ARCANA TRANSCRIPT
+            </span>
+<span class="text-[9px] text-aged-gold-bright flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">casino</span>
+              D20 ROLL: 18 [CRITICAL TRIUMPH]
+            </span>
+</div>
+<div class="space-y-1 text-[10px] sm:text-[11px]">
+<div class="text-parchment-muted">
+<span class="text-parchment-dim">[14:28:02]</span> Sentinel Prime strikes with Concussive Blast → <span class="text-red-400">Krok -28 HP</span>
+</div>
+<div class="text-parchment-muted">
+<span class="text-parchment-dim">[14:28:03]</span> Silas Null triggers Astral Aura → <span class="text-aged-gold-bright">+14 HP Party Restored</span>
+</div>
+<div class="text-parchment-light">
+<span class="text-astral-violet-bright">[14:28:04]</span> Valentina Hex invokes Frost-Void Hex → <span class="text-astral-violet-bright">Adversary Chilled &amp; Disoriented</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Arena Footer -->
+<div class="px-6 py-3 bg-surface-dim/95 border-t border-brass-border-subtle flex items-center justify-between text-xs">
+<span class="font-serif italic text-parchment-muted flex items-center gap-1.5">
+<span class="text-aged-gold">✦</span>
+          Duel resolved by turn cadence and celestial initiative.
+        </span>
+<span class="font-mono text-[10px] text-aged-gold">STATUS: ENGAGED</span>
+</div>
+</section>
+</div>
+</main>
+<!-- 5. BOTTOM FOOTER BAR (EXACT SPECIFICATION) -->
+<footer class="mt-auto border-t border-brass-border bg-[#0e0c15]/95 backdrop-blur-md">
+<div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono">
+<!-- Left telemetry status -->
+<div class="flex flex-wrap items-center gap-4 text-parchment-muted">
+<span class="flex items-center gap-1.5 text-aged-gold">
+<span class="w-1.5 h-1.5 rounded-full bg-aged-gold-bright animate-pulse"></span>
+        LEYLINE SYNC VERIFIED
+      </span>
+<span class="text-parchment-dim">•</span>
+<span class="text-parchment-light">
+        WARD INTEGRITY: <strong class="text-aged-gold">100%</strong>
+</span>
+<span class="text-parchment-dim">•</span>
+<span class="text-astral-violet-bright">
+        PROTOCOL: 0xDEADBEEF-VIII
+      </span>
+</div>
+<!-- Right seals & security -->
+<div class="flex flex-wrap items-center gap-4 text-parchment-dim">
+<span class="flex items-center gap-1 text-parchment-muted">
+<span class="material-symbols-outlined text-xs text-aged-gold">verified_user</span>
+        CELESTIAL SEAL VALIDATED
+      </span>
+<span class="text-parchment-dim">•</span>
+<span class="px-2 py-0.5 bg-astral-violet-deep/30 border border-violet-border text-astral-violet-bright text-[10px] tracking-widest uppercase rounded-sm">
+        WARDS ACTIVE
+      </span>
+</div>
+</div>
+</footer>
+</body></html>
