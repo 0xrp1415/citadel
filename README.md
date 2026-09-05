@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: Core systems phase.** Foundation, rooms, identity, procedural generation, character system, the full ability system, the AI DM (wired into the run loop as judge + narrator), and trial challenges (dice/DC resolution for locked passages) are implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: the shared move economy, combat encounters with enemies, full dice/DC resolution for combat, XP/level-up rewards, loot & equipment progression, and the merchant (stasis).
+> **Status: Core loop functional.** Foundation, rooms, identity, procedural generation, character system, the full ability system, the AI DM (wired into the run loop as judge + narrator), turn-based combat with enemies, damage calculation, and trial challenges are all implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: XP/level-up awards during runs, loot drop logic, the merchant, gear dismantling, difficulty scaling, and scroll acquisition.
 
 
 ## Overview
@@ -24,15 +24,15 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 ## Features
 
 - **Free-text play** — actions are typed as plain text and structured into a verdict (`execute` / `not_allowed` / `ambiguous`); an `execute` verdict carries up to 6 structured actions (`intent` / `target_type` / `target_id` / `direction` / `resource`)
-- **Shared action economy** — *planned*: the party gets **3 moves per round**, split however they choose; AGI breaks ties, unspent moves are lost, then monsters respond. Not yet built — actions currently resolve one at a time with no move budget.
-- **Deterministic resolution** — every roll is `d20 + stat` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**. The dice/DC roll is wired in for trial challenges (locked passages); combat/encounter rolls are *planned*.
+- **Turn-based combat** — initiative sorted by agility; each player selects attack, defend, or an ability on their turn; enemies act automatically with heuristic AI; defend redirects enemy targeting
+- **Deterministic resolution** — every roll is `d20 + stat` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**
 - **Characters** — STR / DEX / INT / WIS / AGI / HP; every stat starts at base 20, plus **50 bonus points** (max 40 per stat at creation), with race as a cosmetic choice
-- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; bosses grant bonus points to survivors. XP/level-up and boss bonuses are *planned* — XP is never awarded in a run yet.
-- **Stasis rooms** — *planned*: a rest checkpoint at the start of every dungeon: restore HP, spend stat points, and visit the merchant (buy/sell gear for gold). Not yet built.
-- **Equipment** — *planned*: weapon and armor slots, upgraded via drops or merchant purchases; better gear drops in any room, and dropped gear can be dismantled for a small XP bump. Slots exist on the sheet; drops, merchant, and dismantling are not built.
-- **Abilities from scrolls** — 1 active + 2 passive slots. The 97-ability system is built, but scroll acquisition is *planned*.
-- **Fainting & revives** — *planned*: a player at 0 HP is downed for the encounter; an ally can spend a revive action, and a full party wipe is the only way a run ends. Dead-state detection exists but downed/revive/wipe handling isn't wired up.
-- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; a typical run lands around **20–30 minutes**. Difficulty scaling is *planned*.
+- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; XP awards are *planned* — leveling infrastructure exists but XP is not yet awarded during runs
+- **Stasis rooms** — grace rooms restore HP on rest; stat point spending works in-run; merchant is *planned*
+- **Equipment** — weapon and armor slots with equip/unequip; 80-item static catalog (20 weapons, 20 heads, 20 chests, 20 greaves) with rarity tiers and stat bonuses; drops and merchant are *planned*
+- **Abilities from scrolls** — 1 active + 2 passive slots; 97-ability system with components and targeting is built; scroll acquisition is *planned*
+- **Fainting & revives** — a player at 0 HP is skipped in initiative; a full party wipe ends the run; revive ability component exists as a stub
+- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; difficulty scaling is *planned*
 - **Pacing that doesn't stall** — the run advances only when every connected (socket-alive) player votes yes; narration lands as each event resolves
 
 ## Roadmap
@@ -52,7 +52,6 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] In-memory room state management (players, character sheets, config)
 - [x] Broadcast scene updates / results to all clients
 - [x] Run/encounter game loop (InRunState: accepts actions, resolves them through the DM + engine)
-- [ ] Round/turn system (shared action economy: 3 moves per round) — actions currently resolve one at a time with no move budget
 - [x] Advance gate: every connected (socket-alive) player must vote yes to advance
 
 ### Characters
@@ -61,9 +60,10 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Race selection (cosmetic: elf / dwarf / human / orc / goblin / troll)
 - [x] Run-scoped leveling (cubic XP curve, +3 skill points per level)
 - [x] Skill point allocation
-- [x] Ability system (97 abilities across 6 stat trees, with active/passive, components, targeting) — acquired by claiming scrolls in-run (acquisition not yet wired)
-- [x] In-run stat modification (skill-point spend at grace rooms; full level-up UI pending)
+- [x] Ability system (97 abilities across 6 stat trees, with active/passive, components, targeting)
+- [x] In-run stat modification (skill-point spend at grace rooms)
 - [ ] Per-encounter XP awards and boss bonus XP — XP is not yet awarded during a run
+- [ ] Scroll acquisition — abilities exist but scrolls cannot be picked up mid-run yet
 
 ### Procedural generation
 - [x] Seeded RNG (MulberryRNG, FNV-1a string hash)
@@ -73,18 +73,19 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Miniboss placement (triangular distribution, same-type adjacency gap)
 - [x] Secret rooms (new dead-end branches, not converted normals; count by map size)
 - [x] Passage events (combat / puzzle / challenge with stat requirements, depth-scaled)
-- [x] Map serialization and frontend rendering (BFS grid layout, pan/zoom, type coloring)
-- [x] Dice roll resolution for trial challenges (d20 + stat vs DC) — combat/encounter rolls pending
-- [x] DC calculation for trial challenges (`8 + difficulty × 4`) — events carry `difficulty`/`requiredStat`/`flavor_text` and are resolved via `challenge`
+- [x] Map serialization and frontend rendering (BFS grid layout, pan/zoom, type coloring, side-panel inspection)
+- [x] Dice roll resolution for trial challenges (d20 + stat vs DC)
+- [x] DC calculation for trial challenges (`8 + difficulty × 4`)
 - [x] Action resolution pipeline (move / look / rest / use_item / use_ability / challenge resolvers)
 
 ### Equipment & gear
 - [x] Data model (weapon / armor slots, consumables, gold)
 - [x] Default starter gear (wooden helmet / chestplate / greaves / bat)
 - [x] Consumables (health potion works; gold key / lockpick tracked but have no game effect yet)
-- [ ] Gear catalog / loot tables
+- [x] Static gear catalog (80 items across 4 slots, rarity tiers, stat bonuses, buy prices)
+- [x] Equip / unequip actions (backend + full frontend UI)
 - [ ] Gear drop logic (rewards from rooms)
-- [ ] Equip / unequip actions
+- [ ] Loot tables (random item generation)
 - [ ] Merchant / shop (buy / sell in stasis rooms)
 - [ ] Gear dismantling for XP
 
@@ -98,20 +99,23 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Login / identity page
 - [x] Lobby (expedition management, invite codes, player roster, host controls, character modal)
 - [x] Run page layout (party manifest, field log, room card)
-- [x] Map visualization (interactive canvas with pan/zoom, room type colors, connectors)
+- [x] Map visualization (interactive canvas with pan/zoom, room type colors, connectors, side-panel inspection)
 - [x] Action input UI (text field for player actions, @mention autocomplete)
 - [x] Real-time transcript from server (with speaker attribution, self-highlighting)
 - [x] Scene description display (room card + DM narration)
-- [ ] Move counter / shared action economy display
 - [x] Fog of war / explored vs unexplored rooms (only visited rooms serialize)
-- [ ] Room navigation from map (map is view-only)
+- [x] Combat modal (initiative, action buttons, clickable foe cards, target selection, combat log)
+- [x] Inventory & gear modals (equip/unequip, consumable use, ability binding)
+- [ ] Room navigation from map (map is view-only; navigation via text composer)
 
 ### Combat & encounters
-- [ ] Combat state and encounter loop
-- [ ] Monster / enemy definitions
-- [ ] Damage calculation
-- [ ] Fainting & revive mechanics
-- [ ] Full party wipe = run end
+- [x] Combat state machine and encounter loop (vote → combat → finish)
+- [x] Monster / enemy definitions (99 enemies across 4 tiers, 14 enemy abilities)
+- [x] Damage calculation (Pokemon-style formula, physical/magical type awareness)
+- [x] Turn-based initiative (agility-sorted, player turns wait for input, enemy turns auto-resolve with heuristic AI)
+- [x] Defend mechanic (redirects enemy targeting, clears on next turn)
+- [x] Full party wipe = run end (EndRunState with narration)
+- [ ] Fainting & revive mechanics (Revive component is a stub; no downed state or death-save)
 
 ### Stasis rooms
 - [x] Grace room rest behavior (HP restore) — the `rest` action heals to full in grace rooms
@@ -130,39 +134,39 @@ Every expedition carries a **ruined tablet**, through which a flat, official voi
 
 ### Style
 
-Retro medieval, illuminated-manuscript — dark vellum, ornamental corners, old-style serif body text with blackletter headers and drop caps. No CRT or scanlines; terminal imagery belongs only to the tablet's voice.
+**Grimoire Nocturna** — dark violet-and-gold illuminated-manuscript aesthetic. Deep void surfaces, parchment body text, ornamental gold corner accents. Zero border-radius; thin gold borders; subtle glow on hover. No CRT or scanlines; terminal imagery belongs only to the tablet's voice.
 
 | Role | Hex | Notes |
 |---|---|---|
-| Background | `#090909` | ink-black |
-| Player | `#d3ffe9` | pale mint — brightest, "you" stand out |
-| Other party members | `#9bc4bc` | sage — one step dimmer |
-| DM (officer, via the tablet) | `#8ddbe0` | fen cyan — the voice from the stone |
-| System | `#4b5043` | faded olive — muted, never shouts |
+| Void / background | `#0c0b0f` | deepest black-violet |
+| Surface | `#181520` | panel and card ground |
+| Gold primary | `#d4af37` | borders, highlights, active states |
+| Gold bright | `#f2ca50` | hover glow, cipher codes |
+| Astral violet | `#c084fc` | DM voice, officer markers |
+| Parchment | `#ece4d4` | primary body text |
+| Foe red | `#dc2626` | enemy borders, danger |
 
-Outcomes are structured lines, not prose walls — validation reads like court rulings:
+Outcomes are structured lines, not prose walls — the field log renders each action and result as distinct rows with colored left borders (gold for player, violet for DM):
 
 ```
-> I advance, blade low, toward the warden
-→ RULING: ADMISSIBLE
-roll 12 + 26 vs 18 → hit
-  14 damage to the warden
+‹ rest                          (player action — gold border)
+✦ A calm settles...            (DM narration — violet border)
 ```
 
 ## Tech stack
 
 | Layer | Choice |
 |---|---|
-| **Client** | React (Vite) + socket.io-client — static SPA, no install |
-| **Server** | Node.js + Socket.io (Express/Fastify for REST) — single process for MVP |
-| **AI** | LangChain.js (Groq, `openai/gpt-oss-120b`), in-process — DungeonMaster: `Resolve` (free text → structured verdict) + `Narrate` (event → prose) |
+| **Client** | React 19 (Vite) + TanStack Router + Tailwind v4 + socket.io-client — static SPA, no install |
+| **Server** | Node.js ESM + Socket.io + Express — single process for MVP |
+| **AI** | LangChain.js (Groq, `openai/gpt-oss-20b`), in-process — DungeonMaster: `Resolve` (free text → structured verdict) + `Narrate` (event → prose) |
 | **State** | In-memory (users, game rooms, run state) — everything is lost on server restart |
 | **Transport** | REST for entry/routing, Socket.io for live game events |
 
 **Architecture rules:**
 
 - **Single process** — one Node server holds sockets, game state, and the in-process agent for the MVP
-- **AI is bound to Groq** — `CreateDungeonMaster` uses ChatGroq (`openai/gpt-oss-120b`)
+- **AI is bound to Groq** — `CreateDungeonMaster` uses ChatGroq (`openai/gpt-oss-20b`)
 - **State is in-memory** — no database; users and game rooms live in memory and are cleared on restart
 - **No-install client** — the browser is the only client
 
@@ -179,7 +183,7 @@ The backend splits into four domains, each owning a narrow slice of a session:
 
 - **User** issues a `user_id` once and reuses it across every expedition; it hands off to GameRoom after auth.
 - **GameRoom** is authoritative: one instance per expedition, owning player mapping, character sheets, room lifecycle, and the run/encounter loop. It never rolls, generates, or resolves — it *asks* the AI to structure/judge/narrate and *hands* validated actions to the engine.
-- **DungeonMaster** turns free text into a structured verdict (`execute` / `not_allowed` / `ambiguous`) and narrates decided outcomes as single-shot prose. It's bound to Groq (`openai/gpt-oss-120b`) via `CreateDungeonMaster`. It never decides outcomes and never owns state — parse failures fall back to `not_allowed`.
+- **DungeonMaster** turns free text into a structured verdict (`execute` / `not_allowed` / `ambiguous`) and narrates decided outcomes as single-shot prose. It's bound to Groq (`openai/gpt-oss-20b`) via `CreateDungeonMaster`. It never decides outcomes and never owns state — parse failures fall back to `not_allowed`.
 - **ProceduralEngine** is the single source of randomness — seeded RNG, dungeon generation, DCs, dice rolls — and resolves validated actions into deterministic outcomes. Pure, no I/O, trivially testable.
 
 ### Request flow
