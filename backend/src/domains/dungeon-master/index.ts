@@ -81,12 +81,12 @@ const NARRATE_TEMPERATURE = 0.2;
 export function CreateDungeonMaster({ roomViewGenerator, onStateChange }: { roomViewGenerator: TRoomViewGenerator; onStateChange?: (state: "idle" | "active") => void }): IDungeonMaster {
     config();
     const resolveModel = new ChatGroq({
-        model: "openai/gpt-oss-120b",
+        model: "openai/gpt-oss-20b",
         apiKey: process.env.GROQ_API_KEY,
         temperature: RESOLVE_TEMPERATURE,
     });
     const narrateModel = new ChatGroq({
-        model: "openai/gpt-oss-120b",
+        model: "openai/gpt-oss-20b",
         apiKey: process.env.GROQ_API_KEY,
         temperature: NARRATE_TEMPERATURE,
     });
