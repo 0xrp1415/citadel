@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { Fleuron } from '../components/Fleuron'
 import { PermitCopy } from '../components/PermitCopy'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
 import { setStage } from '../stages'
+import { useToast } from '../toast'
 import {
   generateSeed,
   kickPlayer,
@@ -61,8 +62,7 @@ function Lobby() {
   const [roomToken, setRoomToken] = useState<string | null>(() => getRoomToken())
   const [inviteCode, setInviteCode] = useState<string | null>(() => getInviteCode())
   const [busy, setBusy] = useState(false)
-  const [, setError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const [partySize, setPartySize] = useState(4)
   const [mapSize, setMapSize] = useState<'small' | 'medium' | 'large'>('medium')
@@ -113,22 +113,20 @@ function Lobby() {
 
   async function handleReady() {
     if (!roomToken) return
-    setActionError(null)
     try {
       await sendAction(roomToken, 'player_toggle_ready')
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     }
   }
 
   async function handleStart() {
     if (!roomToken) return
-    setActionError(null)
     setBusy(true)
     try {
       await sendAction(roomToken, 'start_game')
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -136,12 +134,11 @@ function Lobby() {
 
   async function handleConfirmStart() {
     if (!roomToken) return
-    setActionError(null)
     setBusy(true)
     try {
       await sendAction(roomToken, 'confirm_start')
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -149,12 +146,12 @@ function Lobby() {
 
   async function handleKick(targetPlayerId: string) {
     if (!roomToken) return
-    setActionError(null)
     setBusy(true)
     try {
       await kickPlayer(roomToken, targetPlayerId)
+      toast('success', 'Player expelled')
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -163,46 +160,42 @@ function Lobby() {
   async function handlePartySize(size: number) {
     if (!roomToken) return
     setPartySize(size)
-    setActionError(null)
     try {
       await updateRoomConfig(roomToken, { maxPlayers: size, seed, mapSize, difficulty })
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     }
   }
 
   async function handleMapSize(size: 'small' | 'medium' | 'large') {
     if (!roomToken) return
     setMapSize(size)
-    setActionError(null)
     try {
       await updateRoomConfig(roomToken, { maxPlayers: partySize, seed, mapSize: size, difficulty })
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     }
   }
 
   async function handleDifficulty(diff: 'easy' | 'medium' | 'hard') {
     if (!roomToken) return
     setDifficulty(diff)
-    setActionError(null)
     try {
       await updateRoomConfig(roomToken, { maxPlayers: partySize, seed, mapSize, difficulty: diff })
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     }
   }
 
   async function handleRerollSeed() {
     if (!roomToken) return
-    setActionError(null)
     setBusy(true)
     const next = generateSeed()
     try {
       await updateRoomConfig(roomToken, { maxPlayers: partySize, seed: next, mapSize, difficulty })
       setSeed(next)
     } catch (err) {
-      setActionError(errorMessage(err))
+      toast('error', errorMessage(err))
     } finally {
       setBusy(false)
     }
@@ -212,7 +205,7 @@ function Lobby() {
     setSeed(value)
     if (!roomToken) return
     updateRoomConfig(roomToken, { maxPlayers: partySize, seed: value, mapSize, difficulty }).catch(
-      (err) => setActionError(errorMessage(err)),
+      (err) => toast('error', errorMessage(err)),
     )
   }
 
@@ -227,8 +220,6 @@ function Lobby() {
     clearRoomSession()
     setRoomToken(null)
     setInviteCode(null)
-    setActionError(null)
-    setError(null)
     setBusy(false)
   }
 
@@ -267,7 +258,6 @@ function Lobby() {
           difficulty={difficulty}
           seed={seed}
           busy={busy}
-          actionError={actionError}
           onPartySize={handlePartySize}
           onMapSize={handleMapSize}
           onDifficulty={handleDifficulty}
@@ -279,23 +269,7 @@ function Lobby() {
           onRerollSeed={handleRerollSeed}
           onSeedChange={handleSeedChange}
         />
-      ) : (
-        <div className="grounds">
-          <div className="panel">
-            <div className="panel__head">
-              <span className="panel__title">No expedition on file</span>
-            </div>
-            <p className="register__lede">
-              Return to the Chamber Nexus to forge or join a descent.
-            </p>
-            <div className="intake__actions">
-              <Link to="/chamber" className="btn btn--primary" onClick={() => setStage(1)}>
-                Chamber Nexus
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      ) : null}
     </LedgerFrame>
   )
 }
@@ -609,7 +583,6 @@ interface LiveRoomProps {
   difficulty: 'easy' | 'medium' | 'hard'
   seed: string
   busy: boolean
-  actionError: string | null
   onPartySize: (size: number) => void
   onMapSize: (size: 'small' | 'medium' | 'large') => void
   onDifficulty: (diff: 'easy' | 'medium' | 'hard') => void
@@ -635,7 +608,6 @@ function LiveRoom({
   difficulty,
   seed,
   busy,
-  actionError,
   onPartySize,
   onMapSize,
   onDifficulty,
@@ -937,12 +909,6 @@ function LiveRoom({
 
         </div>
       </div>
-
-      {actionError && (
-        <div className="intake__error" role="alert" style={{ margin: '0 0.75rem' }}>
-          {actionError}
-        </div>
-      )}
 
       <Fleuron small />
 

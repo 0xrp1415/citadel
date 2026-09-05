@@ -6,6 +6,7 @@ import type { Ability, CombatAction, CombatTarget, GearSlot, MapPublicJSON, Play
 import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, sendVoteOption } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
+import { useToast } from '../toast'
 
 export const Route = createFileRoute('/run')({
   component: Run,
@@ -252,6 +253,7 @@ function Run() {
   const navigate = useNavigate()
   const roomToken = getRoomToken()
   const { room, error: socketError } = useRoomSocket(roomToken)
+  const { toast } = useToast()
 
   const selfPlayerId = roomToken ? (decodeRoomToken(roomToken)?.playerId ?? null) : null
   const [openPlayerId, setOpenPlayerId] = useState<string | null>(null)
@@ -259,10 +261,8 @@ function Run() {
   const [inventoryOpen, setInventoryOpen] = useState(false)
   const [gearOpen, setGearOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [composerBusy, setComposerBusy] = useState(false)
-  const [playError, setPlayError] = useState<string | null>(null)
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -298,54 +298,54 @@ function Run() {
   const handleEquipItem = useCallback(async (index: number) => {
     if (!roomToken) return
     setBusy(true)
-    setActionError(null)
     try {
       await equipItem(roomToken, index)
+      toast('success', 'Item equipped')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'equip failed')
+      toast('error', e instanceof Error ? e.message : 'Equip failed')
     } finally {
       setBusy(false)
     }
-  }, [roomToken])
+  }, [roomToken, toast])
 
   const handleUseItem = useCallback(async (id: string) => {
     if (!roomToken) return
     setBusy(true)
-    setActionError(null)
     try {
       await requestUseItem(roomToken, id)
+      toast('success', 'Item used')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'use failed')
+      toast('error', e instanceof Error ? e.message : 'Use failed')
     } finally {
       setBusy(false)
     }
-  }, [roomToken])
+  }, [roomToken, toast])
 
   const handleUnequipItem = useCallback(async (slot: GearSlot) => {
     if (!roomToken) return
     setBusy(true)
-    setActionError(null)
     try {
       await unequipItem(roomToken, slot)
+      toast('success', 'Item unequipped')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'unequip failed')
+      toast('error', e instanceof Error ? e.message : 'Unequip failed')
     } finally {
       setBusy(false)
     }
-  }, [roomToken])
+  }, [roomToken, toast])
 
   const handleSetActiveAbility = useCallback(async (id: string, slot: number) => {
     if (!roomToken) return
     setBusy(true)
-    setActionError(null)
     try {
       await requestSetActiveAbility(roomToken, id, slot)
+      toast('success', 'Ability assigned')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : 'assign failed')
+      toast('error', e instanceof Error ? e.message : 'Assign failed')
     } finally {
       setBusy(false)
     }
-  }, [roomToken])
+  }, [roomToken, toast])
 
   const autoGrowComposer = useCallback(() => {
     const el = composerRef.current
@@ -378,13 +378,12 @@ function Run() {
       text = text.replace(re, `<#${id}>`)
     }
     setComposerBusy(true)
-    setPlayError(null)
     try {
       await sendAction(roomToken, 'player_play', text)
       setDraft('')
       resetComposer()
     } catch (err) {
-      setPlayError(errorMessage(err))
+      toast('error', errorMessage(err))
     } finally {
       setComposerBusy(false)
     }
@@ -393,14 +392,13 @@ function Run() {
   const handleVote = useCallback(
     async (optionId: string) => {
       if (!roomToken) return
-      setPlayError(null)
       try {
         await sendVoteOption(roomToken, optionId)
       } catch (err) {
-        setPlayError(errorMessage(err))
+        toast('error', errorMessage(err))
       }
     },
-    [roomToken],
+    [roomToken, toast],
   )
 
   useEffect(() => {
@@ -621,9 +619,6 @@ function Run() {
               <span className="caret" aria-hidden="true" />
             </div>
           </div>
-          {playError && (
-            <p className="composer__error" role="alert">{playError}</p>
-          )}
           <div className="composer">
             <div className="composer__field">
               <span className="composer__glyph" aria-hidden="true">🜚</span>
@@ -679,7 +674,7 @@ function Run() {
               onClick={() => void handlePlay()}
               disabled={dmActive || encounterActive || runEnded || !draft.trim()}
             >
-              {encounterActive ? 'in battle' : dmActive ? 'judging…' : runEnded ? 'ended' : 'speak'}
+              {encounterActive ? 'in battle' : dmActive ? 'judging…' : runEnded ? 'ended' : <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>send</span>}
             </button>
           </div>
         </section>
@@ -689,6 +684,10 @@ function Run() {
       <aside className="descent__right" aria-label="Tactical overview">
         <RightRail
           room={room}
+          onOpenMap={() => setMapOpen(true)}
+          onOpenInventory={() => setInventoryOpen(true)}
+          onOpenGear={() => setGearOpen(true)}
+          onOpenDossier={() => selfPlayerId && setOpenPlayerId(selfPlayerId)}
         />
       </aside>
 
@@ -727,7 +726,6 @@ function Run() {
           onEquip={handleEquipItem}
           onUse={handleUseItem}
           busy={busy}
-          actionError={actionError}
         />
       )}
 
@@ -738,7 +736,6 @@ function Run() {
           busy={busy}
           onClose={() => setGearOpen(false)}
           onUnequip={handleUnequipItem}
-          actionError={actionError}
           onSetActive={handleSetActiveAbility}
           onOpenInventory={() => {
             setGearOpen(false)
@@ -864,16 +861,44 @@ function numberKeyIndex(key: string): number {
 
 function RightRail({
   room,
+  onOpenMap,
+  onOpenInventory,
+  onOpenGear,
+  onOpenDossier,
 }: {
   room: RoomData | null
+  onOpenMap: () => void
+  onOpenInventory: () => void
+  onOpenGear: () => void
+  onOpenDossier: () => void
 }) {
   const encounter = room?.encounter
   const enemies = encounter?.enemies ?? []
+  const roomType = room?.currentRoom.type ?? 'grace'
 
   return (
     <>
+      {/* Quick-access bar */}
+      <div className="quickbar">
+        <button type="button" className="quickbar__btn" onClick={onOpenGear} aria-label="Open gear (G)">
+          <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>shield</span>
+          <span className="quickbar__label">Gear</span>
+          <kbd className="quickbar__kbd">G</kbd>
+        </button>
+        <button type="button" className="quickbar__btn" onClick={onOpenInventory} aria-label="Open inventory (I)">
+          <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>backpack</span>
+          <span className="quickbar__label">Inventory</span>
+          <kbd className="quickbar__kbd">I</kbd>
+        </button>
+        <button type="button" className="quickbar__btn" onClick={onOpenDossier} aria-label="Open dossier (P)">
+          <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>person</span>
+          <span className="quickbar__label">Player Sheet</span>
+          <kbd className="quickbar__kbd">P</kbd>
+        </button>
+      </div>
+
       {/* Chamber art */}
-      <div className="chamberart">
+      <div className="chamberart" role="button" tabIndex={0} onClick={onOpenMap} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenMap() } }} style={{ cursor: 'pointer' }}>
         <svg className="chamberart__svg" viewBox="0 0 800 160" preserveAspectRatio="xMidYMid slice">
           <defs>
             <radialGradient cx="50%" cy="50%" id="occultGlow" r="50%">
@@ -887,18 +912,114 @@ function RightRail({
             </pattern>
           </defs>
           <rect fill="url(#runeGrid)" width="800" height="160" />
-          <circle cx="400" cy="80" fill="url(#occultGlow)" r="75" />
-          <circle cx="400" cy="80" fill="none" r="62" stroke="#d4af37" strokeOpacity="0.65" strokeWidth="1.2" />
-          <circle cx="400" cy="80" fill="none" r="48" stroke="#c084fc" strokeDasharray="5 3" strokeOpacity="0.5" strokeWidth="0.8" />
-          <polygon fill="none" points="400,28 448,104 352,104" stroke="#f2ca50" strokeOpacity="0.8" strokeWidth="1.2" />
-          <polygon fill="none" points="400,132 448,56 352,56" stroke="#d4af37" strokeOpacity="0.6" strokeWidth="0.9" />
-          <circle cx="400" cy="80" fill="#dc2626" fillOpacity="0.85" r="6">
-            <animate attributeName="r" dur="2.8s" repeatCount="indefinite" values="5;8;5" />
-          </circle>
-          <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="220" y1="80" x2="338" y2="80" />
-          <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="462" y1="80" x2="580" y2="80" />
-          <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="250" y="75">✦ ☽ ☥</text>
-          <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="520" y="75">☥ ☩ ☾</text>
+          {roomType === 'grace' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="75" />
+              <circle cx="400" cy="80" fill="none" r="62" stroke="#34d399" strokeOpacity="0.65" strokeWidth="1.2" />
+              <circle cx="400" cy="80" fill="none" r="48" stroke="#34d399" strokeDasharray="5 3" strokeOpacity="0.5" strokeWidth="0.8" />
+              <polygon fill="none" points="400,28 448,104 352,104" stroke="#34d399" strokeOpacity="0.8" strokeWidth="1.2" />
+              <polygon fill="none" points="400,132 448,56 352,56" stroke="#34d399" strokeOpacity="0.6" strokeWidth="0.9" />
+              <circle cx="400" cy="80" fill="#34d399" fillOpacity="0.85" r="6">
+                <animate attributeName="r" dur="2.8s" repeatCount="indefinite" values="5;8;5" />
+              </circle>
+              <line stroke="#34d399" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="220" y1="80" x2="338" y2="80" />
+              <line stroke="#34d399" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="462" y1="80" x2="580" y2="80" />
+              <text fill="#34d399" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="250" y="75">☮ ☽ ☥</text>
+              <text fill="#34d399" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="520" y="75">☥ ☩ ☾</text>
+            </>
+          )}
+          {roomType === 'normal' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="75" />
+              <circle cx="400" cy="80" fill="none" r="62" stroke="#d4af37" strokeOpacity="0.65" strokeWidth="1.2" />
+              <circle cx="400" cy="80" fill="none" r="48" stroke="#c084fc" strokeDasharray="5 3" strokeOpacity="0.5" strokeWidth="0.8" />
+              <polygon fill="none" points="400,28 448,104 352,104" stroke="#f2ca50" strokeOpacity="0.8" strokeWidth="1.2" />
+              <polygon fill="none" points="400,132 448,56 352,56" stroke="#d4af37" strokeOpacity="0.6" strokeWidth="0.9" />
+              <circle cx="400" cy="80" fill="#dc2626" fillOpacity="0.85" r="6">
+                <animate attributeName="r" dur="2.8s" repeatCount="indefinite" values="5;8;5" />
+              </circle>
+              <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="220" y1="80" x2="338" y2="80" />
+              <line stroke="#d4af37" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="462" y1="80" x2="580" y2="80" />
+              <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="250" y="75">✦ ☽ ☥</text>
+              <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="520" y="75">☥ ☩ ☾</text>
+            </>
+          )}
+          {roomType === 'boss' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="80" />
+              <circle cx="400" cy="80" fill="none" r="70" stroke="#dc2626" strokeOpacity="0.7" strokeWidth="1.5" />
+              <circle cx="400" cy="80" fill="none" r="55" stroke="#dc2626" strokeDasharray="8 4" strokeOpacity="0.5" strokeWidth="1" />
+              <polygon fill="none" points="400,18 462,120 338,120" stroke="#dc2626" strokeOpacity="0.9" strokeWidth="1.5" />
+              <polygon fill="none" points="400,142 462,40 338,40" stroke="#dc2626" strokeOpacity="0.7" strokeWidth="1.2" />
+              <circle cx="400" cy="80" fill="#dc2626" fillOpacity="0.9" r="8">
+                <animate attributeName="r" dur="1.5s" repeatCount="indefinite" values="6;10;6" />
+              </circle>
+              <line stroke="#dc2626" strokeDasharray="3 3" strokeOpacity="0.5" strokeWidth="1" x1="180" y1="80" x2="330" y2="80" />
+              <line stroke="#dc2626" strokeDasharray="3 3" strokeOpacity="0.5" strokeWidth="1" x1="470" y1="80" x2="620" y2="80" />
+              <text fill="#dc2626" fontFamily="Cinzel" fontSize="11" opacity="0.75" x="240" y="75">⚔ ⚔ ⚔</text>
+              <text fill="#dc2626" fontFamily="Cinzel" fontSize="11" opacity="0.75" x="510" y="75">☠ ☠ ☠</text>
+            </>
+          )}
+          {roomType === 'miniboss' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="70" />
+              <circle cx="400" cy="80" fill="none" r="58" stroke="#f97316" strokeOpacity="0.7" strokeWidth="1.3" />
+              <circle cx="400" cy="80" fill="none" r="44" stroke="#f97316" strokeDasharray="6 3" strokeOpacity="0.5" strokeWidth="0.9" />
+              <polygon fill="none" points="400,26 445,100 355,100" stroke="#f97316" strokeOpacity="0.85" strokeWidth="1.3" />
+              <polygon fill="none" points="400,134 445,60 355,60" stroke="#f97316" strokeOpacity="0.65" strokeWidth="1" />
+              <circle cx="400" cy="80" fill="#f97316" fillOpacity="0.85" r="7">
+                <animate attributeName="r" dur="2s" repeatCount="indefinite" values="5;9;5" />
+              </circle>
+              <line stroke="#f97316" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.9" x1="240" y1="80" x2="342" y2="80" />
+              <line stroke="#f97316" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.9" x1="458" y1="80" x2="560" y2="80" />
+              <text fill="#f97316" fontFamily="Cinzel" fontSize="10" opacity="0.7" x="255" y="75">⚔ ☽</text>
+              <text fill="#f97316" fontFamily="Cinzel" fontSize="10" opacity="0.7" x="525" y="75">☽ ⚔</text>
+            </>
+          )}
+          {roomType === 'puzzle' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="70" />
+              <rect x="355" y="35" width="90" height="90" fill="none" stroke="#c084fc" strokeOpacity="0.6" strokeWidth="1.2" rx="2" />
+              <rect x="368" y="48" width="64" height="64" fill="none" stroke="#c084fc" strokeDasharray="4 4" strokeOpacity="0.5" strokeWidth="0.9" rx="1" />
+              <circle cx="400" cy="80" fill="none" r="30" stroke="#c084fc" strokeOpacity="0.7" strokeWidth="1" />
+              <circle cx="400" cy="80" fill="#c084fc" fillOpacity="0.8" r="5">
+                <animate attributeName="r" dur="3s" repeatCount="indefinite" values="4;7;4" />
+              </circle>
+              <line x1="355" y1="35" x2="445" y2="125" stroke="#c084fc" strokeOpacity="0.3" strokeWidth="0.8" />
+              <line x1="445" y1="35" x2="355" y2="125" stroke="#c084fc" strokeOpacity="0.3" strokeWidth="0.8" />
+              <text fill="#c084fc" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="240" y="75">✧ ◇ ✧</text>
+              <text fill="#c084fc" fontFamily="Cinzel" fontSize="10" opacity="0.65" x="520" y="75">◇ ✧ ◇</text>
+            </>
+          )}
+          {roomType === 'treasure' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="70" />
+              <circle cx="400" cy="80" fill="none" r="58" stroke="#f2ca50" strokeOpacity="0.7" strokeWidth="1.3" />
+              <circle cx="400" cy="80" fill="none" r="44" stroke="#f2ca50" strokeDasharray="3 5" strokeOpacity="0.5" strokeWidth="0.9" />
+              <rect x="372" y="52" width="56" height="56" fill="none" stroke="#f2ca50" strokeOpacity="0.8" strokeWidth="1.3" rx="2" />
+              <rect x="382" y="62" width="36" height="36" fill="none" stroke="#f2ca50" strokeOpacity="0.6" strokeWidth="0.9" rx="1" />
+              <circle cx="400" cy="80" fill="#f2ca50" fillOpacity="0.85" r="6">
+                <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="5;8;5" />
+              </circle>
+              <line stroke="#f2ca50" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="230" y1="80" x2="340" y2="80" />
+              <line stroke="#f2ca50" strokeDasharray="4 4" strokeOpacity="0.4" strokeWidth="0.8" x1="460" y1="80" x2="570" y2="80" />
+              <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.7" x="245" y="75">⚜ ☽ ⚜</text>
+              <text fill="#f2ca50" fontFamily="Cinzel" fontSize="10" opacity="0.7" x="515" y="75">⚜ ☽ ⚜</text>
+            </>
+          )}
+          {roomType === 'secret' && (
+            <>
+              <circle cx="400" cy="80" fill="url(#occultGlow)" r="65" />
+              <circle cx="400" cy="80" fill="none" r="52" stroke="#a855f7" strokeOpacity="0.6" strokeWidth="1.2" />
+              <circle cx="400" cy="80" fill="none" r="40" stroke="#a855f7" strokeDasharray="2 6" strokeOpacity="0.45" strokeWidth="0.8" />
+              <polygon fill="none" points="400,32 440,100 360,100" stroke="#a855f7" strokeOpacity="0.75" strokeWidth="1.1" />
+              <circle cx="400" cy="80" fill="#a855f7" fillOpacity="0.7" r="4">
+                <animate attributeName="r" dur="4s" repeatCount="indefinite" values="3;6;3" />
+              </circle>
+              <text fill="#a855f7" fontFamily="Cinzel" fontSize="10" opacity="0.6" x="250" y="75">? ☽ ?</text>
+              <text fill="#a855f7" fontFamily="Cinzel" fontSize="10" opacity="0.6" x="520" y="75">? ☽ ?</text>
+            </>
+          )}
         </svg>
         <div className="chamberart__overlay" />
         <div className="chamberart__badges">
@@ -915,6 +1036,7 @@ function RightRail({
       </div>
 
       {/* Hostiles deck */}
+      {enemies.length > 0 && (
       <div className="hostiles">
         <div className="hostiles__head">
           <div className="hostiles__title">
@@ -941,12 +1063,8 @@ function RightRail({
             </div>
           )
         })}
-        {enemies.length === 0 && (
-          <div style={{ fontSize: '0.75rem', color: '#6e6656', padding: '0.5rem 0', fontFamily: '"EB Garamond", serif', fontStyle: 'italic' }}>
-            No enemies found.
-          </div>
-        )}
       </div>
+      )}
     </>
   )
 }
@@ -965,8 +1083,8 @@ function CombatModal({
   const encounter = room.encounter
   const [pending, setPending] = useState<CombatAction | null>(null)
   const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
+  const { toast } = useToast()
 
   const voteActive = encounter?.phase === 'vote' && (room.currentVote != null)
   const voteDeadlineAt = room.currentVote?.deadlineAt ?? 0
@@ -1021,6 +1139,14 @@ function CombatModal({
       p.stats.health.CurrentHealth > 0,
   )
 
+  const downedAllies = room.players.filter(
+    (p) =>
+      p.playerPublicId !== selfPublicId &&
+      p.status !== 'disconnected' &&
+      p.status !== 'left' &&
+      p.stats.health.CurrentHealth <= 0,
+  )
+
   const partyAll = room.players.filter(
     (p) => p.status !== 'disconnected' && p.status !== 'left' && p.status !== 'ended',
   )
@@ -1029,6 +1155,7 @@ function CombatModal({
   const pendingAbility = pending && pending.type === 'ability' ? pending : null
   const needsTarget =
     pending?.type === 'attack' ||
+    pending?.type === 'revive' ||
     (pendingAbility !== null &&
       (() => {
         const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
@@ -1037,6 +1164,7 @@ function CombatModal({
 
   const pendingTargetKind: 'enemy' | 'ally' | null = (() => {
     if (pending?.type === 'attack') return 'enemy'
+    if (pending?.type === 'revive') return 'ally'
     if (pendingAbility) {
       const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
       if (ability && abilityNeedsTarget(ability)) {
@@ -1049,12 +1177,11 @@ function CombatModal({
   const sendAction = async (action: CombatAction) => {
     if (!roomToken) return
     setBusy(true)
-    setErr(null)
     try {
       await selectCombatAction(roomToken, action)
       setPending(action)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'failed to act')
+      toast('error', e instanceof Error ? e.message : 'Failed to act')
     } finally {
       setBusy(false)
     }
@@ -1063,12 +1190,11 @@ function CombatModal({
   const sendTarget = async (target: CombatTarget) => {
     if (!roomToken) return
     setBusy(true)
-    setErr(null)
     try {
       await selectCombatTarget(roomToken, target)
       setPending(null)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'failed to target')
+      toast('error', e instanceof Error ? e.message : 'Failed to target')
     } finally {
       setBusy(false)
     }
@@ -1080,11 +1206,10 @@ function CombatModal({
   const sendVote = async (optionId: string) => {
     if (!roomToken) return
     setBusy(true)
-    setErr(null)
     try {
       await sendVoteOption(roomToken, optionId)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'failed to vote')
+      toast('error', e instanceof Error ? e.message : 'Failed to vote')
     } finally {
       setBusy(false)
     }
@@ -1100,6 +1225,9 @@ function CombatModal({
       invoke: () => void sendAction({ type: 'ability', abilityId: a.id }),
     })),
     { label: 'defend', invoke: () => void sendAction({ type: 'defend' }) },
+    ...(downedAllies.length > 0
+      ? [{ label: 'revive', title: 'Revive a fallen ally', invoke: () => void sendAction({ type: 'revive' }) }]
+      : []),
   ]
 
   keyboardRef.current = (event: KeyboardEvent) => {
@@ -1128,9 +1256,10 @@ function CombatModal({
       const idx = numberKeyIndex(event.key)
       if (idx === -1) return
       if (pendingTargetKind === 'ally') {
-        if (idx < allies.length) {
+        const targetList = pending?.type === 'revive' ? downedAllies : allies
+        if (idx < targetList.length) {
           event.preventDefault()
-          pickAlly(allies[idx].playerPublicId)
+          pickAlly(targetList[idx].playerPublicId)
         }
       } else if (idx < enemies.length) {
         event.preventDefault()
@@ -1147,21 +1276,26 @@ function CombatModal({
   }
 
   return (
-    <div className="combatmodal__scrim">
+    <div className="bento-scrim">
       <div
-        className="combatmodal"
+        className="bento"
+        style={{ maxWidth: '48rem' }}
         role="dialog"
         aria-modal="true"
         aria-label="Combat"
       >
-        <header className="combatmodal__head">
-          <span className="combatmodal__eyebrow">
-            {isVote ? `the party decides · ${voteRemainingSec}s` : `combat · round ${encounter.round}`}
-          </span>
-          <h2 className="combatmodal__title">{isVote ? 'Foes Bar the Way' : 'The Fray'}</h2>
-          <span className="combatmodal__turn">
-            {isVote ? 'battle or ambush?' : isMyTurn ? 'your turn' : `awaiting ${turnName}`}
-          </span>
+        <header className="bento__head">
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">
+              {isVote ? `the party decides · ${voteRemainingSec}s` : `combat · round ${encounter.round}`}
+            </span>
+            <h2 className="bento__title">{isVote ? 'Foes Bar the Way' : 'The Fray'}</h2>
+          </div>
+          <div className="bento__head-right">
+            <span className="bento__subtitle">
+              {isVote ? 'battle or ambush?' : isMyTurn ? 'your turn' : `awaiting ${turnName}`}
+            </span>
+          </div>
         </header>
 
         <div className="combatmodal__body">
@@ -1235,7 +1369,7 @@ function CombatModal({
               {isMyTurn && needsTarget && (
                 <div className="combatgrid__actionsbody">
                   {pendingTargetKind === 'ally' &&
-                    allies.map((p, i) => (
+                    (pending?.type === 'revive' ? downedAllies : allies).map((p, i) => (
                       <button
                         type="button"
                         key={p.playerPublicId}
@@ -1245,7 +1379,9 @@ function CombatModal({
                       >
                         <span className="combatgrid__actkey">{i + 1}</span>
                         <span className="combatgrid__actlabel">{p.name}</span>
-                        <span className="combatgrid__acthp">{p.stats.health.CurrentHealth}/{p.stats.health.MaxHealth}</span>
+                        <span className="combatgrid__acthp">
+                          {p.stats.health.CurrentHealth <= 0 ? 'down' : `${p.stats.health.CurrentHealth}/${p.stats.health.MaxHealth}`}
+                        </span>
                       </button>
                     ))}
                   {pendingTargetKind === 'enemy' && (
@@ -1386,14 +1522,6 @@ function CombatModal({
           </div>
           )}
         </div>
-
-        {err && (
-          <footer className="combatmodal__controls">
-            <p className="composer__error" role="alert">
-              {err}
-            </p>
-          </footer>
-        )}
       </div>
     </div>
   )
@@ -1731,9 +1859,10 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
   const selectedRoom = room.map && selectedIdx !== null ? room.map.rooms[selectedIdx] : null
 
   return (
-    <div className="mapmodal__scrim" onClick={onClose}>
+    <div className="bento-scrim" style={{ padding: '1rem' }} onClick={onClose}>
       <div
-        className="mapmodal"
+        className="bento"
+        style={{ maxWidth: '72rem', height: '92vh' }}
         role="dialog"
         aria-modal="true"
         aria-label="Descent map"
@@ -1741,32 +1870,27 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
         onClick={(event) => event.stopPropagation()}
       >
         {/* Top bar */}
-        <header className="mapmodal__header">
-          <div className="mapmodal__header-left">
-            <span className="mapmodal__sigil">
-              <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', color: '#d4af37' }}>explore</span>
-            </span>
-            <div className="mapmodal__header-text">
-              <span className="mapmodal__eyebrow">the descent</span>
-              <h2 className="mapmodal__title">Celestial Cartography</h2>
-            </div>
+        <header className="bento__head">
+          <div className="bento__head-left">
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#d4af37' }}>explore</span>
+            <span className="bento__eyebrow">the descent</span>
+            <h2 className="bento__title">Celestial Cartography</h2>
           </div>
-          <div className="mapmodal__header-right">
-            <span className="mapmodal__floor-badge">
-              <span className="mapmodal__floor-label">Floor</span>
-              <span className="mapmodal__floor-num">{romanNumeral(room.floor)}</span>
+          <div className="bento__head-right">
+            <span className="bento__badge">
+              Floor {romanNumeral(room.floor)}
             </span>
-            <span className="mapmodal__chamber-badge">
+            <span className="bento__badge">
               Chamber {currentIdx >= 0 ? currentIdx + 1 : '—'} / {room.map?.rooms.length ?? '—'}
             </span>
             <button
               ref={closeRef}
               type="button"
-              className="mapmodal__close"
+              className="bento__close"
               onClick={onClose}
               aria-label="Close map"
             >
-              Close <span style={{ fontSize: '0.75rem' }}>✕</span>
+              ✕
             </button>
           </div>
         </header>
@@ -1928,59 +2052,85 @@ function VoteModal({
   const unspoken = Math.max(0, totalVoters - totalVotesCast)
 
   return (
-    <div className="mapmodal__scrim">
+    <div className="bento-scrim">
       <div
-        className="votemodal"
+        className="bento"
+        style={{ maxWidth: '32rem' }}
         role="dialog"
         aria-modal="true"
         aria-label="Party vote"
         ref={voteRef}
       >
-        <header className="votemodal__head">
-          <div className="votemodal__head-left">
-            <span className="votemodal__eyebrow">the descent</span>
-            <h2 className="votemodal__title">{vote.name}</h2>
-            <p className="votemodal__rule">{vote.description}</p>
+        <header className="bento__head" style={{ position: 'relative' }}>
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">the descent</span>
+            <h2 className="bento__title">{vote.name}</h2>
+            <p className="bento__subtitle" style={{ margin: 0 }}>{vote.description}</p>
           </div>
-          <div className="votemodal__clock" aria-label={`${remainingSec} seconds remain`}>
-            <span className="votemodal__clock-num">{remainingSec}</span>
-            <span className="votemodal__clock-unit">s remain</span>
+          <div className="bento__head-right" style={{ gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }} aria-label={`${remainingSec} seconds remain`}>
+              <span style={{ fontFamily: '"Cinzel", serif', fontSize: '1.5rem', fontWeight: 700, color: remainingSec <= 10 ? '#dc2626' : '#d4af37' }}>
+                {remainingSec}
+              </span>
+              <span className="bento__subtitle">s remain</span>
+            </div>
           </div>
           <div
-            className="votemodal__rod"
+            style={{
+              position: 'absolute', bottom: 0, left: 0, height: '2px',
+              background: 'linear-gradient(90deg, #d4af37, #8a702b)',
+              width: pct > 0 ? `${pct}%` : '0%', transition: 'width 0.25s linear',
+            }}
             role="presentation"
-            style={pct > 0 ? { width: `${pct}%` } : undefined}
           />
         </header>
 
-        <div className="votemodal__body">
-          <div className="votemodal__options">
+        <div className="bento__body" style={{ flexDirection: 'column' }}>
+          <div className="bento-grid" style={{ gridTemplateColumns: '1fr', padding: '0.75rem', gap: '0.5rem' }}>
             {optionCounts.map((opt, i) => {
               const barPct = maxCount > 0 ? opt.count / maxCount : 0
+              const isChosen = myVote === opt.id
               return (
                 <button
                   key={opt.id}
                   ref={i === 0 ? firstButtonRef : undefined}
                   type="button"
-                  className={`votemodal__opt${myVote === opt.id ? ' votemodal__opt--chosen' : ''}`}
+                  className={`bento-card${isChosen ? ' bento-card--accent' : ''}`}
+                  style={{ position: 'relative', overflow: 'hidden', textAlign: 'left', cursor: 'pointer' }}
                   onClick={() => onVote(opt.id)}
                 >
                   <div
-                    className="votemodal__opt-bar"
-                    style={{ transform: `scaleX(${barPct})` }}
+                    style={{
+                      position: 'absolute', inset: 0, transformOrigin: '0 50%',
+                      background: isChosen ? 'rgba(212,175,55,0.12)' : 'rgba(212,175,55,0.05)',
+                      transform: `scaleX(${barPct})`, transition: 'transform 0.3s ease',
+                    }}
                   />
-                  <div className="votemodal__opt-inner">
-                    <span className="votemodal__opt-badge">{i + 1}</span>
-                    <span className="votemodal__opt-body">
-                      <span className="votemodal__opt-name">{opt.name}</span>
-                      <span className="votemodal__opt-desc">{opt.description}</span>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{
+                      fontFamily: '"JetBrains Mono", monospace', fontSize: '0.625rem', fontWeight: 700,
+                      color: isChosen ? '#d4af37' : '#6e6656', background: isChosen ? 'rgba(212,175,55,0.15)' : 'rgba(110,102,86,0.2)',
+                      width: '1.5rem', height: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: `1px solid ${isChosen ? 'rgba(212,175,55,0.4)' : 'rgba(110,102,86,0.3)'}`,
+                    }}>
+                      {i + 1}
                     </span>
-                    <span className="votemodal__opt-meta">
-                      <span className="votemodal__opt-count">{opt.count}</span>
-                      <span className="votemodal__opt-voters">
-                        {opt.voters.join(', ')}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span className="bento-card__title" style={{ display: 'block' }}>{opt.name}</span>
+                      {opt.description && (
+                        <span className="bento-card__desc" style={{ display: 'block', margin: 0 }}>{opt.description}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.125rem', flexShrink: 0 }}>
+                      <span style={{ fontFamily: '"Cinzel", serif', fontSize: '1rem', fontWeight: 700, color: '#d4af37' }}>
+                        {opt.count}
                       </span>
-                    </span>
+                      {opt.voters.length > 0 && (
+                        <span style={{ fontFamily: '"EB Garamond", serif', fontSize: '0.6875rem', color: '#6e6656', fontStyle: 'italic' }}>
+                          {opt.voters.join(', ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </button>
               )
@@ -1988,16 +2138,20 @@ function VoteModal({
           </div>
         </div>
 
-        <div className="votemodal__foot">
-          {hasSpoken && (
-            <p className="votemodal__hint">
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '0.5rem 0.75rem', borderTop: '1px solid rgba(212,175,55,0.1)',
+          background: 'rgba(12,11,15,0.4)', flexShrink: 0,
+        }}>
+          {hasSpoken ? (
+            <span className="bento__subtitle" style={{ margin: 0, fontSize: '0.75rem' }}>
               you may change your voice while time holds
-            </p>
-          )}
+            </span>
+          ) : <span />}
           {unspoken > 0 && (
-            <p className="votemodal__unspoken">
+            <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.625rem', color: '#8a702b' }}>
               {unspoken} silent
-            </p>
+            </span>
           )}
         </div>
       </div>
@@ -2021,17 +2175,32 @@ interface InventoryModalProps {
   onEquip: (index: number) => void
   onUse: (id: string) => void
   busy: boolean
-  actionError: string | null
 }
 
-function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionError }: InventoryModalProps) {
+type SortKey = 'name' | 'rarity'
+type PocketId = 'consumables' | 'gear' | 'scrolls'
+const ITEMS_PER_PAGE = 12
+
+const RARITY_ORDER: Record<string, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 }
+
+function sortItems(items: RunItem[], key: SortKey): RunItem[] {
+  const sorted = [...items]
+  if (key === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name))
+  if (key === 'rarity') sorted.sort((a, b) => (RARITY_ORDER[b.rarity.name] ?? 0) - (RARITY_ORDER[a.rarity.name] ?? 0))
+  return sorted
+}
+
+function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: InventoryModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  const [tip, setTip] = useState<InventoryTip | null>(null)
-  const [activePocket, setActivePocket] = useState<PocketId>('consumables')
+  const [activePocket, setActivePocket] = useState<PocketId>('gear')
+  const [sortBy, setSortBy] = useState<SortKey>('rarity')
+  const [page, setPage] = useState(0)
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
 
   const stats = player.stats
   const temp = stats.temp_stat_modifiers
@@ -2044,15 +2213,45 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionE
     agility: stats.base_stats.agility + stats.stat_modifiers.agility + temp.agility,
   }
   const carried = stats.items ?? []
-  const consumables = carried.filter((item) => item.type === 'consumable')
-  const gear = carried.filter((item) => item.type === 'gear')
-  const scrolls = carried.filter((item) => item.type === 'scroll')
+  const consumables = sortItems(carried.filter((item) => item.type === 'consumable'), sortBy)
+  const gear = sortItems(carried.filter((item) => item.type === 'gear'), sortBy)
+  const scrolls = sortItems(carried.filter((item) => item.type === 'scroll'), sortBy)
 
-  const pockets: { id: PocketId; label: string; count: number }[] = [
-    { id: 'consumables', label: 'consumables', count: consumables.length },
-    { id: 'gear', label: 'gear', count: gear.length },
-    { id: 'scrolls', label: 'scrolls', count: scrolls.length },
+  const activeItems = activePocket === 'consumables' ? consumables : activePocket === 'gear' ? gear : scrolls
+  const totalPages = Math.max(1, Math.ceil(activeItems.length / ITEMS_PER_PAGE))
+  const pagedItems = activeItems.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE)
+  const selectedItem = selectedIdx !== null ? activeItems[selectedIdx] ?? null : null
+
+  const pockets: { id: PocketId; label: string; icon: string; count: number }[] = [
+    { id: 'gear', label: 'gear', icon: 'shield', count: gear.length },
+    { id: 'consumables', label: 'consumables', icon: 'science', count: consumables.length },
+    { id: 'scrolls', label: 'scrolls', icon: 'auto_stories', count: scrolls.length },
   ]
+
+  const pocketIds: PocketId[] = ['gear', 'consumables', 'scrolls']
+
+  const getColumns = useCallback(() => {
+    const el = gridRef.current
+    if (!el) return 4
+    const cols = getComputedStyle(el).gridTemplateColumns
+    return cols.split(' ').length || 4
+  }, [])
+
+  useEffect(() => { setPage(0); setSelectedIdx(null) }, [activePocket, sortBy])
+
+  useEffect(() => {
+    if (selectedIdx === null) return
+    const el = gridRef.current?.querySelector<HTMLElement>('[data-selected]')
+    if (el) el.scrollIntoView({ block: 'nearest' })
+  }, [selectedIdx])
+
+  useEffect(() => {
+    if (selectedIdx === null) return
+    const pageStart = page * ITEMS_PER_PAGE
+    const pageEnd = pageStart + ITEMS_PER_PAGE
+    if (selectedIdx < pageStart) setPage(Math.floor(selectedIdx / ITEMS_PER_PAGE))
+    else if (selectedIdx >= pageEnd) setPage(Math.floor(selectedIdx / ITEMS_PER_PAGE))
+  }, [selectedIdx, page])
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -2065,6 +2264,53 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionE
         onCloseRef.current()
         return
       }
+
+      const cols = getColumns()
+      const count = activeItems.length
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setSelectedIdx((prev) => {
+          if (prev === null) return count > 0 ? 0 : null
+          return prev < count - 1 ? prev + 1 : prev
+        })
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setSelectedIdx((prev) => {
+          if (prev === null) return count > 0 ? 0 : null
+          return prev > 0 ? prev - 1 : prev
+        })
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setSelectedIdx((prev) => {
+          if (prev === null) return count > 0 ? 0 : null
+          const next = prev + cols
+          return next < count ? next : prev
+        })
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setSelectedIdx((prev) => {
+          if (prev === null) return count > 0 ? 0 : null
+          const next = prev - cols
+          return next >= 0 ? next : prev
+        })
+      } else if (event.key === 'Enter' && selectedIdx !== null) {
+        event.preventDefault()
+        setSelectedIdx((prev) => prev === null ? null : (prev === selectedIdx ? null : prev))
+      } else if (event.key === 'Tab') {
+        event.preventDefault()
+        const current = pocketIds.indexOf(activePocket)
+        const next = event.shiftKey
+          ? (current - 1 + pocketIds.length) % pocketIds.length
+          : (current + 1) % pocketIds.length
+        setActivePocket(pocketIds[next])
+      } else if (event.key === 'Home') {
+        event.preventDefault()
+        setSelectedIdx(count > 0 ? 0 : null)
+      } else if (event.key === 'End') {
+        event.preventDefault()
+        setSelectedIdx(count > 0 ? count - 1 : null)
+      }
     }
     window.addEventListener('keydown', onKeyDown)
 
@@ -2072,285 +2318,266 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy, actionE
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [])
+  }, [activeItems.length, activePocket, getColumns, selectedIdx])
 
   return (
-    <div className="filecard__scrim" onClick={onClose}>
+    <div className="bento-scrim" onClick={onClose}>
       <div
-        className="filecard"
+        className="bento"
+        style={{ maxWidth: '52rem' }}
         role="dialog"
         aria-modal="true"
         aria-label={`${player.name} — inventory`}
         ref={dialogRef}
-        onClick={(event) => event.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="filecard__tab filecard__tab--simple">
-          <span className="filecard__tab-label">inventory</span>
-          <button
-            ref={closeRef}
-            type="button"
-            className="filecard__close"
-            onClick={onClose}
-            aria-label="Close inventory"
-          >
-            close ✕
-          </button>
-        </div>
-        <div className="filecard__sheet" key={player.playerId}>
-          <header className="filecard__head">
-            <h2 className="filecard__name">{player.name}</h2>
-            <div className="filecard__identity">
-              <span className="filecard__gold">{stats.gold} gold</span>
-            </div>
-          </header>
-
-          <div className="filecard__tabpanel bag" role="tabpanel">
-            <aside className="bag__sidebar" role="tablist" aria-label="Inventory pockets">
-              {pockets.map((pocket) => (
-                <button
-                  key={pocket.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activePocket === pocket.id}
-                  className={`bag__pocket${activePocket === pocket.id ? ' bag__pocket--active' : ''}`}
-                  onClick={() => setActivePocket(pocket.id)}
-                >
-                  <BagIcon pocket={pocket.id} size={15} />
-                  <span className="bag__pocket-label">{pocket.label}</span>
-                  <span className="bag__pocket-count">×{pocket.count}</span>
-                </button>
-              ))}
-            </aside>
-
-            <div className="bag__main">
-              <p className="filecard__inventory-hint">
-                click an item to inspect it{isSelf ? ' · use / read / equip it' : ''}
-              </p>
-              {actionError && <p className="filecard__inventory-error">{actionError}</p>}
-
-              {activePocket === 'consumables' &&
-                (consumables.length > 0 ? (
-                  <ul className="filecard__list">
-                    {consumables.map((item, i) => (
-                      <InventoryRow
-                        key={`${item.id}-${i}`}
-                        item={item}
-                        busy={busy}
-                        onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
-                        onLeave={() => setTip(null)}
-                        action={
-                          isSelf ? { label: 'use', onClick: () => onUse(item.id) } : null
-                        }
-                      />
-                    ))}
-                  </ul>
-                ) : (
-                  <span className="filecard__empty">nothing drinkable carried</span>
-                ))}
-
-              {activePocket === 'gear' &&
-                (gear.length > 0 ? (
-                  <ul className="filecard__list">
-                    {gear.map((item, i) => {
-                      const idx = stats.items ? stats.items.indexOf(item) : -1
-                      const canEquip =
-                        idx >= 0 &&
-                        isSelf &&
-                        item.type === 'gear' &&
-                        !!item.slot &&
-                        meetsRequired(item.required_stats ?? {}, effectiveStats)
-                      const unmet =
-                        item.type === 'gear' && item.required_stats
-                          ? (Object.keys(item.required_stats) as (keyof Stats)[])
-                              .filter(
-                                (k) =>
-                                  (item.required_stats![k] ?? 0) > 0 &&
-                                  effectiveStats[k] < item.required_stats![k],
-                              )
-                              .map((k) => `${k} ${item.required_stats![k]}`)
-                              .join(', ')
-                          : null
-                      return (
-                        <InventoryRow
-                          key={`${item.id}-${i}`}
-                          item={item}
-                          busy={busy}
-                          gateNote={unmet ? `needs ${unmet}` : null}
-                          onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
-                          onLeave={() => setTip(null)}
-                          action={
-                            isSelf
-                              ? canEquip
-                                ? { label: 'equip', onClick: () => onEquip(idx) }
-                                : null
-                              : null
-                          }
-                        />
-                      )
-                    })}
-                  </ul>
-                ) : (
-                  <span className="filecard__empty">nothing equippable carried</span>
-                ))}
-
-              {activePocket === 'scrolls' &&
-                (scrolls.length > 0 ? (
-                  <ul className="filecard__list">
-                    {scrolls.map((item, i) => (
-                      <InventoryRow
-                        key={`${item.id}-${i}`}
-                        item={item}
-                        busy={busy}
-                        onHover={(hovered, rect) => setTip({ item: hovered, rect, met: meetsRequired(hovered.required_stats ?? {}, effectiveStats) })}
-                        onLeave={() => setTip(null)}
-                        action={
-                          isSelf ? { label: 'read', onClick: () => onUse(item.id) } : null
-                        }
-                      />
-                    ))}
-                  </ul>
-                ) : (
-                  <span className="filecard__empty">nothing to read carried</span>
-                ))}
-            </div>
+        {/* Header */}
+        <div className="bento__head">
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">inventory</span>
+            <h2 className="bento__title">{player.name}</h2>
+            <span className="bento__subtitle">{carried.length} items · {stats.gold} gold</span>
+          </div>
+          <div className="bento__head-right">
+            <button ref={closeRef} type="button" className="bento__close" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
           </div>
         </div>
-      </div>
-      {tip && <InventoryTooltip tip={tip} />}
-    </div>
-  )
-}
 
-interface InventoryRowProps {
-  item: RunItem
-  busy: boolean
-  action?: { label: string; onClick: () => void } | null
-  gateNote?: string | null
-  onHover: (item: RunItem, rect: DOMRect) => void
-  onLeave: () => void
-}
+        {/* Tabs */}
+        <div className="bento-tabs">
+          {pockets.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`bento-tab${activePocket === p.id ? ' bento-tab--active' : ''}`}
+              onClick={() => setActivePocket(p.id)}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>{p.icon}</span>
+              {p.label}
+              <span className="bento-tab__count">{p.count}</span>
+            </button>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', margin: '0 0.75rem', borderLeft: '1px solid rgba(212,175,55,0.08)', paddingLeft: '0.75rem' }}>
+            <button
+              type="button"
+              className={`bento-btn bento-btn--ghost bento-btn--sm${sortBy === 'name' ? ' bento-tab--active' : ''}`}
+              onClick={() => setSortBy('name')}
+            >
+              A–Z
+            </button>
+            <button
+              type="button"
+              className={`bento-btn bento-btn--ghost bento-btn--sm${sortBy === 'rarity' ? ' bento-tab--active' : ''}`}
+              onClick={() => setSortBy('rarity')}
+            >
+              rarity
+            </button>
+          </div>
+        </div>
 
-function InventoryRow({ item, busy, action, gateNote, onHover, onLeave }: InventoryRowProps) {
-  return (
-    <li
-      className="filecard__item"
-      onMouseEnter={(event) => onHover(item, event.currentTarget.getBoundingClientRect())}
-      onMouseLeave={onLeave}
-    >
-      <div className="filecard__item-row">
-        <span className="filecard__item-nav">
-          <span className="filecard__item-name">{item.name}</span>
-          <span className={`filecard__rarity filecard__rarity--${item.rarity.name}`}>
-            {item.rarity.name}
-          </span>
-          {item.type === 'gear' && item.slot && (
-            <span className="filecard__item-slot">{item.slot}</span>
-          )}
-        </span>
-        {action && (
-          <button
-            type="button"
-            className="btn btn--ghost"
-            disabled={busy}
-            onClick={action.onClick}
-          >
-            {action.label}
-          </button>
-        )}
-      </div>
-      {gateNote && <span className="filecard__item-gate">{gateNote}</span>}
-    </li>
-  )
-}
+        {/* Body: grid + detail */}
+        <div className="bento__body">
+          <div ref={gridRef} className="bento-grid bento-grid--auto" style={{ alignContent: 'start' }}>
+            {activeItems.length === 0 ? (
+              <div className="bento-empty" style={{ gridColumn: '1 / -1' }}>
+                {activePocket === 'gear' && 'No armor or weapons carried.'}
+                {activePocket === 'consumables' && 'No potions carried.'}
+                {activePocket === 'scrolls' && 'No scrolls carried.'}
+              </div>
+            ) : (
+              pagedItems.map((item, i) => {
+                const globalIdx = page * ITEMS_PER_PAGE + i
+                const isSelected = selectedIdx === globalIdx
+                return (
+                  <button
+                    key={`${item.id}-${i}`}
+                    type="button"
+                    data-selected={isSelected || undefined}
+                    className={`bento-card${isSelected ? ' bento-card--accent' : ''}`}
+                    style={{
+                      cursor: 'pointer', textAlign: 'left',
+                      borderLeft: `3px solid ${
+                        item.rarity.name === 'legendary' ? '#dc2626' :
+                        item.rarity.name === 'epic' ? '#d4af37' :
+                        item.rarity.name === 'rare' ? '#8b5cf6' :
+                        item.rarity.name === 'uncommon' ? '#34d399' :
+                        'rgba(110,102,86,0.5)'
+                      }`,
+                    }}
+                    onClick={() => setSelectedIdx(isSelected ? null : globalIdx)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.375rem' }}>
+                      <span style={{
+                        fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem',
+                        textTransform: 'uppercase', letterSpacing: '0.1em',
+                        color: item.rarity.name === 'legendary' ? '#dc2626' :
+                               item.rarity.name === 'epic' ? '#d4af37' :
+                               item.rarity.name === 'rare' ? '#8b5cf6' :
+                               item.rarity.name === 'uncommon' ? '#34d399' :
+                               '#6e6656',
+                      }}>
+                        {item.rarity.name}
+                      </span>
+                      {item.type === 'gear' && item.slot && (
+                        <span style={{
+                          fontFamily: '"JetBrains Mono", monospace', fontSize: '0.4375rem',
+                          color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em',
+                        }}>
+                          {item.slot}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{
+                      fontFamily: '"Cinzel", serif', fontSize: '0.75rem', fontWeight: 700,
+                      color: '#ece4d4', lineHeight: 1.2,
+                    }}>
+                      {item.name}
+                    </span>
+                    {item.type === 'scroll' && item.ability && (
+                      <span style={{
+                        fontFamily: '"EB Garamond", serif', fontSize: '0.6875rem',
+                        color: '#8a702b', fontStyle: 'italic',
+                      }}>
+                        teaches {item.ability}
+                      </span>
+                    )}
+                    {item.type === 'consumable' && (
+                      <span style={{
+                        fontFamily: '"EB Garamond", serif', fontSize: '0.6875rem',
+                        color: '#34d399', fontStyle: 'italic',
+                      }}>
+                        consumable
+                      </span>
+                    )}
+                  </button>
+                )
+              })
+            )}
 
-interface InventoryTip {
-  item: RunItem
-  rect: DOMRect
-  met: boolean
-}
+            {totalPages > 1 && (
+              <div className="bento-pages" style={{ gridColumn: '1 / -1' }}>
+                <button
+                  type="button"
+                  className="bento-pages__btn"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  ‹
+                </button>
+                <span className="bento-pages__info">{page + 1} / {totalPages}</span>
+                <button
+                  type="button"
+                  className="bento-pages__btn"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+          </div>
 
-function InventoryTooltip({ tip }: { tip: InventoryTip }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const { innerWidth, innerHeight } = window
-    const gutter = 12
-    const W = el.offsetWidth
-    const H = el.offsetHeight
-    let left = tip.rect.right + gutter
-    if (left + W > innerWidth - gutter) left = tip.rect.left - gutter - W
-    left = Math.max(gutter, left)
-    let top = tip.rect.top
-    if (top + H > innerHeight - gutter) top = innerHeight - gutter - H
-    top = Math.max(gutter, top)
-    setPos({ left, top })
-  }, [tip])
-
-  const { item } = tip
-  const entries = item.stats ? Object.entries(item.stats).filter(([, v]) => v !== 0) : []
-  const requiredEntries = item.required_stats
-    ? Object.entries(item.required_stats).filter(([, v]) => v !== 0)
-    : []
-
-  return createPortal(
-    <div
-      ref={ref}
-      className="filecard__tooltip filecard__tooltip--fixed"
-      role="tooltip"
-      style={pos ? { left: pos.left, top: pos.top } : { left: -9999, top: -9999 }}
-    >
-      <span className="filecard__tooltip-head">
-        <span className="filecard__tooltip-name">{item.name}</span>
-        <span className={`filecard__rarity filecard__rarity--${item.rarity.name}`}>
-          {item.rarity.name}
-        </span>
-      </span>
-      {item.description && <span className="filecard__tooltip-desc">{item.description}</span>}
-      {item.type === 'scroll' && item.ability && (
-        <span className="filecard__tooltip-teaches">
-          <span className="filecard__tooltip-teaches-k">teaches</span>
-          <span className="filecard__tooltip-teaches-v">
-            {item.ability}
-            {item.ability_description ? ` — ${item.ability_description}` : ''}
-          </span>
-        </span>
-      )}
-      {entries.length > 0 && (
-        <span className="filecard__tooltip-block">
-          <span className="filecard__tooltip-label">stats</span>
-          <span className="filecard__gear-stats">
-            {entries.map(([k, v]) => (
-              <span className="filecard__ws" key={k}>
-                <span className="filecard__ws-k">{k}</span>
-                <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
-                  {v > 0 ? `+${v}` : v}
+          {/* Detail panel */}
+          {selectedItem && (
+            <div className="bento-detail">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className={`bento-list-item__rarity bento-list-item__rarity--${selectedItem.rarity.name}`}>
+                  {selectedItem.rarity.name}
                 </span>
-              </span>
-            ))}
-          </span>
-        </span>
-      )}
-      {requiredEntries.length > 0 && (
-        <span className="filecard__tooltip-block">
-          <span className="filecard__tooltip-label">requires</span>
-          <span className={tip.met ? 'field__req field__req--met' : 'field__req field__req--req'}>
-            {requiredEntries.map(([k, v]) => (
-              <span className="field__req-chip" key={k}>
-                <span className="field__req-k">{k}</span>
-                <span className="field__req-v">{v}</span>
-              </span>
-            ))}
-          </span>
-        </span>
-      )}
-      {item.type === 'consumable' && item.buyPrice > 0 && (
-        <span className="filecard__tooltip-price">shop value · {item.buyPrice} gold</span>
-      )}
-    </div>,
-    document.body,
+                {selectedItem.type === 'gear' && selectedItem.slot && (
+                  <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.0625rem 0.375rem', border: '1px solid rgba(110,102,86,0.3)' }}>
+                    {selectedItem.slot}
+                  </span>
+                )}
+              </div>
+              <h3 className="bento-detail__name">{selectedItem.name}</h3>
+              {selectedItem.description && (
+                <p className="bento-detail__desc">{selectedItem.description}</p>
+              )}
+              {selectedItem.type === 'scroll' && selectedItem.ability && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="bento-card__label">teaches</span>
+                  <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.8125rem', fontWeight: 700, color: '#c084fc' }}>
+                    {selectedItem.ability}
+                  </span>
+                  {selectedItem.ability_description && (
+                    <span style={{ fontFamily: '"EB Garamond", serif', fontSize: '0.75rem', color: '#8a702b', fontStyle: 'italic', marginTop: '0.125rem' }}>
+                      {selectedItem.ability_description}
+                    </span>
+                  )}
+                </div>
+              )}
+              {selectedItem.stats && Object.entries(selectedItem.stats).filter(([, v]) => v !== 0).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="bento-card__label">stats</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                    {Object.entries(selectedItem.stats).filter(([, v]) => v !== 0).map(([k, v]) => (
+                      <span className="stat-chip" key={k}>
+                        <span className="stat-chip__label">{k}</span>
+                        <span className={`stat-chip__value${v > 0 ? ' stat-chip__value--pos' : ''}`}>
+                          {v > 0 ? `+${v}` : v}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedItem.required_stats && Object.entries(selectedItem.required_stats).filter(([, v]) => v !== 0).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="bento-card__label">requires</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                    {Object.entries(selectedItem.required_stats).filter(([, v]) => v !== 0).map(([k, v]) => {
+                      const met = effectiveStats[k as keyof Stats] >= (v as number)
+                      return (
+                        <span className={`stat-chip${met ? ' stat-chip--met' : ''}`} key={k} style={met ? { borderColor: 'rgba(52,211,153,0.4)' } : { borderColor: 'rgba(110,102,86,0.3)' }}>
+                          <span className="stat-chip__label">{k}</span>
+                          <span className="stat-chip__value">{v}</span>
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {isSelf && (
+                <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
+                  {selectedItem.type === 'consumable' && (
+                    <button type="button" className="bento-btn" style={{ width: '100%' }} disabled={busy} onClick={() => onUse(selectedItem.id)}>
+                      use
+                    </button>
+                  )}
+                  {selectedItem.type === 'scroll' && (
+                    <button type="button" className="bento-btn" style={{ width: '100%' }} disabled={busy} onClick={() => onUse(selectedItem.id)}>
+                      read
+                    </button>
+                  )}
+                  {selectedItem.type === 'gear' && (() => {
+                    const idx = stats.items ? stats.items.indexOf(selectedItem) : -1
+                    const canEquip = idx >= 0 && !!selectedItem.slot && meetsRequired(selectedItem.required_stats ?? {}, effectiveStats)
+                    const unmet = selectedItem.required_stats
+                      ? (Object.keys(selectedItem.required_stats) as (keyof Stats)[])
+                          .filter((k) => (selectedItem.required_stats![k] ?? 0) > 0 && effectiveStats[k] < selectedItem.required_stats![k])
+                          .map((k) => `${k} ${selectedItem.required_stats![k]}`)
+                          .join(', ')
+                      : null
+                    return canEquip ? (
+                      <button type="button" className="bento-btn" style={{ width: '100%' }} disabled={busy} onClick={() => onEquip(idx)}>
+                        equip
+                      </button>
+                    ) : unmet ? (
+                      <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6875rem', color: '#dc2626', display: 'block', textAlign: 'center', padding: '0.375rem 0' }}>
+                        needs {unmet}
+                      </span>
+                    ) : null
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -2654,50 +2881,6 @@ function GearSlotIcon({ slot, size = 18 }: GearSlotIconProps) {
   }
 }
 
-type PocketId = 'consumables' | 'gear' | 'scrolls'
-
-interface BagIconProps {
-  pocket: PocketId
-  size?: number
-}
-
-function BagIcon({ pocket, size = 16 }: BagIconProps) {
-  const common = {
-    width: size,
-    height: size,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.8,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-  }
-  switch (pocket) {
-    case 'consumables':
-      return (
-        <svg {...common}>
-          <path d="M10 2v7.31a2 2 0 0 1-.29 1.06L4.7 17.48A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.7-3.52l-5.01-7.11A2 2 0 0 1 14 9.31V2" />
-          <path d="M8.5 2h7" />
-          <path d="M7 16h10" />
-        </svg>
-      )
-    case 'gear':
-      return (
-        <svg {...common}>
-          <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-        </svg>
-      )
-    case 'scrolls':
-      return (
-        <svg {...common}>
-          <path d="M19 17V5a2 2 0 0 0-2-2H4" />
-          <path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" />
-        </svg>
-      )
-  }
-}
-
 interface GearModalProps {
   player: PlayerPublic
   isSelf: boolean
@@ -2706,7 +2889,6 @@ interface GearModalProps {
   onUnequip: (slot: GearSlot) => void
   onSetActive: (id: string, slot: number) => void
   onOpenInventory: () => void
-  actionError: string | null
 }
 
 function GearModal({
@@ -2717,7 +2899,6 @@ function GearModal({
   onUnequip,
   onSetActive,
   onOpenInventory,
-  actionError,
 }: GearModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -2812,136 +2993,152 @@ function GearModal({
   }
 
   return (
-    <div className="filecard__scrim" onClick={onClose}>
+    <div className="bento-scrim" onClick={onClose}>
       <div
-        className="filecard"
+        className="bento"
+        style={{ maxWidth: '36rem' }}
         role="dialog"
         aria-modal="true"
         aria-label={`${player.name} — gear and abilities`}
         ref={dialogRef}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="filecard__tab filecard__tab--simple">
-          <span className="filecard__tab-label">gear &amp; abilities</span>
-          <button
-            ref={closeRef}
-            type="button"
-            className="filecard__close"
-            onClick={onClose}
-            aria-label="Close gear"
-          >
-            close ✕
-          </button>
-        </div>
-        <div className="filecard__sheet" key={player.playerId}>
-          <header className="filecard__head">
-            <h2 className="filecard__name">{player.name}</h2>
-            <div className="filecard__identity">
-              <span className="filecard__level">Lv. {stats.level}</span>
-              <span className="filecard__sep">·</span>
-              <span className="filecard__gold">{stats.gold} gold</span>
-            </div>
-          </header>
-
-          <div className="filecard__secs" role="tablist" aria-label="Gear and abilities sections">
-            {(
-              [
-                { id: 'gear', label: 'Gear' },
-                { id: 'active', label: 'Active' },
-                { id: 'ability', label: 'Abilities' },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={activeSection === tab.id}
-                className={`filecard__sec${activeSection === tab.id ? ' filecard__sec--active' : ''}`}
-                onClick={() => setActiveSection(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
+        <div className="bento__head">
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">gear & abilities</span>
+            <h2 className="bento__title">{player.name}</h2>
+            <span className="bento__subtitle">Lv. {stats.level} · {stats.gold} gold</span>
           </div>
+          <div className="bento__head-right">
+            <button
+              ref={closeRef}
+              type="button"
+              className="bento__close"
+              onClick={onClose}
+              aria-label="Close gear"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
 
-          <div className="filecard__tabpanel" role="tabpanel">
+        <div className="bento-tabs">
+          {(
+            [
+              { id: 'gear', label: 'Gear' },
+              { id: 'active', label: 'Active' },
+              { id: 'ability', label: 'Abilities' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeSection === tab.id}
+              className={`bento-tab${activeSection === tab.id ? ' bento-tab--active' : ''}`}
+              onClick={() => setActiveSection(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="bento__body" style={{ flexDirection: 'column' }}>
+          <div style={{ padding: '0.75rem', flex: 1, overflowY: 'auto' }}>
             {activeSection === 'gear' && (() => {
               return (
                 <>
                   {slots.length > 0 ? (
-                    <ul className="filecard__gear">
+                    <div className="bento-grid bento-grid--2" style={{ padding: 0 }}>
                       {slots.map(({ slot, label, name, description, rarity, stats: pieceStats }) => {
                         const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
                         return (
-                          <li className="filecard__gear-row" key={label}>
-                            <span className="filecard__gear-slot" title={label} aria-label={label}>
-                              <GearSlotIcon slot={slot} />
-                            </span>
-                            <span className="filecard__gear-body">
-                              <span className="filecard__gear-head">
-                                <span className="filecard__gear-name">{name}</span>
-                                <span className={`filecard__rarity filecard__rarity--${rarity.name}`}>
-                                  {rarity.name}
-                                </span>
+                          <div className="bento-card" key={label}>
+                            <div className="bento-card__head">
+                              <span className="bento-card__label">{label}</span>
+                              <span className={`bento-list-item__rarity bento-list-item__rarity--${rarity.name}`}>
+                                {rarity.name}
                               </span>
-                              <span className="filecard__gear-desc">{description}</span>
-                              {entries.length > 0 && (
-                                <span className="filecard__gear-stats">
-                                  {entries.map(([k, v]) => (
-                                    <span className="filecard__ws" key={k}>
-                                      <span className="filecard__ws-k">{k}</span>
-                                      <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
-                                        {v > 0 ? `+${v}` : v}
-                                      </span>
+                            </div>
+                            <span className="bento-card__title">{name}</span>
+                            {description && (
+                              <span className="bento-card__desc">{description}</span>
+                            )}
+                            {entries.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                {entries.map(([k, v]) => (
+                                  <span className="stat-chip" key={k}>
+                                    <span className="stat-chip__label">{k}</span>
+                                    <span className={`stat-chip__value${v > 0 ? ' stat-chip__value--pos' : ''}`}>
+                                      {v > 0 ? `+${v}` : v}
                                     </span>
-                                  ))}
-                                </span>
-                              )}
-                              {isSelf && (
-                                <button
-                                  type="button"
-                                  className="btn btn--ghost"
-                                  disabled={busy}
-                                  onClick={() => onUnequip(slot)}
-                                >
-                                  unequip
-                                </button>
-                              )}
-                            </span>
-                          </li>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {isSelf && (
+                              <button
+                                type="button"
+                                className="bento-btn bento-btn--ghost bento-btn--sm"
+                                style={{ marginTop: 'auto' }}
+                                disabled={busy}
+                                onClick={() => onUnequip(slot)}
+                              >
+                                unequip
+                              </button>
+                            )}
+                          </div>
                         )
                       })}
-                    </ul>
+                    </div>
                   ) : (
-                    <span className="filecard__empty">nothing equipped</span>
+                    <span className="bento-empty">nothing equipped</span>
                   )}
 
                   {emptySlots.length > 0 && (
-                    <p className="filecard__gear-missing">
-                      empty slots:{' '}
-                      {emptySlots.map((slot) => (
-                        <span className="filecard__gear-empty" key={slot} title={slot} aria-label={slot}>
-                          <GearSlotIcon slot={slot as GearSlot} size={16} />
-                        </span>
-                      ))}
-                      {isSelf && ' · equip gear from inventory to fill them'}
-                    </p>
+                    <div className="bento-card bento-card--muted" style={{ marginTop: '0.5rem' }}>
+                      <span className="bento-card__label">empty slots</span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {emptySlots.map((slot) => (
+                          <span key={slot} title={slot} aria-label={slot} style={{ opacity: 0.4 }}>
+                            <GearSlotIcon slot={slot as GearSlot} size={16} />
+                          </span>
+                        ))}
+                        {isSelf && (
+                          <span className="bento-card__desc" style={{ margin: 0 }}>
+                            equip gear from inventory
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   )}
 
                   {gearBonusEntries.length > 0 && (
-                    <section className="filecard__group">
-                      <h3 className="filecard__sub-heading">gear bonus</h3>
-                      <span className="filecard__gear-stats">
+                    <div className="bento-card bento-card--accent" style={{ marginTop: '0.5rem' }}>
+                      <div className="bento-card__head">
+                        <span className="bento-card__label">gear bonus</span>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
                         {gearBonusEntries.map((k) => (
-                          <span className="filecard__ws" key={k}>
-                            <span className="filecard__ws-k">{k}</span>
-                            <span className="filecard__ws-v filecard__ws-v--pos">
-                              +{gearTotal[k]}
-                            </span>
+                          <span className="stat-chip" key={k}>
+                            <span className="stat-chip__label">{k}</span>
+                            <span className="stat-chip__value stat-chip__value--pos">+{gearTotal[k]}</span>
                           </span>
                         ))}
-                      </span>
-                    </section>
+                      </div>
+                    </div>
+                  )}
+
+                  {isSelf && (
+                    <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="bento-btn bento-btn--ghost"
+                        onClick={onOpenInventory}
+                      >
+                        open inventory (I)
+                      </button>
+                    </div>
                   )}
                 </>
               )
@@ -2970,27 +3167,15 @@ function GearModal({
             {activeSection === 'ability' && (() => {
               return (
                 <>
-                  <h3 className="filecard__sub-heading">
-                    mastered abilities
-                    {stats.abilities.length > 0 ? ` · ${stats.abilities.length}` : ''}
-                  </h3>
+                  <div className="bento-card__head" style={{ marginBottom: '0.5rem' }}>
+                    <span className="bento-card__label">
+                      mastered abilities{stats.abilities.length > 0 ? ` · ${stats.abilities.length}` : ''}
+                    </span>
+                  </div>
                   <AbilityList abilities={stats.abilities} emptyText="none mastered — read scrolls from your inventory to learn abilities" />
                 </>
               )
             })()}
-
-            {isSelf && activeSection === 'gear' && (
-              <p className="filecard__gear-foot">
-                {actionError && <span className="filecard__inventory-error">{actionError}</span>}
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={onOpenInventory}
-                >
-                  manage inventory (I)
-                </button>
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -3090,84 +3275,71 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
   }, [])
 
   return (
-    <div className="filecard__scrim" onClick={onClose}>
+    <div className="bento-scrim" onClick={onClose}>
       <div
-        className="filecard"
+        className="bento"
+        style={{ maxWidth: '36rem' }}
         role="dialog"
         aria-modal="true"
         aria-label={`${player.name} — expeditioner file`}
         ref={dialogRef}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="filecard__tab">
-          <span className="filecard__tab-num">
-            {String(index + 1).padStart(2, '0')} / {String(players.length).padStart(2, '0')}
-          </span>
-          <span className="filecard__tab-label">expeditioner file</span>
-          <button
-            ref={closeRef}
-            type="button"
-            className="filecard__close"
-            onClick={onClose}
-            aria-label="Close file"
-          >
-            close ✕
-          </button>
+        <div className="bento__head">
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">{String(index + 1).padStart(2, '0')} / {String(players.length).padStart(2, '0')}</span>
+            <h2 className="bento__title">{player.name}</h2>
+            <span className="bento__subtitle">Lv. {stats.level} · {stats.gold} gold</span>
+          </div>
+          <div className="bento__head-right">
+            {player.playerPublicId === hostPublicId && (
+              <span className="bento__badge">lead</span>
+            )}
+            {player.playerId === selfPlayerId && (
+              <span className="bento__badge" style={{ color: '#c084fc', background: 'rgba(192,132,252,0.1)', borderColor: 'rgba(192,132,252,0.2)' }}>you</span>
+            )}
+            <button
+              ref={closeRef}
+              type="button"
+              className="bento__close"
+              onClick={onClose}
+              aria-label="Close file"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        <div className="filecard__sheet" key={player.playerId}>
-          <header className="filecard__head">
-            <span className="filecard__kicker">on file with the officer</span>
-            <h2 className="filecard__name">{player.name}</h2>
-            <div className="filecard__identity">
-              <span className="filecard__level">Lv. {stats.level}</span>
-              <span className="filecard__sep">·</span>
-              <span className="filecard__gold">{stats.gold} gold</span>
+        <div className="bento__body" style={{ flexDirection: 'column' }}>
+          <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* HP + XP bars */}
+            <div className="bento-grid bento-grid--2" style={{ padding: 0 }}>
+              <div className="bento-card">
+                <div className="bento-card__head">
+                  <span className="bento-card__label">health</span>
+                  <span className="bento-card__value">{health.CurrentHealth}/{health.MaxHealth}</span>
+                </div>
+                <div className="bento-bar">
+                  <span
+                    className={`bento-bar__fill bento-bar__fill--hp${healthPct <= 25 ? ' bento-bar__fill--danger' : ''}`}
+                    style={{ width: `${healthPct}%` }}
+                  />
+                </div>
+              </div>
+              <div className="bento-card">
+                <div className="bento-card__head">
+                  <span className="bento-card__label">experience</span>
+                  <span className="bento-card__value">{stats.experience}/{stats.level * 100}</span>
+                </div>
+                <div className="bento-bar">
+                  <span className="bento-bar__fill bento-bar__fill--xp" style={{ width: `${xpPct}%` }} />
+                </div>
+              </div>
             </div>
-            <div className="filecard__tags">
-              {player.playerPublicId === hostPublicId && (
-                <span className="board__tag board__tag--host">lead</span>
-              )}
-              {player.playerId === selfPlayerId && (
-                <span className="board__tag board__tag--you">you</span>
-              )}
-              <span className={`board__tag board__tag--${player.status}`}>
-                {statusLabel(player.status)}
-              </span>
-            </div>
-            <span className="filecard__stamp" aria-hidden="true">
-              {statusLabel(player.status)}
-            </span>
-          </header>
 
-          <div className="filecard__bars">
-            <div className="filecard__bar">
-              <span className="filecard__bar-label">Health</span>
-              <span className="filecard__bar-track">
-                <span
-                  className={`filecard__bar-fill${healthPct <= 25 ? ' filecard__bar-fill--low' : ''}`}
-                  style={{ width: `${healthPct}%` }}
-                />
-              </span>
-              <span className="filecard__bar-num">
-                {health.CurrentHealth}/{health.MaxHealth}
-              </span>
-            </div>
-            <div className="filecard__bar">
-              <span className="filecard__bar-label">XP</span>
-              <span className="filecard__bar-track">
-                <span
-                  className="filecard__bar-fill filecard__bar-fill--xp"
-                  style={{ width: `${xpPct}%` }}
-                />
-              </span>
-              <span className="filecard__bar-num">
-                {stats.experience}/{stats.level * 100}
-              </span>
-            </div>
           </div>
 
-          <div className="filecard__secs" role="tablist" aria-label="Expeditioner file sections">
+          <div className="bento-tabs">
             {(
               [
                 { id: 'stats', label: 'Stats' },
@@ -3181,14 +3353,15 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                 type="button"
                 role="tab"
                 aria-selected={activeTab === tab.id}
-                className={`filecard__sec${activeTab === tab.id ? ' filecard__sec--active' : ''}`}
+                className={`bento-tab${activeTab === tab.id ? ' bento-tab--active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <div className="filecard__tabpanel" role="tabpanel">
+
+          <div style={{ padding: '0.75rem', flex: 1, overflowY: 'auto' }}>
             {activeTab === 'stats' &&
               (canModifyStats ? (
                 <ul className="sheet__stats sheet__stats--file">
@@ -3247,16 +3420,16 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                   </li>
                 </ul>
               ) : (
-                <dl className="filecard__stats">
+                <div className="bento-grid bento-grid--2" style={{ padding: 0 }}>
                   {DOSSIER_FIELDS.map((field) => {
                     const base = stats.base_stats[field.key]
                     const mod = stats.stat_modifiers[field.key]
                     const buff = stats.temp_stat_modifiers[field.key]
                     const total = base + mod + buff
                     return (
-                      <div className="filecard__stat" key={field.key}>
-                        <dt className="filecard__k">{field.label}</dt>
-                        <dd className="filecard__v">
+                      <div className="bento-card" key={field.key}>
+                        <span className="bento-card__label">{field.label}</span>
+                        <span className="bento-card__value">
                           {total}
                           {mod !== 0 && (
                             <span className={`filecard__mod${mod > 0 ? ' filecard__mod--pos' : ''}`}>
@@ -3264,13 +3437,13 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                             </span>
                           )}
                           {buff > 0 && (
-                            <span className="filecard__mod filecard__mod--buff">+{buff} active</span>
+                            <span className="filecard__mod filecard__mod--buff">+{buff}</span>
                           )}
-                        </dd>
+                        </span>
                       </div>
                     )
                   })}
-                </dl>
+                </div>
               ))}
 
             {activeTab === 'gear' && (() => {
@@ -3286,35 +3459,34 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                 if (piece) slots.push({ slot, label, name: piece.armorName, stats: piece.stats })
               }
               return slots.length > 0 ? (
-                <ul className="filecard__gear">
+                <div className="bento-grid bento-grid--2" style={{ padding: 0 }}>
                   {slots.map(({ slot, label, name, stats: pieceStats }) => {
                     const entries = Object.entries(pieceStats).filter(([, v]) => v !== 0)
                     return (
-                      <li className="filecard__gear-row" key={label}>
-                        <span className="filecard__gear-slot" title={label} aria-label={label}>
+                      <div className="bento-card" key={label}>
+                        <div className="bento-card__head">
+                          <span className="bento-card__label">{label}</span>
                           <GearSlotIcon slot={slot} />
-                        </span>
-                        <span className="filecard__gear-body">
-                          <span className="filecard__gear-name">{name}</span>
-                          {entries.length > 0 && (
-                            <span className="filecard__gear-stats">
-                              {entries.map(([k, v]) => (
-                                <span className="filecard__ws" key={k}>
-                                  <span className="filecard__ws-k">{k}</span>
-                                  <span className={`filecard__ws-v${v > 0 ? ' filecard__ws-v--pos' : ''}`}>
-                                    {v > 0 ? `+${v}` : v}
-                                  </span>
+                        </div>
+                        <span className="bento-card__title">{name}</span>
+                        {entries.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                            {entries.map(([k, v]) => (
+                              <span className="stat-chip" key={k}>
+                                <span className="stat-chip__label">{k}</span>
+                                <span className={`stat-chip__value${v > 0 ? ' stat-chip__value--pos' : ''}`}>
+                                  {v > 0 ? `+${v}` : v}
                                 </span>
-                              ))}
-                            </span>
-                          )}
-                        </span>
-                      </li>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
-                </ul>
+                </div>
               ) : (
-                <span className="filecard__empty">nothing equipped</span>
+                <span className="bento-empty">nothing equipped</span>
               )
             })()}
 
@@ -3328,23 +3500,21 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
             {activeTab === 'ability' && <AbilityList abilities={stats.abilities} />}
           </div>
 
-          <footer className="filecard__foot">
+          <footer style={{ display: 'flex', justifyContent: 'space-between', padding: '0.625rem 0.75rem', borderTop: '1px solid rgba(212,175,55,0.1)', background: 'rgba(12,11,15,0.4)' }}>
             {previous ? (
               <button
                 type="button"
-                className="btn btn--ghost"
+                className="bento-btn bento-btn--ghost bento-btn--sm"
                 onClick={() => onSwitch(previous.playerId)}
               >
-                <span className="filecard__nav-arrow">{'\u2039'}</span>
-                <span className="filecard__nav-name">{previous.name}</span>
+                {'\u2039'} {previous.name}
               </button>
             ) : (
               <span />
             )}
             {next ? (
-              <button type="button" className="btn btn--ghost" onClick={() => onSwitch(next.playerId)}>
-                <span className="filecard__nav-name">{next.name}</span>
-                <span className="filecard__nav-arrow">{'\u203A'}</span>
+              <button type="button" className="bento-btn bento-btn--ghost bento-btn--sm" onClick={() => onSwitch(next.playerId)}>
+                {next.name} {'\u203A'}
               </button>
             ) : (
               <span />

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useAuth } from '../auth'
 import { setStage } from '../stages'
+import { useToast } from '../toast'
 
 export const Route = createFileRoute('/')({
   component: Gate,
@@ -10,18 +11,17 @@ export const Route = createFileRoute('/')({
 
 function Gate() {
   const { user, status, login, logout } = useAuth()
+  const { toast } = useToast()
   const [name, setName] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setError(null)
     setBusy(true)
     try {
       await login(name.trim())
     } catch {
-      setError('The wax seal rejected your inscription. Try again with a different cognomen.')
+      toast('error', 'The wax seal rejected your inscription. Try again with a different cognomen.')
     } finally {
       setBusy(false)
     }
@@ -119,8 +119,6 @@ function Gate() {
                     </span>
                   </div>
                 </div>
-
-                {error && <p className="intake__error" role="alert">{error}</p>}
 
                 <button type="submit" className="btn btn--primary" disabled={busy || !name.trim()}>
                   <span>{busy ? 'Communing with Nexus…' : 'Confirm Cognomen & Proceed'}</span>

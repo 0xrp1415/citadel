@@ -200,6 +200,7 @@ export type CombatAction =
   | { type: 'attack' }
   | { type: 'ability'; abilityId: string }
   | { type: 'defend' }
+  | { type: 'revive' }
 
 export type CombatTarget =
   | { kind: 'enemy'; id: string }
@@ -234,6 +235,7 @@ export interface EncounterPublicState {
   playerActions: Record<string, CombatAction | null>
   playerTargets: Record<string, CombatTarget>
   log: string[]
+  downedPlayerIds: string[]
   enemies: EncounterEnemy[]
 }
 

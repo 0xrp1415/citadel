@@ -4,6 +4,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth'
 import { setStage } from '../stages'
 import { generateSeed, createRoom, joinRoom } from '../rooms'
+import { useToast } from '../toast'
 
 const PARTY_CAPACITIES = [3, 4, 5, 6, 7, 8]
 import { saveRoomSession } from '../roomSession'
@@ -19,16 +20,15 @@ function errMessage(err: unknown): string {
 function ChamberNexus() {
   const { user, token } = useAuth()
   const navigate = useNavigate()
+  const { toast } = useToast()
 
   const [partySize, setPartySize] = useState(4)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [cipher, setCipher] = useState('')
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
     if (!token) return
-    setError(null)
     setBusy(true)
     try {
       const res = await createRoom(
@@ -40,7 +40,7 @@ function ChamberNexus() {
       setStage(2)
       navigate({ to: '/lobby' })
     } catch (err) {
-      setError(errMessage(err))
+      toast('error', errMessage(err))
     } finally {
       setBusy(false)
     }
@@ -49,7 +49,6 @@ function ChamberNexus() {
   async function handleJoin(e: FormEvent) {
     e.preventDefault()
     if (!token || cipher.trim().length === 0) return
-    setError(null)
     setBusy(true)
     try {
       const res = await joinRoom(cipher.trim(), user?.name ?? 'A condemned', token)
@@ -57,7 +56,7 @@ function ChamberNexus() {
       setStage(2)
       navigate({ to: '/lobby' })
     } catch (err) {
-      setError(errMessage(err))
+      toast('error', errMessage(err))
     } finally {
       setBusy(false)
     }
@@ -73,12 +72,6 @@ function ChamberNexus() {
           <span className="pagehead__title-sub">Matchmaking</span>
         </h1>
       </div>
-
-      {error && (
-        <p className="intake__error" role="alert">
-          {error}
-        </p>
-      )}
 
       <div className="nexus__grid">
         {/* LEFT: FORGE */}

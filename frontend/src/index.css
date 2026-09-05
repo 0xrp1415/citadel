@@ -169,7 +169,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
 }
 
 .apbar__mark {
@@ -349,7 +348,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.25);
 }
 
 .header__brand-text {
@@ -534,13 +532,11 @@ body {
   align-items: center;
   justify-content: center;
   color: #f2ca50;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
   cursor: pointer;
 }
 
 .header__avatar:hover {
   border-color: #f2ca50;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
 }
 
 /* ==========================================================================
@@ -658,6 +654,504 @@ body {
 .waypoint__seal-divider {
   color: #8a702b;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   BENTO MODAL SYSTEM — Unified Layout Architecture
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Scrim (shared overlay) ──────────────────────────────────────── */
+.bento-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 11, 15, 0.82);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* ── Container (shared dialog wrapper) ───────────────────────────── */
+.bento {
+  background: linear-gradient(168deg, #181520 0%, #100e18 100%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  width: 100%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header bar (shared) ─────────────────────────────────────────── */
+.bento__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(12, 11, 15, 0.6);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+  flex-shrink: 0;
+}
+
+.bento__head-left {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.bento__eyebrow {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.625rem;
+  color: #c084fc;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.bento__title {
+  font-family: "Cinzel", serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ece4d4;
+  margin: 0;
+}
+
+.bento__subtitle {
+  font-family: "EB Garamond", serif;
+  font-size: 0.8125rem;
+  color: #9d9280;
+  font-style: italic;
+}
+
+.bento__head-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bento__badge {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5625rem;
+  color: #d4af37;
+  background: rgba(212, 175, 55, 0.1);
+  padding: 0.1875rem 0.5rem;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  letter-spacing: 0.08em;
+}
+
+.bento__close {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: #9d9280;
+  padding: 0.25rem 0.5rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bento__close:hover {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+/* ── Body (scrollable content area) ──────────────────────────────── */
+.bento__body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+}
+
+/* ── Grid System ─────────────────────────────────────────────────── */
+.bento-grid {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  flex: 1;
+}
+
+.bento-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.bento-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.bento-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.bento-grid--auto { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+
+/* ── Bento Cards ─────────────────────────────────────────────────── */
+.bento-card {
+  background: rgba(20, 17, 28, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+  transition: border-color 0.15s;
+}
+
+.bento-card:hover { border-color: rgba(212, 175, 55, 0.18); }
+
+.bento-card--accent {
+  border-color: rgba(212, 175, 55, 0.25);
+  background: rgba(24, 21, 32, 0.8);
+}
+
+.bento-card--muted {
+  background: rgba(12, 11, 15, 0.5);
+  border-color: rgba(212, 175, 55, 0.05);
+}
+
+.bento-card--active {
+  border-color: rgba(192, 132, 252, 0.3);
+  background: rgba(59, 7, 100, 0.15);
+}
+
+.bento-card--span2 { grid-column: span 2; }
+.bento-card--span3 { grid-column: span 3; }
+.bento-card--span-full { grid-column: 1 / -1; }
+.bento-card--row2 { grid-row: span 2; }
+
+/* ── Card Parts ──────────────────────────────────────────────────── */
+.bento-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.bento-card__label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5625rem;
+  color: #9d9280;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.bento-card__value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.bento-card__title {
+  font-family: "Cinzel", serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #ece4d4;
+  margin: 0;
+}
+
+.bento-card__desc {
+  font-family: "EB Garamond", serif;
+  font-size: 0.8125rem;
+  color: #9d9280;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ── Stat Chips ──────────────────────────────────────────────────── */
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: rgba(20, 17, 28, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.stat-chip__label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5625rem;
+  color: #8a702b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-chip__value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #d4af37;
+}
+
+.stat-chip__value--pos { color: #34d399; }
+.stat-chip__value--neg { color: #dc2626; }
+.stat-chip__value--neutral { color: #9d9280; }
+
+/* ── Progress Bars ───────────────────────────────────────────────── */
+.bento-bar {
+  height: 0.375rem;
+  background: rgba(12, 11, 15, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+  overflow: hidden;
+}
+
+.bento-bar__fill { display: block; height: 100%; transition: width 0.3s ease; }
+.bento-bar__fill--hp { background: linear-gradient(90deg, #34d399, #22c55e); }
+.bento-bar__fill--xp { background: linear-gradient(90deg, #c084fc, #a855f7); }
+.bento-bar__fill--gold { background: linear-gradient(90deg, #d4af37, #f2ca50); }
+.bento-bar__fill--danger { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.bento-bar__fill--timer { background: linear-gradient(90deg, #d4af37, #8a702b); }
+
+/* ── Action Buttons ──────────────────────────────────────────────── */
+.bento-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-family: "Cinzel", serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.08);
+  color: #d4af37;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bento-btn:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.bento-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.bento-btn--ghost {
+  background: transparent;
+  border-color: rgba(212, 175, 55, 0.15);
+  color: #9d9280;
+}
+
+.bento-btn--ghost:hover:not(:disabled) {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.bento-btn--danger {
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.bento-btn--danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.6);
+}
+
+.bento-btn--sm { padding: 0.25rem 0.5rem; font-size: 0.625rem; }
+
+/* ── Tabs (within modal) ─────────────────────────────────────────── */
+.bento-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  background: rgba(12, 11, 15, 0.4);
+  flex-shrink: 0;
+}
+
+.bento-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6e6656;
+  font-family: "Cinzel", serif;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bento-tab:hover { color: #a69c8a; background: rgba(212, 175, 55, 0.03); }
+
+.bento-tab--active {
+  color: #d4af37;
+  border-bottom-color: #d4af37;
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.bento-tab__icon { font-size: 0.875rem; }
+
+.bento-tab__count {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5rem;
+  background: rgba(212, 175, 55, 0.1);
+  color: #8a702b;
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+/* ── Item List ───────────────────────────────────────────────────── */
+.bento-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.bento-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  background: rgba(20, 17, 28, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+  border-left: 3px solid rgba(110, 102, 86, 0.4);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bento-list-item:hover {
+  border-color: rgba(212, 175, 55, 0.2);
+  border-left-color: rgba(212, 175, 55, 0.5);
+  background: rgba(25, 21, 36, 0.8);
+}
+
+.bento-list-item--selected {
+  border-color: rgba(212, 175, 55, 0.4) !important;
+  border-left-color: #d4af37 !important;
+  background: rgba(29, 24, 43, 0.9) !important;
+}
+
+.bento-list-item--common { border-left-color: rgba(110, 102, 86, 0.5); }
+.bento-list-item--uncommon { border-left-color: rgba(52, 211, 153, 0.6); }
+.bento-list-item--rare { border-left-color: rgba(139, 92, 246, 0.6); }
+.bento-list-item--epic { border-left-color: rgba(212, 175, 55, 0.7); }
+.bento-list-item--legendary { border-left-color: rgba(220, 38, 38, 0.6); }
+
+.bento-list-item__main { flex: 1; min-width: 0; }
+
+.bento-list-item__name {
+  font-family: "Cinzel", serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ece4d4;
+}
+
+.bento-list-item__sub {
+  font-family: "EB Garamond", serif;
+  font-size: 0.6875rem;
+  color: #8a702b;
+  font-style: italic;
+}
+
+.bento-list-item__rarity {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.bento-list-item__rarity--common { color: #6e6656; }
+.bento-list-item__rarity--uncommon { color: #34d399; }
+.bento-list-item__rarity--rare { color: #8b5cf6; }
+.bento-list-item__rarity--epic { color: #d4af37; }
+.bento-list-item__rarity--legendary { color: #dc2626; }
+
+/* ── Detail Panel ────────────────────────────────────────────────── */
+.bento-detail {
+  width: 14rem;
+  flex-shrink: 0;
+  padding: 0.75rem;
+  border-left: 1px solid rgba(212, 175, 55, 0.1);
+  background: rgba(12, 11, 15, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.bento-detail__name {
+  font-family: "Cinzel", serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ece4d4;
+  margin: 0;
+}
+
+.bento-detail__desc {
+  font-family: "EB Garamond", serif;
+  font-size: 0.8125rem;
+  color: #9d9280;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────── */
+.bento-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.bento-pages__btn {
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  color: #9d9280;
+  padding: 0.25rem 0.5rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.625rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bento-pages__btn:hover:not(:disabled) { color: #d4af37; border-color: rgba(212, 175, 55, 0.4); }
+.bento-pages__btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.bento-pages__info {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.5625rem;
+  color: #6e6656;
+  min-width: 3rem;
+  text-align: center;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────── */
+.bento-empty {
+  font-family: "EB Garamond", serif;
+  font-size: 0.875rem;
+  color: #6e6656;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .bento-scrim { padding: 0.5rem; }
+  .bento { max-height: 95vh; }
+  .bento-grid--2, .bento-grid--3, .bento-grid--4 { grid-template-columns: 1fr; }
+  .bento-card--span2, .bento-card--span3 { grid-column: span 1; }
+  .bento-detail { width: 100%; border-left: none; border-top: 1px solid rgba(212, 175, 55, 0.1); }
+  .bento__body { flex-direction: column; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   END BENTO MODAL SYSTEM
+   ══════════════════════════════════════════════════════════════════════ */
 
 /* ==========================================================================
    GATE / LOGIN PAGE — The Gate Inscription Screen
@@ -856,7 +1350,6 @@ body {
 .telemetry-item__bar-fill {
   height: 100%;
   background: linear-gradient(to right, #d4af37, #f2ca50);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
 }
 
 .telemetry-item__sub {
@@ -900,7 +1393,6 @@ body {
   padding: 2rem;
   border-radius: 0;
   position: relative;
-  box-shadow: 0 12px 45px rgba(0, 0, 0, 0.9), 0 0 30px rgba(212, 175, 55, 0.15);
   backdrop-filter: blur(16px);
 }
 
@@ -1142,11 +1634,9 @@ body {
   background: linear-gradient(to right, #d4af37, #f2ca50, #d4af37);
   color: #0c0b0f;
   width: 100%;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
 }
 
 .btn--primary:hover:not(:disabled) {
-  box-shadow: 0 0 28px rgba(212, 175, 55, 0.7);
   filter: brightness(1.1);
 }
 
@@ -1401,7 +1891,6 @@ body {
 }
 
 .pathcard--gold {
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.22), inset 0 0 15px rgba(212, 175, 55, 0.08);
 }
 
 .pathcard--violet {
@@ -1590,7 +2079,6 @@ body {
 .capacity__opt--active {
   background: rgba(34, 28, 46, 0.95);
   border: 2px solid #f2ca50;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
 }
 
 .capacity__num {
@@ -2784,12 +3272,10 @@ body {
   gap: 0.5rem;
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 24px rgba(212, 175, 55, 0.45);
   transition: all 0.2s;
 }
 
 .dock__cast:hover:not(:disabled) {
-  box-shadow: 0 0 32px rgba(212, 175, 55, 0.7);
   transform: translateY(-1px);
 }
 
@@ -2839,7 +3325,6 @@ body {
 
 .chamberbar:hover {
   border-color: rgba(212, 175, 55, 0.35);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
 }
 
 .chamberbar__left {
@@ -2861,7 +3346,6 @@ body {
 
 .chamberbar__cipher:hover {
   border-color: #d4af37;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
 }
 
 .chamberbar__cipher-label {
@@ -2966,7 +3450,6 @@ body {
 
 .chamberbar__ward:hover {
   border-color: #d4af37;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
 }
 
 @media (max-width: 768px) {
@@ -3271,6 +3754,64 @@ body {
   padding: 0.125rem 0.375rem;
 }
 
+/* ── Quick Access Bar ───────────────────────────────────────────── */
+.quickbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: rgba(14, 12, 20, 0.6);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.quickbar__btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.06);
+  color: #a69c8a;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.quickbar__btn:last-child {
+  border-bottom: none;
+}
+
+.quickbar__btn:hover {
+  background: rgba(212, 175, 55, 0.08);
+  color: #f2ca50;
+}
+
+.quickbar__label {
+  flex: 1;
+  font-family: "Cinzel", serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.quickbar__kbd {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.625rem;
+  color: #6e6656;
+  background: rgba(20, 18, 24, 0.8);
+  border: 1px solid rgba(110, 102, 86, 0.25);
+  padding: 0.0625rem 0.3125rem;
+  line-height: 1;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.quickbar__btn:hover .quickbar__kbd {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
 /* Exegesis */
 .exegesis {
   background: rgba(20, 18, 24, 0.9);
@@ -3399,7 +3940,6 @@ body {
 /* Composer */
 .composer {
   background: #131119;
-  border: 1px solid rgba(212, 175, 55, 0.3);
   padding: 0.75rem;
   display: flex;
   gap: 0.5rem;
@@ -3414,6 +3954,57 @@ body {
   background: #0c0b0f;
   border: 1px solid rgba(212, 175, 55, 0.4);
   padding: 0.375rem 0.75rem;
+  position: relative;
+}
+
+.composer__pick {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0.375rem;
+  background: rgba(22, 18, 32, 0.98);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.8);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  max-height: 240px;
+  overflow-y: auto;
+  border-radius: 0;
+}
+
+.composer__pick-item {
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: all 0.1s;
+  font-family: "Cinzel", serif;
+  font-size: 0.6875rem;
+  color: #ede4d3;
+  border: 1px solid transparent;
+}
+
+.composer__pick-item:hover,
+.composer__pick-item--active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.28);
+}
+
+.composer__pick-name {
+  font-weight: 700;
+}
+
+.composer__pick-target {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
+  color: #6e6656;
 }
 
 .composer__glyph {
@@ -3437,23 +4028,20 @@ body {
 }
 
 .composer__send {
-  width: fit-content;
-  padding: 0.5rem 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(to right, #d4af37, #f2ca50);
   color: #0c0b0f;
-  font-family: "Cinzel", serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(212, 175, 55, 0.4);
   flex-shrink: 0;
 }
 
 .composer__send:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(212, 175, 55, 0.6);
 }
 
 .composer__send:disabled {
@@ -3820,7 +4408,6 @@ body {
   background: rgba(34, 28, 46, 0.8);
   border-color: rgba(212, 175, 55, 0.4);
   color: #f2ca50;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .archive__folio {
@@ -4242,8 +4829,8 @@ body {
 .filecard__scrim {
   position: fixed;
   inset: 0;
-  background: rgba(6, 5, 9, 0.95);
-  backdrop-filter: blur(12px);
+  background: rgba(12, 11, 15, 0.82);
+  backdrop-filter: blur(4px);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -4260,7 +4847,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(212, 175, 55, 0.12), 0 0 0 1px rgba(212, 175, 55, 0.08);
 }
 
 .filecard__tab {
@@ -4395,7 +4981,6 @@ body {
 .filecard__tabbtn--active {
   background: rgba(212, 175, 55, 0.12);
   color: #d4af37;
-  box-shadow: inset 0 -2px 0 #d4af37;
 }
 
 .filecard__pane {
@@ -4550,7 +5135,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(212, 175, 55, 0.12);
 }
 
 .combatmodal__head {
@@ -4720,7 +5304,6 @@ body {
 .combatgrid__act:hover:not(:disabled) {
   background: rgba(29, 24, 43, 1);
   border-color: #d4af37;
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.12);
 }
 
 .combatgrid__act:disabled {
@@ -4839,7 +5422,6 @@ body {
 
 .combatmodal__voteopt--selected {
   border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.12);
 }
 
 .combatmodal__voteopt-bar {
@@ -5063,7 +5645,6 @@ body {
 .combatgrid__operative--active {
   background: rgba(35, 30, 52, 0.8);
   border-color: rgba(212, 175, 55, 0.28);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
 }
 
 .combatgrid__operative-name {
@@ -5674,7 +6255,6 @@ body {
   position: absolute;
   height: 2px;
   background: rgba(212, 175, 55, 0.3);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.4), 0 0 12px rgba(212, 175, 55, 0.15);
   pointer-events: none;
 }
 
@@ -5701,7 +6281,6 @@ body {
 .map__room--active {
   border-color: #d4af37;
   background: rgba(212, 175, 55, 0.06);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.35);
   z-index: 2;
   color: #ece4d4;
 }
@@ -5785,7 +6364,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(212, 175, 55, 0.12);
 }
 
 .inventorymodal__head,
@@ -5811,7 +6389,6 @@ body {
   height: 8px;
   border-radius: 50%;
   background: #d4af37;
-  box-shadow: 0 0 8px #d4af37;
 }
 
 .inventorymodal__title,
@@ -5869,7 +6446,6 @@ body {
 
 .item-card--active {
   border-color: rgba(212, 175, 55, 0.28);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .item-card__accent {
@@ -5966,7 +6542,6 @@ body {
 
 .gearslot--active {
   border-color: rgba(212, 175, 55, 0.28);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .gearslot__label {
@@ -6037,7 +6612,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(212, 175, 55, 0.12);
 }
 
 .votemodal__head {
@@ -6064,7 +6638,6 @@ body {
   height: 8px;
   border-radius: 50%;
   background: #d4af37;
-  box-shadow: 0 0 8px #d4af37;
 }
 
 .votemodal__eyebrow {
@@ -6154,7 +6727,6 @@ body {
 
 .votemodal__opt--selected {
   border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.12);
 }
 
 .votemodal__opt-bar {
@@ -6406,7 +6978,6 @@ body {
 
 .combatcard--acting {
   border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .combatcard--self {
@@ -6425,7 +6996,6 @@ body {
 
 .combatcard--targetable:hover {
   border-color: #d4af37;
-  box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
   background: rgba(29, 24, 43, 0.9);
 }
 
@@ -6509,7 +7079,6 @@ body {
 
 .votemodal__opt--chosen {
   border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.12);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -6626,7 +7195,6 @@ body {
   background: linear-gradient(180deg, rgba(212, 175, 55, 0.18) 0%, rgba(35, 30, 52, 0.8) 100%);
   color: #ede4d3;
   border-color: #d4af37;
-  box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
 }
 
 /* Tab Panel */
@@ -6726,7 +7294,6 @@ body {
   background: rgba(29, 24, 43, 0.8);
   border-color: rgba(212, 175, 55, 0.28);
   color: #ede4d3;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.12);
 }
 
 .bag__pocket-label {
@@ -7121,7 +7688,6 @@ body {
 
 .sheet__row--unspent {
   border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.12);
 }
 
 .sheet__row-k {
@@ -7272,7 +7838,6 @@ body {
 
 .activebar__cell--open {
   border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
 }
 
 .activebar__cell-name {
@@ -7420,7 +7985,6 @@ body {
 
 .btn--primary:hover:not(:disabled) {
   background: linear-gradient(180deg, #ffe082 0%, #f2ca50 100%);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
 }
 
 .btn--danger {
@@ -7566,4 +8130,61 @@ body {
     flex-direction: column;
     gap: 0.25rem;
   }
+}
+
+/* ── Toast Stack ─────────────────────────────────────────────────── */
+.toast-stack {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: rgba(22, 18, 32, 0.96);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+  font-family: "EB Garamond", serif;
+  font-size: 0.8125rem;
+  color: #ece4d4;
+  max-width: 28rem;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: toast-in 0.25s ease-out;
+}
+
+.toast--success { border-left: 3px solid #34d399; }
+.toast--error   { border-left: 3px solid #dc2626; }
+.toast--info    { border-left: 3px solid #c084fc; }
+
+.toast__icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.toast--success .toast__icon { color: #34d399; }
+.toast--error   .toast__icon { color: #dc2626; }
+.toast--info    .toast__icon { color: #c084fc; }
+
+.toast__msg {
+  line-height: 1.3;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
