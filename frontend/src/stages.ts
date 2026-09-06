@@ -3,16 +3,17 @@ export const STAGES = [
   { path: '/chamber', label: 'Chamber Nexus', sublabel: 'Matchmaking' },
   { path: '/lobby', label: 'Staging Grounds', sublabel: 'Cadre Lobby' },
   { path: '/run', label: 'The Descent', sublabel: 'Live Run' },
+  { path: '/archive', label: 'Tactical Archive', sublabel: 'Folio' },
 ] as const
 
-export type StageIndex = 0 | 1 | 2 | 3
+export type StageIndex = 0 | 1 | 2 | 3 | 4
 
 const STAGE_KEY = 'citadel.stage'
 
 export function readStage(): StageIndex {
   const raw = sessionStorage.getItem(STAGE_KEY)
   const n = raw === null ? 0 : Number(raw)
-  return n === 0 || n === 1 || n === 2 || n === 3 ? n : 0
+  return n >= 0 && n <= 4 ? n as StageIndex : 0
 }
 
 export function setStage(index: StageIndex): void {

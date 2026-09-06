@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as ChamberRouteImport } from './routes/chamber'
 import { Route as LobbyRouteImport } from './routes/lobby'
 import { Route as RunRouteImport } from './routes/run'
@@ -17,6 +18,11 @@ import { Route as RunRouteImport } from './routes/run'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArchiveRoute = ArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChamberRoute = ChamberRouteImport.update({
@@ -37,12 +43,14 @@ const RunRoute = RunRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/archive': typeof ArchiveRoute
   '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/archive': typeof ArchiveRoute
   '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/archive': typeof ArchiveRoute
   '/chamber': typeof ChamberRoute
   '/lobby': typeof LobbyRoute
   '/run': typeof RunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chamber' | '/lobby' | '/run'
+  fullPaths: '/' | '/archive' | '/chamber' | '/lobby' | '/run'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chamber' | '/lobby' | '/run'
-  id: '__root__' | '/' | '/chamber' | '/lobby' | '/run'
+  to: '/' | '/archive' | '/chamber' | '/lobby' | '/run'
+  id: '__root__' | '/' | '/archive' | '/chamber' | '/lobby' | '/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArchiveRoute: typeof ArchiveRoute
   ChamberRoute: typeof ChamberRoute
   LobbyRoute: typeof LobbyRoute
   RunRoute: typeof RunRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/archive': {
+      id: '/archive'
+      path: '/archive'
+      fullPath: '/archive'
+      preLoaderRoute: typeof ArchiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chamber': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArchiveRoute: ArchiveRoute,
   ChamberRoute: ChamberRoute,
   LobbyRoute: LobbyRoute,
   RunRoute: RunRoute,

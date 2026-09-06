@@ -1,5 +1,55 @@
 export type PlayerStatus = 'joined' | 'connected' | 'ready' | 'disconnected' | 'left' | 'in-run' | 'ended'
 
+export type StarterKitId = 'vanguard' | 'blade' | 'shadow' | 'arcane' | 'wanderer'
+
+export interface StarterKit {
+  id: StarterKitId
+  name: string
+  description: string
+  icon: string
+  gear: { weapon?: string; head?: string; chest?: string; greaves?: string }
+  consumables: { id: string; qty: number }[]
+  abilities: string[]
+}
+
+export const STARTER_KITS: StarterKit[] = [
+  {
+    id: 'vanguard', name: 'Vanguard', icon: 'game-icons:shield',
+    description: 'Heavy armor and blade. A frontline fighter built to endure.',
+    gear: { weapon: 'iron_sword', head: 'iron_helm', chest: 'iron_chestplate', greaves: 'iron_greaves' },
+    consumables: [{ id: 'health_potion', qty: 2 }, { id: 'lockpick', qty: 1 }],
+    abilities: ['iron_thews', 'mend_wounds'],
+  },
+  {
+    id: 'blade', name: 'Blade', icon: 'game-icons:gauntlet',
+    description: 'Swift steel and keen eyes. Strikes fast, strikes first.',
+    gear: { weapon: 'rusty_dagger', head: 'night_veil', chest: 'hunter_tunic', greaves: 'reed_sandals' },
+    consumables: [{ id: 'health_potion', qty: 2 }, { id: 'lockpick', qty: 1 }],
+    abilities: ['crushing_blow', 'swift_step'],
+  },
+  {
+    id: 'shadow', name: 'Shadow', icon: 'game-icons:hood',
+    description: 'Cloak and bow. Unseen, unheard, unstoppable.',
+    gear: { weapon: 'shortbow', head: 'cloth_bonnet', chest: 'linen_vestments', greaves: 'cloth_wraps' },
+    consumables: [{ id: 'health_potion', qty: 2 }, { id: 'lockpick', qty: 2 }],
+    abilities: ['dodge', 'fleet_foot'],
+  },
+  {
+    id: 'arcane', name: 'Arcane', icon: 'game-icons:book-aura',
+    description: 'Staff and scripture. Bends the weave to their will.',
+    gear: { weapon: 'acolyte_staff', head: 'novice_cowl', chest: 'tattered_robe', greaves: 'monk_legwraps' },
+    consumables: [{ id: 'health_potion', qty: 2 }, { id: 'lockpick', qty: 1 }],
+    abilities: ['arcane_bolt', 'learned_lore'],
+  },
+  {
+    id: 'wanderer', name: 'Wanderer', icon: 'game-icons:boots',
+    description: 'No school, no master. Survives by instinct and grit.',
+    gear: { weapon: 'weapon_default_bat', head: 'wooden_helmet', chest: 'wooden_chest', greaves: 'wooden_greaves' },
+    consumables: [{ id: 'health_potion', qty: 3 }, { id: 'gold_key', qty: 1 }, { id: 'lockpick', qty: 2 }],
+    abilities: ['grit', 'clarity'],
+  },
+]
+
 export interface Stats {
   hp: number
   strength: number
@@ -49,7 +99,9 @@ export interface RunItem {
   type: ItemType
   rarity: Rarity
   stackable: boolean
+  maxStackQty: number
   buyPrice: number
+  count: number
   slot?: GearSlot
   stats?: Stats
   required_stats?: Stats
@@ -94,6 +146,7 @@ export interface PlayerPublic {
   name: string
   status: PlayerStatus
   disconnectedAt: number | null
+  kit: StarterKitId
   stats: PlayerRunEntity
 }
 
@@ -135,6 +188,7 @@ export interface RoomPublicJSON {
     east: ExitPublicJSON | null
     west: ExitPublicJSON | null
   }
+  droppedItems: RunItem[]
 }
 
 export interface EnemyPublicJSON {
@@ -178,6 +232,36 @@ export interface VoteJSON {
   deadlineAt: number
 }
 
+export interface RunSummaryPlayer {
+  name: string
+  kit: string
+  level: number
+  xp: number
+  gold: number
+  health: { CurrentHealth: number; MaxHealth: number }
+  weapon: { weaponId: string; weaponName: string; description: string; stats: Stats; rarity: Rarity } | null
+  armor: {
+    head: { armorId: string; armorName: string; description: string; stats: Stats; gear_position: string; rarity: Rarity } | null
+    chest: { armorId: string; armorName: string; description: string; stats: Stats; gear_position: string; rarity: Rarity } | null
+    greaves: { armorId: string; armorName: string; description: string; stats: Stats; gear_position: string; rarity: Rarity } | null
+  }
+  abilities: Ability[]
+  activeAbilities: { slot: number; id: string }[]
+  inventory: RunItem[]
+  base_stats: Record<string, number>
+  stat_modifiers: Record<string, number>
+}
+
+export interface RunSummary {
+  floor: number
+  roomsExplored: number
+  enemiesDefeated: number
+  totalXP: number
+  totalGold: number
+  itemsFound: number
+  players: RunSummaryPlayer[]
+}
+
 export interface RoomData {
   inviteCode: string
   totalPlayers: number
@@ -191,7 +275,10 @@ export interface RoomData {
   dungeonMasterState?: 'idle' | 'active'
   hostPublicId: string | null
   encounter?: EncounterPublicState | null
+  merchantDetails?: { stock: RunItem[]; available: boolean } | null
   currentVote?: VoteJSON | null
+  runSummary?: RunSummary | null
+  acceptedPlayerIds?: string[]
 }
 
 export type EncounterPhase = '' | 'vote' | 'combat'
@@ -348,6 +435,43 @@ export async function selectCombatTarget(
   target: CombatTarget,
 ): Promise<void> {
   await sendAction(roomToken, 'combat_select_target', target)
+}
+
+export async function buyItem(roomToken: string, itemId: string): Promise<{ gold: number }> {
+  const result = await request<{ gold: number }>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'buy_item', payload: { itemId } }),
+  })
+  return result
+}
+
+export async function sellItem(roomToken: string, index: number): Promise<{ gold: number; sold: number }> {
+  const result = await request<{ gold: number; sold: number }>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'sell_item', payload: { index } }),
+  })
+  return result
+}
+
+export async function dropItem(roomToken: string, index: number, qty?: number): Promise<void> {
+  await request<unknown>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'drop_item', payload: { index, qty } }),
+  })
+}
+
+export async function pickUpItem(roomToken: string, itemIndex: number): Promise<void> {
+  await request<unknown>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'pick_up_item', payload: { itemIndex } }),
+  })
+}
+
+export async function returnToLobby(roomToken: string): Promise<void> {
+  await request<unknown>('/api/rooms/action', roomToken, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'return_to_lobby' }),
+  })
 }
 
 export async function kickPlayer(roomToken: string, playerId: string): Promise<void> {

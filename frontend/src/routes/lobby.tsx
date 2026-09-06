@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Icon } from '@iconify/react'
 import { useAuth } from '../auth'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { Fleuron } from '../components/Fleuron'
-import { PermitCopy } from '../components/PermitCopy'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
 import { setStage } from '../stages'
 import { useToast } from '../toast'
@@ -14,8 +14,9 @@ import {
   leaveRoom,
   sendAction,
   updateRoomConfig,
+  STARTER_KITS,
 } from '../rooms'
-import type { PlayerPublic, RoomData } from '../rooms'
+import type { PlayerPublic, RoomData, StarterKitId } from '../rooms'
 import {
   clearRoomSession,
   decodeRoomToken,
@@ -75,12 +76,16 @@ function Lobby() {
     if (socketError && isFatalRoomSocketError(socketError)) {
       clearRoomSession()
       setRoomToken(null)
+      setInviteCode(null)
+      setStage(1)
+      navigate({ to: '/chamber' })
     }
   }, [socketError])
 
   useEffect(() => {
     if (!roomToken) {
-      setStage(2)
+      setStage(1)
+      navigate({ to: '/chamber' })
     }
   }, [roomToken])
 
@@ -154,6 +159,15 @@ function Lobby() {
       toast('error', errorMessage(err))
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function handleKit(kit: StarterKitId) {
+    if (!roomToken) return
+    try {
+      await sendAction(roomToken, 'set_kit', { kit })
+    } catch (err) {
+      toast('error', errorMessage(err))
     }
   }
 
@@ -265,6 +279,7 @@ function Lobby() {
           onStart={handleStart}
           onConfirmStart={handleConfirmStart}
           onKick={handleKick}
+          onKit={handleKit}
           onLeave={handleLeave}
           onRerollSeed={handleRerollSeed}
           onSeedChange={handleSeedChange}
@@ -437,6 +452,10 @@ function ManageModal({
             {players.map((player) => (
               <li key={player.playerId} className="filecard__roster-row">
                 <span className="filecard__roster-name">{player.name}</span>
+                <span className="board__tag" style={{ fontSize: '0.5rem', background: 'rgba(192,132,252,0.1)', color: '#c084fc', border: '1px solid rgba(192,132,252,0.2)' }}>
+                  <Icon icon={STARTER_KITS.find((k) => k.id === player.kit)?.icon ?? 'game-icons:boots'} style={{ fontSize: '0.625rem', verticalAlign: 'middle' }} />
+                  {' '}{STARTER_KITS.find((k) => k.id === player.kit)?.name ?? 'Wanderer'}
+                </span>
                 {player.playerPublicId === hostPublicId && (
                   <span className="board__tag board__tag--host">lead</span>
                 )}
@@ -590,6 +609,7 @@ interface LiveRoomProps {
   onStart: () => void
   onConfirmStart: () => void
   onKick: (playerId: string) => void
+  onKit: (kit: StarterKitId) => void
   onLeave: () => void
   onRerollSeed: () => void
   onSeedChange: (seed: string) => void
@@ -615,25 +635,57 @@ function LiveRoom({
   onStart,
   onConfirmStart,
   onKick,
+  onKit,
   onLeave,
   onRerollSeed,
   onSeedChange,
 }: LiveRoomProps) {
+  const { toast } = useToast()
   const slotCount = room?.config.maxPlayers ?? 4
   const slots: (PlayerPublic | undefined)[] = Array.from(
     { length: slotCount },
     (_, i) => room?.players[i],
   )
+  const nonHostPlayers = slots.filter((p): p is PlayerPublic => p != null && p.playerPublicId !== room?.hostPublicId)
+  const readyCount = nonHostPlayers.filter((p) => p.status === 'ready').length
+  const allReady = readyCount === nonHostPlayers.length
 
   const [pendingKick, setPendingKick] = useState<string | null>(null)
   const kickTimerRef = useRef<number | null>(null)
   const [manageOpen, setManageOpen] = useState(false)
+  const [kitIdx, setKitIdx] = useState(0)
 
   useEffect(() => {
     return () => {
       if (kickTimerRef.current !== null) window.clearTimeout(kickTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (manageOpen) return
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setKitIdx((i) => (i > 0 ? i - 1 : STARTER_KITS.length - 1))
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setKitIdx((i) => (i < STARTER_KITS.length - 1 ? i + 1 : 0))
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        if (isHost) {
+          if (allReady && !busy && connected) onStart()
+        } else {
+          onReady()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onReady, onStart, isHost, allReady, busy, connected, manageOpen])
 
   function requestKick(playerId: string) {
     if (kickTimerRef.current !== null) window.clearTimeout(kickTimerRef.current)
@@ -651,18 +703,6 @@ function LiveRoom({
   return (
     <div className="grounds">
       <div className="chamber-banner">
-          <div className="chamber-banner__cipher">
-            <div className="chamber-banner__icon">
-              <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>key</span>
-            </div>
-            <span className="chamber-banner__label">Cipher Code</span>
-            {inviteCode ? (
-              <PermitCopy code={inviteCode} className="chamber-banner__copy" />
-            ) : (
-              <span className="chamber-banner__code">————</span>
-            )}
-          </div>
-
           <div className="chamber-banner__center">
             <div className="chamber-banner__quorum">
               <span className="chamber-banner__cadre">{playerCount}</span>
@@ -672,22 +712,62 @@ function LiveRoom({
             </div>
             <div className="chamber-banner__divider" />
             <div className="chamber-banner__quorum">
-              <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', color: '#c084fc' }}>schedule</span>
-              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5625rem', color: '#9d9280' }}>
-                awaiting quorum
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#c084fc' }}>terrain</span>
+              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6875rem', color: '#9d9280' }}>
+                {difficulty}
               </span>
             </div>
+            <div className="chamber-banner__divider" />
+            <div className="chamber-banner__quorum">
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#c084fc' }}>map</span>
+              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6875rem', color: '#9d9280' }}>
+                {mapSize}
+              </span>
+            </div>
+            <div className="chamber-banner__divider" />
+            <div className="chamber-banner__quorum">
+              <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#c084fc' }}>key</span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace', fontSize: '0.8125rem',
+                  fontWeight: 700, color: '#f2ca50', letterSpacing: '0.1em',
+                  cursor: 'pointer',
+                }}
+                onClick={async () => {
+                  if (!inviteCode) return
+                  try {
+                    await navigator.clipboard.writeText(inviteCode)
+                    toast('success', 'Invite code copied')
+                  } catch {}
+                }}
+                title="Click to copy"
+              >
+                {inviteCode ?? '————'}
+              </span>
+            </div>
+            <div className="chamber-banner__divider" />
+            {hostPlayer && (
+              <div className="chamber-banner__quorum">
+                <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.6875rem', color: '#9d9280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  led by
+                </span>
+                <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.8125rem', fontWeight: 700, color: '#f2ca50' }}>
+                  {hostPlayer.name}
+                </span>
+              </div>
+            )}
           </div>
 
-          {hostPlayer && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-              <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.625rem', color: '#9d9280', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                led by
-              </span>
-              <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.75rem', fontWeight: 700, color: '#f2ca50' }}>
-                {hostPlayer.name}
-              </span>
-            </div>
+          {isHost && (
+            <button
+              type="button"
+              className="btn btn--ghost"
+              style={{ fontSize: '0.6875rem', padding: '0.375rem 0.75rem' }}
+              onClick={() => setManageOpen(true)}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', verticalAlign: 'middle' }}>settings</span>
+              {' '}settings
+            </button>
           )}
         </div>
 
@@ -731,7 +811,17 @@ function LiveRoom({
                     </div>
                   </div>
                   <div className="delver__body">
-                    <span className="delver__name"><span className="delver__name-label">Name:</span> {player.name}</span>
+                    <div className="delver__profile">
+                      <div className="delver__avatar">
+                        <Icon icon={STARTER_KITS.find((k) => k.id === player.kit)?.icon ?? 'game-icons:boots'} className="delver__avatar-icon" />
+                      </div>
+                      <div className="delver__identity">
+                        <span className="delver__name">{player.name}</span>
+                        <span className="delver__kit-label">
+                          {STARTER_KITS.find((k) => k.id === player.kit)?.name ?? 'Wanderer'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   {slots.length <= 3 && (
                     <div className="delver__sheet">
@@ -756,61 +846,31 @@ function LiveRoom({
                         <span className="delver__sheet-value">{player.stats.experience}</span>
                       </div>
                       <div className="delver__sheet-divider" />
-                      <div className="delver__stat-grid">
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">STR</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.strength}</span>
-                        </div>
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">DEX</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.dexterity}</span>
-                        </div>
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">INT</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.intelligence}</span>
-                        </div>
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">WIS</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.wisdom}</span>
-                        </div>
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">AGI</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.agility}</span>
-                        </div>
-                        <div className="delver__stat-cell">
-                          <span className="delver__stat-cell-k">HP</span>
-                          <span className="delver__stat-cell-v">{player.stats.base_stats.hp}</span>
-                        </div>
+                      <div className="delver__stat-row">
+                        <span className="delver__stat-inline">STR <b>{player.stats.base_stats.strength}</b></span>
+                        <span className="delver__stat-inline">DEX <b>{player.stats.base_stats.dexterity}</b></span>
+                        <span className="delver__stat-inline">INT <b>{player.stats.base_stats.intelligence}</b></span>
+                      </div>
+                      <div className="delver__stat-row">
+                        <span className="delver__stat-inline">WIS <b>{player.stats.base_stats.wisdom}</b></span>
+                        <span className="delver__stat-inline">AGI <b>{player.stats.base_stats.agility}</b></span>
+                        <span className="delver__stat-inline">HP <b>{player.stats.base_stats.hp}</b></span>
                       </div>
                     </div>
                   )}
                   {slots.length > 3 && slots.length <= 6 && (
-                    <div className="delver__stat-grid">
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">STR</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.strength}</span>
+                      <>
+                      <div className="delver__stat-row">
+                        <span className="delver__stat-inline">STR <b>{player.stats.base_stats.strength}</b></span>
+                        <span className="delver__stat-inline">DEX <b>{player.stats.base_stats.dexterity}</b></span>
+                        <span className="delver__stat-inline">INT <b>{player.stats.base_stats.intelligence}</b></span>
                       </div>
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">DEX</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.dexterity}</span>
+                      <div className="delver__stat-row">
+                        <span className="delver__stat-inline">WIS <b>{player.stats.base_stats.wisdom}</b></span>
+                        <span className="delver__stat-inline">AGI <b>{player.stats.base_stats.agility}</b></span>
+                        <span className="delver__stat-inline">HP <b>{player.stats.base_stats.hp}</b></span>
                       </div>
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">INT</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.intelligence}</span>
-                      </div>
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">WIS</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.wisdom}</span>
-                      </div>
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">AGI</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.agility}</span>
-                      </div>
-                      <div className="delver__stat-cell">
-                        <span className="delver__stat-cell-k">HP</span>
-                        <span className="delver__stat-cell-v">{player.stats.base_stats.hp}</span>
-                      </div>
-                    </div>
+                      </>
                   )}
                   <div className="delver__stats">
                     <div className="delver__bar">
@@ -849,64 +909,92 @@ function LiveRoom({
           <div className="rites">
             <div className="rites__head">
               <span className="rites__title">
-                <span className="material-symbols-outlined rites__title-icon">info</span>
-                Chamber Stats
+                <span className="material-symbols-outlined rites__title-icon">backpack</span>
+                Starter Kits
               </span>
+              <span className="rites__sub">choose your loadout</span>
             </div>
-            <div className="rites__body">
-              <div className="rites__row">
-                <div className="rites__row-left">
-                  <span className="material-symbols-outlined rites__row-icon">group</span>
-                  <div>
-                    <span className="rites__row-name">Cadre Limit</span>
-                    <span className="rites__row-sub">{maxPlayers} delvers</span>
-                  </div>
-                </div>
-                <span className="rites__value">{maxPlayers}</span>
+            <div className="rites__kitlayout">
+              <div className="rites__kitpreview">
+                {me && (() => {
+                  const k = STARTER_KITS.find((kit) => kit.id === me.kit)
+                  if (!k) return null
+                  const gearSlotIcons: Record<string, string> = {
+                    weapon: 'game-icons:crossed-swords',
+                    head: 'game-icons:centurion-helmet',
+                    chest: 'game-icons:chest-armor',
+                    greaves: 'game-icons:boots',
+                  }
+                  const gearEntries = [
+                    k.gear.weapon && { name: k.gear.weapon.replace(/_/g, ' '), icon: gearSlotIcons.weapon },
+                    k.gear.head && { name: k.gear.head.replace(/_/g, ' '), icon: gearSlotIcons.head },
+                    k.gear.chest && { name: k.gear.chest.replace(/_/g, ' '), icon: gearSlotIcons.chest },
+                    k.gear.greaves && { name: k.gear.greaves.replace(/_/g, ' '), icon: gearSlotIcons.greaves },
+                  ].filter(Boolean) as { name: string; icon: string }[]
+                  const abilIcons: Record<string, string> = {
+                    iron_thews: 'game-icons:muscle-up',
+                    mend_wounds: 'game-icons:healing',
+                    crushing_blow: 'game-icons:slash',
+                    swift_step: 'game-icons:sprint',
+                    dodge: 'game-icons:dodge',
+                    fleet_foot: 'game-icons:sprint',
+                    arcane_bolt: 'game-icons:focused-lightning',
+                    learned_lore: 'game-icons:book-aura',
+                    grit: 'game-icons:determined',
+                    clarity: 'game-icons:all-seeing-eye',
+                  }
+                  return (
+                    <>
+                      <div className="rites__kitpreview-head">
+                        <Icon icon={k.icon} className="rites__kitpreview-icon" />
+                        <span className="rites__kitpreview-name">{k.name}</span>
+                      </div>
+                      <p className="rites__kitpreview-desc">{k.description}</p>
+                      <div className="rites__kitpreview-section">
+                        <span className="rites__kitpreview-label">gear</span>
+                        <div className="rites__kitpreview-chips">
+                          {gearEntries.map((g) => (
+                            <span key={g.name} className="rites__kit-chip rites__kit-chip--gear">
+                              <Icon icon={g.icon} className="rites__kit-chip-icon" />
+                              {g.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rites__kitpreview-section">
+                        <span className="rites__kitpreview-label">abilities</span>
+                        <div className="rites__kitpreview-chips">
+                          {k.abilities.map((id) => (
+                            <span key={id} className="rites__kit-chip rites__kit-chip--abil">
+                              <Icon icon={abilIcons[id] ?? 'game-icons:flash'} className="rites__kit-chip-icon" />
+                              {id.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
-              <div className="rites__row">
-                <div className="rites__row-left">
-                  <span className="material-symbols-outlined rites__row-icon">terrain</span>
-                  <div>
-                    <span className="rites__row-name">Difficulty</span>
-                    <span className="rites__row-sub">{difficulty}</span>
-                  </div>
-                </div>
-                <span className="rites__value">{difficulty}</span>
-              </div>
-              <div className="rites__row">
-                <div className="rites__row-left">
-                  <span className="material-symbols-outlined rites__row-icon">map</span>
-                  <div>
-                    <span className="rites__row-name">Map Size</span>
-                    <span className="rites__row-sub">{mapSize}</span>
-                  </div>
-                </div>
-                <span className="rites__value">{mapSize}</span>
-              </div>
-              <div className="rites__row">
-                <div className="rites__row-left">
-                  <span className="material-symbols-outlined rites__row-icon">casino</span>
-                  <div>
-                    <span className="rites__row-name">Run Seed</span>
-                    <span className="rites__row-sub">{seed}</span>
-                  </div>
-                </div>
-                <span className="rites__value">{seed}</span>
+              <div className="rites__kiticons">
+                {STARTER_KITS.map((k, ki) => {
+                  const isSelected = me?.kit === k.id
+                  const isFocused = ki === kitIdx
+                  return (
+                    <button
+                      key={k.id}
+                      type="button"
+                      className={`rites__kiticon-btn${isSelected ? ' rites__kiticon-btn--active' : ''}${isFocused ? ' rites__kiticon-btn--focused' : ''}`}
+                      onClick={() => { setKitIdx(ki); onKit(k.id) }}
+                      title={k.name}
+                    >
+                      <Icon icon={k.icon} className="rites__kiticon-glyph" />
+                    </button>
+                  )
+                })}
               </div>
             </div>
-            {isHost && (
-              <button
-                type="button"
-                className="rites__settings"
-                onClick={() => setManageOpen(true)}
-              >
-                <span className="material-symbols-outlined rites__settings-icon">settings</span>
-                settings
-              </button>
-            )}
           </div>
-
         </div>
       </div>
 
@@ -943,11 +1031,12 @@ function LiveRoom({
               )}
               <button
                 className="dock__cast"
-                disabled={busy || !connected}
+                disabled={busy || !connected || !allReady}
                 onClick={onStart}
+                style={!allReady ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
               >
                 <span className="material-symbols-outlined dock__cast-icon">sailing</span>
-                Cast Off Into The Depths
+                {allReady ? 'Set Sail' : `${readyCount}/${nonHostPlayers.length} ready`}
               </button>
             </div>
           ) : (

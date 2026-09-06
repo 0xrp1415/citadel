@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Icon } from '@iconify/react'
 import { setStage } from '../stages'
-import type { Ability, CombatAction, CombatTarget, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, Stats, VoteJSON } from '../rooms'
-import { changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, sendVoteOption } from '../rooms'
+import type { Ability, CombatAction, CombatTarget, EncounterEnemy, GearSlot, MapPublicJSON, PlayerPublic, Rarity, RoomData, RoomMessage, RunItem, RunSummary, Stats, VoteJSON } from '../rooms'
+import { STARTER_KITS, changePlayerStatsBy, equipItem, sendAction, setActiveAbility as requestSetActiveAbility, unequipItem, useInventoryItem as requestUseItem, selectCombatAction, selectCombatTarget, sendVoteOption, buyItem as requestBuyItem, sellItem as requestSellItem, dropItem as requestDropItem, pickUpItem as requestPickUpItem } from '../rooms'
 import { clearRoomSession, decodeRoomToken, getRoomToken } from '../roomSession'
 import { isFatalRoomSocketError, useRoomSocket } from '../useRoomSocket'
 import { useToast } from '../toast'
@@ -260,6 +261,7 @@ function Run() {
   const [mapOpen, setMapOpen] = useState(false)
   const [inventoryOpen, setInventoryOpen] = useState(false)
   const [gearOpen, setGearOpen] = useState(false)
+  const [merchantOpen, setMerchantOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [draft, setDraft] = useState('')
   const [composerBusy, setComposerBusy] = useState(false)
@@ -347,6 +349,58 @@ function Run() {
     }
   }, [roomToken, toast])
 
+  const handleBuyItem = useCallback(async (itemId: string) => {
+    if (!roomToken) return
+    setBusy(true)
+    try {
+      await requestBuyItem(roomToken, itemId)
+      toast('success', 'Item purchased')
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Purchase failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken, toast])
+
+  const handleSellItem = useCallback(async (index: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    try {
+      await requestSellItem(roomToken, index)
+      toast('success', 'Item sold')
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Sell failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken, toast])
+
+  const handleDropItem = useCallback(async (index: number, qty?: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    try {
+      await requestDropItem(roomToken, index, qty)
+      toast('success', 'Item dropped')
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Drop failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken, toast])
+
+  const handlePickUpItem = useCallback(async (itemIndex: number) => {
+    if (!roomToken) return
+    setBusy(true)
+    try {
+      await requestPickUpItem(roomToken, itemIndex)
+      toast('success', 'Item picked up')
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Pick up failed')
+    } finally {
+      setBusy(false)
+    }
+  }, [roomToken, toast])
+
   const autoGrowComposer = useCallback(() => {
     const el = composerRef.current
     if (!el) return
@@ -403,14 +457,14 @@ function Run() {
 
   useEffect(() => {
     if (!roomToken) {
-      setStage(2)
-      navigate({ to: '/lobby' })
+      setStage(1)
+      navigate({ to: '/chamber' })
       return
     }
     if (socketError && isFatalRoomSocketError(socketError)) {
       clearRoomSession()
-      setStage(2)
-      navigate({ to: '/lobby' })
+      setStage(1)
+      navigate({ to: '/chamber' })
       return
     }
     if (room && room.status === 'lobby') {
@@ -450,14 +504,24 @@ function Run() {
       }
 
       if (event.key === 'm' || event.key === 'M') {
-        if (openPlayerId || inventoryOpen || gearOpen) return
+        if (openPlayerId || inventoryOpen || gearOpen || merchantOpen) return
         event.preventDefault()
         setMapOpen((prev) => !prev)
         return
       }
 
+      if (event.key === 'k' || event.key === 'K') {
+        if (openPlayerId || inventoryOpen || gearOpen || mapOpen) return
+        if (room?.currentRoom.type !== 'grace') return
+        if ((room?.players.find((p) => p.playerId === selfPlayerId)?.stats.health.CurrentHealth ?? 1) <= 0) return
+        event.preventDefault()
+        setMerchantOpen((prev) => !prev)
+        return
+      }
+
       if (event.key === 'i' || event.key === 'I') {
-        if (openPlayerId || mapOpen) return
+        if (openPlayerId || mapOpen || merchantOpen) return
+        if ((room?.players.find((p) => p.playerId === selfPlayerId)?.stats.health.CurrentHealth ?? 1) <= 0) return
         event.preventDefault()
         setGearOpen(false)
         setInventoryOpen((prev) => !prev)
@@ -465,7 +529,8 @@ function Run() {
       }
 
       if (event.key === 'g' || event.key === 'G') {
-        if (openPlayerId || mapOpen) return
+        if (openPlayerId || mapOpen || merchantOpen) return
+        if ((room?.players.find((p) => p.playerId === selfPlayerId)?.stats.health.CurrentHealth ?? 1) <= 0) return
         event.preventDefault()
         setInventoryOpen(false)
         setGearOpen((prev) => !prev)
@@ -473,7 +538,7 @@ function Run() {
       }
 
       if (event.key === 'p' || event.key === 'P') {
-        if (mapOpen || inventoryOpen || gearOpen) return
+        if (mapOpen || inventoryOpen || gearOpen || merchantOpen) return
         event.preventDefault()
         if (openPlayerId) {
           setOpenPlayerId(null)
@@ -486,14 +551,35 @@ function Run() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [room, selfPlayerId, openPlayerId, mapOpen, inventoryOpen, gearOpen])
+  }, [room, selfPlayerId, openPlayerId, mapOpen, inventoryOpen, gearOpen, merchantOpen])
 
   const dmActive = composerBusy || room?.dungeonMasterState === 'active'
   const encounterActive = (room?.encounter?.phase ?? '') !== ''
   const runEnded = room?.status === 'end'
 
+  useEffect(() => {
+    if (!runEnded || !room?.runSummary) return
+    const key = 'citadel.archive'
+    const existing: RunSummary[] = JSON.parse(localStorage.getItem(key) ?? '[]')
+    const alreadySaved = existing.some((s) => s.floor === room.runSummary!.floor && s.totalXP === room.runSummary!.totalXP && s.roomsExplored === room.runSummary!.roomsExplored)
+    if (!alreadySaved) {
+      existing.push({ ...room.runSummary, date: Date.now() } as RunSummary & { date: number })
+      localStorage.setItem(key, JSON.stringify(existing.slice(-20)))
+    }
+  }, [runEnded, room?.runSummary])
+
+  useEffect(() => {
+    if (!runEnded || !room?.runSummary) return
+    const timer = window.setTimeout(() => {
+      setStage(4)
+      navigate({ to: '/archive' })
+    }, 2500)
+    return () => window.clearTimeout(timer)
+  }, [runEnded, room?.runSummary, navigate])
+
   const selfPlayer = room?.players.find((p) => p.playerId === selfPlayerId) ?? null
   const selfPublicId = selfPlayer?.playerPublicId ?? null
+  const isSelfDead = (selfPlayer?.stats.health.CurrentHealth ?? 1) <= 0
   const awayFromGrace = room !== null && room.currentRoom.type !== 'grace'
   const playerNameById = new Map<string, string>(
     (room?.players ?? []).map((p) => [p.playerPublicId, p.name]),
@@ -684,10 +770,13 @@ function Run() {
       <aside className="descent__right" aria-label="Tactical overview">
         <RightRail
           room={room}
+          isSelfDead={isSelfDead}
           onOpenMap={() => setMapOpen(true)}
           onOpenInventory={() => setInventoryOpen(true)}
           onOpenGear={() => setGearOpen(true)}
           onOpenDossier={() => selfPlayerId && setOpenPlayerId(selfPlayerId)}
+          onOpenMerchant={() => setMerchantOpen(true)}
+          onPickUpItem={handlePickUpItem}
         />
       </aside>
 
@@ -725,6 +814,7 @@ function Run() {
           onClose={() => setInventoryOpen(false)}
           onEquip={handleEquipItem}
           onUse={handleUseItem}
+          onDrop={handleDropItem}
           busy={busy}
         />
       )}
@@ -744,6 +834,28 @@ function Run() {
         />
       )}
 
+      {merchantOpen && selfPlayer && (
+        <MerchantModal
+          stock={room?.merchantDetails?.stock ?? []}
+          playerItems={selfPlayer.stats.items ?? []}
+          playerGold={selfPlayer.stats.gold}
+          equippedArmor={selfPlayer.stats.armor_stats}
+          equippedWeapon={selfPlayer.stats.weapon_stats}
+          effectiveStats={{
+            hp: selfPlayer.stats.base_stats.hp + selfPlayer.stats.stat_modifiers.hp + selfPlayer.stats.temp_stat_modifiers.hp,
+            strength: selfPlayer.stats.base_stats.strength + selfPlayer.stats.stat_modifiers.strength + selfPlayer.stats.temp_stat_modifiers.strength,
+            dexterity: selfPlayer.stats.base_stats.dexterity + selfPlayer.stats.stat_modifiers.dexterity + selfPlayer.stats.temp_stat_modifiers.dexterity,
+            intelligence: selfPlayer.stats.base_stats.intelligence + selfPlayer.stats.stat_modifiers.intelligence + selfPlayer.stats.temp_stat_modifiers.intelligence,
+            wisdom: selfPlayer.stats.base_stats.wisdom + selfPlayer.stats.stat_modifiers.wisdom + selfPlayer.stats.temp_stat_modifiers.wisdom,
+            agility: selfPlayer.stats.base_stats.agility + selfPlayer.stats.stat_modifiers.agility + selfPlayer.stats.temp_stat_modifiers.agility,
+          }}
+          onClose={() => setMerchantOpen(false)}
+          onBuy={handleBuyItem}
+          onSell={handleSellItem}
+          busy={busy}
+        />
+      )}
+
       {room?.currentVote && (
         <VoteModal
           vote={room.currentVote}
@@ -756,6 +868,17 @@ function Run() {
           onVote={handleVote}
         />
       )}
+      {runEnded && room?.runSummary && (
+        <div className="runend" role="dialog" aria-label="run complete">
+          <div className="runend__left">
+            <span className="runend__eyebrow">expedition complete</span>
+            <span className="runend__note">your folio awaits in the archive</span>
+          </div>
+          <div className="runend__right">
+            <h2 className="runend__title">The Descent Has Ended</h2>
+          </div>
+        </div>
+      )}
       {selfPlayer && selfPlayer.stats.skill_points > 0 && !runEnded && (
         <div className="runtoast" role="status" aria-live="polite">
           <div className="runtoast__head">
@@ -766,7 +889,7 @@ function Run() {
           <p className="runtoast__note">
             {awayFromGrace ? 'return to grace' : 'open your file to spend them'}
           </p>
-        </div>
+      </div>
       )}
     </div>
   )
@@ -810,6 +933,7 @@ function PartyManifest({
               aria-label={`View ${player.name}'s file`}
             >
               <div className="manifest__delver-name">
+                <Icon icon={STARTER_KITS.find((k) => k.id === player.kit)?.icon ?? 'game-icons:boots'} className="manifest__delver-icon" />
                 <span className="manifest__delver-name-text">{player.name}</span>
                 <span className="manifest__delver-level">Lv.{s.level}</span>
               </div>
@@ -861,31 +985,38 @@ function numberKeyIndex(key: string): number {
 
 function RightRail({
   room,
+  isSelfDead,
   onOpenMap,
   onOpenInventory,
   onOpenGear,
   onOpenDossier,
+  onOpenMerchant,
+  onPickUpItem,
 }: {
   room: RoomData | null
+  isSelfDead: boolean
   onOpenMap: () => void
   onOpenInventory: () => void
   onOpenGear: () => void
   onOpenDossier: () => void
+  onOpenMerchant: () => void
+  onPickUpItem: (itemIndex: number) => void
 }) {
   const encounter = room?.encounter
   const enemies = encounter?.enemies ?? []
   const roomType = room?.currentRoom.type ?? 'grace'
+  const droppedItems = room?.map?.rooms?.find((r) => r.isCurrentRoom)?.droppedItems ?? []
 
   return (
     <>
       {/* Quick-access bar */}
       <div className="quickbar">
-        <button type="button" className="quickbar__btn" onClick={onOpenGear} aria-label="Open gear (G)">
+        <button type="button" className="quickbar__btn" disabled={isSelfDead} onClick={onOpenGear} aria-label="Open gear (G)">
           <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>shield</span>
           <span className="quickbar__label">Gear</span>
           <kbd className="quickbar__kbd">G</kbd>
         </button>
-        <button type="button" className="quickbar__btn" onClick={onOpenInventory} aria-label="Open inventory (I)">
+        <button type="button" className="quickbar__btn" disabled={isSelfDead} onClick={onOpenInventory} aria-label="Open inventory (I)">
           <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>backpack</span>
           <span className="quickbar__label">Inventory</span>
           <kbd className="quickbar__kbd">I</kbd>
@@ -895,6 +1026,13 @@ function RightRail({
           <span className="quickbar__label">Player Sheet</span>
           <kbd className="quickbar__kbd">P</kbd>
         </button>
+        {roomType === 'grace' && (
+          <button type="button" className="quickbar__btn" disabled={isSelfDead} onClick={onOpenMerchant} aria-label="Open merchant (K)">
+            <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>storefront</span>
+            <span className="quickbar__label">Merchant</span>
+            <kbd className="quickbar__kbd">K</kbd>
+          </button>
+        )}
       </div>
 
       {/* Chamber art */}
@@ -1065,6 +1203,42 @@ function RightRail({
         })}
       </div>
       )}
+
+      {/* Dropped items */}
+      {droppedItems.length > 0 && (
+      <div className="hostiles">
+        <div className="hostiles__head">
+          <div className="hostiles__title">
+            <span>✦</span>
+            <span>Dropped Items</span>
+          </div>
+          <span className="hostiles__badge">{droppedItems.length} on ground</span>
+        </div>
+        {droppedItems.map((item, i) => (
+          <div key={`${item.id}-${i}`} className="hostile-card" style={{ cursor: isSelfDead ? 'not-allowed' : 'pointer', opacity: isSelfDead ? 0.5 : 1 }} onClick={() => { if (!isSelfDead) onPickUpItem(i) }}>
+            <div className="hostile-card__name">
+              <span className="hostile-card__name-text" style={{ color: '#ece4d4' }}>{item.name}</span>
+              <span className="hostile-card__status" style={{ color: '#34d399' }}>pick up</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: item.rarity.name === 'legendary' ? '#dc2626' : item.rarity.name === 'epic' ? '#d4af37' : item.rarity.name === 'rare' ? '#8b5cf6' : item.rarity.name === 'uncommon' ? '#34d399' : '#6e6656' }}>
+                {item.rarity.name}
+              </span>
+              {item.type === 'gear' && item.slot && (
+                <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.4375rem', color: '#6e6656', textTransform: 'uppercase' }}>
+                  {item.slot}
+                </span>
+              )}
+              {item.type === 'scroll' && item.ability && (
+                <span style={{ fontFamily: '"EB Garamond", serif', fontSize: '0.625rem', color: '#8a702b', fontStyle: 'italic' }}>
+                  {item.ability}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      )}
     </>
   )
 }
@@ -1082,24 +1256,74 @@ function CombatModal({
 }) {
   const encounter = room.encounter
   const [pending, setPending] = useState<CombatAction | null>(null)
+  const [selectedIdx, setSelectedIdx] = useState(0)
   const [busy, setBusy] = useState(false)
-  const [now, setNow] = useState(() => Date.now())
   const { toast } = useToast()
 
-  const voteActive = encounter?.phase === 'vote' && (room.currentVote != null)
-  const voteDeadlineAt = room.currentVote?.deadlineAt ?? 0
+  const myTurnRef = useRef(false)
+  const needsTargetRef = useRef(false)
+  const pendingRef = useRef<CombatAction | null>(null)
+  const pendingTargetKindRef = useRef<'enemy' | 'ally' | null>(null)
+  const selectedIdxRef = useRef(0)
+  const actionListRef = useRef<{ label: string; title?: string; invoke: () => void }[]>([])
+  const enemiesRef = useRef<EncounterEnemy[]>([])
+  const alliesRef = useRef<PlayerPublic[]>([])
+  const pickEnemyRef = useRef<(id: string) => void>(() => {})
+  const pickAllyRef = useRef<(id: string) => void>(() => {})
 
   useEffect(() => {
-    if (!voteActive || voteDeadlineAt === 0) return
-    const tick = () => setNow(Date.now())
-    const id = window.setInterval(tick, 250)
-    return () => window.clearInterval(id)
-  }, [voteActive, voteDeadlineAt])
+    const onKey = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
-  const keyboardRef = useRef<((event: KeyboardEvent) => void) | null>(null)
+      if (!myTurnRef.current) return
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => keyboardRef.current?.(event)
+      if (needsTargetRef.current) {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          setPending(null)
+          setSelectedIdx(0)
+          return
+        }
+        const n = numberKeyIndex(event.key)
+        if (n === -1) return
+        const kind = pendingTargetKindRef.current
+        if (kind === 'ally') {
+          const targetList = alliesRef.current
+          if (n < targetList.length) {
+            event.preventDefault()
+            pickAllyRef.current(targetList[n].playerPublicId)
+          }
+        } else if (n < enemiesRef.current.length) {
+          event.preventDefault()
+          pickEnemyRef.current(enemiesRef.current[n].id)
+        }
+        return
+      }
+
+      const actions = actionListRef.current
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setSelectedIdx((i) => (i > 0 ? i - 1 : actions.length - 1))
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setSelectedIdx((i) => (i < actions.length - 1 ? i + 1 : 0))
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        const idx = selectedIdxRef.current
+        if (idx >= 0 && idx < actions.length) {
+          actions[idx].invoke()
+        }
+      } else {
+        const n = numberKeyIndex(event.key)
+        if (n >= 0 && n < actions.length) {
+          event.preventDefault()
+          setSelectedIdx(n)
+          actions[n].invoke()
+        }
+      }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
@@ -1111,17 +1335,6 @@ function CombatModal({
   const selfPlayer = room.players.find((p) => p.playerPublicId === selfPublicId) ?? null
   const isMyTurn =
     encounter.currentTurnKind === 'player' && encounter.currentTurnId === selfPublicId
-
-  const myVote = selfPublicId !== null && room.currentVote ? room.currentVote.votes[selfPublicId] : undefined
-  const voteRemainingMs = Math.max(0, voteDeadlineAt - now)
-  const voteRemainingSec = Math.ceil(voteRemainingMs / 1000)
-  const voteCounts: Record<string, number> = {}
-  if (room.currentVote) {
-    for (const opt of room.currentVote.options) voteCounts[opt.id] = 0
-    for (const choice of Object.values(room.currentVote.votes)) {
-      if (choice && voteCounts[choice] !== undefined) voteCounts[choice]++
-    }
-  }
 
   const activeAbilities: (Ability & { slot: number })[] = (
     selfPlayer?.stats.activeAbilities ?? []
@@ -1139,14 +1352,6 @@ function CombatModal({
       p.stats.health.CurrentHealth > 0,
   )
 
-  const downedAllies = room.players.filter(
-    (p) =>
-      p.playerPublicId !== selfPublicId &&
-      p.status !== 'disconnected' &&
-      p.status !== 'left' &&
-      p.stats.health.CurrentHealth <= 0,
-  )
-
   const partyAll = room.players.filter(
     (p) => p.status !== 'disconnected' && p.status !== 'left' && p.status !== 'ended',
   )
@@ -1155,7 +1360,6 @@ function CombatModal({
   const pendingAbility = pending && pending.type === 'ability' ? pending : null
   const needsTarget =
     pending?.type === 'attack' ||
-    pending?.type === 'revive' ||
     (pendingAbility !== null &&
       (() => {
         const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
@@ -1164,7 +1368,6 @@ function CombatModal({
 
   const pendingTargetKind: 'enemy' | 'ally' | null = (() => {
     if (pending?.type === 'attack') return 'enemy'
-    if (pending?.type === 'revive') return 'ally'
     if (pendingAbility) {
       const ability = activeAbilities.find((a) => a.id === pendingAbility.abilityId)
       if (ability && abilityNeedsTarget(ability)) {
@@ -1173,6 +1376,10 @@ function CombatModal({
     }
     return null
   })()
+
+  useEffect(() => {
+    setSelectedIdx(0)
+  }, [isMyTurn, needsTarget, activeAbilities.length])
 
   const sendAction = async (action: CombatAction) => {
     if (!roomToken) return
@@ -1203,18 +1410,6 @@ function CombatModal({
   const pickEnemy = (id: string) => void sendTarget({ kind: 'enemy', id })
   const pickAlly = (id: string) => void sendTarget({ kind: 'ally', id })
 
-  const sendVote = async (optionId: string) => {
-    if (!roomToken) return
-    setBusy(true)
-    try {
-      await sendVoteOption(roomToken, optionId)
-    } catch (e) {
-      toast('error', e instanceof Error ? e.message : 'Failed to vote')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   const turnName = playerNameById.get(encounter.currentTurnId ?? '') ?? 'the next actor'
 
   const actionList: { label: string; title?: string; invoke: () => void }[] = [
@@ -1225,55 +1420,18 @@ function CombatModal({
       invoke: () => void sendAction({ type: 'ability', abilityId: a.id }),
     })),
     { label: 'defend', invoke: () => void sendAction({ type: 'defend' }) },
-    ...(downedAllies.length > 0
-      ? [{ label: 'revive', title: 'Revive a fallen ally', invoke: () => void sendAction({ type: 'revive' }) }]
-      : []),
   ]
 
-  keyboardRef.current = (event: KeyboardEvent) => {
-    const tag = (event.target as HTMLElement).tagName
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-    if (event.metaKey || event.ctrlKey || event.altKey) return
-
-    if (isVote) {
-      const options = room.currentVote?.options ?? []
-      const idx = numberKeyIndex(event.key)
-      if (idx >= 0 && idx < options.length) {
-        event.preventDefault()
-        void sendVote(options[idx].id)
-      }
-      return
-    }
-
-    if (!isMyTurn) return
-
-    if (needsTarget) {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        setPending(null)
-        return
-      }
-      const idx = numberKeyIndex(event.key)
-      if (idx === -1) return
-      if (pendingTargetKind === 'ally') {
-        const targetList = pending?.type === 'revive' ? downedAllies : allies
-        if (idx < targetList.length) {
-          event.preventDefault()
-          pickAlly(targetList[idx].playerPublicId)
-        }
-      } else if (idx < enemies.length) {
-        event.preventDefault()
-        pickEnemy(enemies[idx].id)
-      }
-      return
-    }
-
-    const idx = numberKeyIndex(event.key)
-    if (idx >= 0 && idx < actionList.length) {
-      event.preventDefault()
-      actionList[idx].invoke()
-    }
-  }
+  myTurnRef.current = isMyTurn
+  needsTargetRef.current = needsTarget
+  pendingRef.current = pending
+  pendingTargetKindRef.current = pendingTargetKind
+  selectedIdxRef.current = selectedIdx
+  actionListRef.current = actionList
+  enemiesRef.current = enemies
+  alliesRef.current = allies
+  pickEnemyRef.current = pickEnemy
+  pickAllyRef.current = pickAlly
 
   return (
     <div className="bento-scrim">
@@ -1287,7 +1445,7 @@ function CombatModal({
         <header className="bento__head">
           <div className="bento__head-left">
             <span className="bento__eyebrow">
-              {isVote ? `the party decides · ${voteRemainingSec}s` : `combat · round ${encounter.round}`}
+              {isVote ? 'the party decides' : `combat · round ${encounter.round}`}
             </span>
             <h2 className="bento__title">{isVote ? 'Foes Bar the Way' : 'The Fray'}</h2>
           </div>
@@ -1300,51 +1458,7 @@ function CombatModal({
 
         <div className="combatmodal__body">
           {isVote ? (
-            room.currentVote ? (
-            <div className="combatmodal__votebody">
-              <div className="combatmodal__voteheader">
-                <span className="combatmodal__votedesc">{room.currentVote.description}</span>
-                <div className="combatmodal__votetimer">
-                  <span className="combatmodal__votetimer-num">{voteRemainingSec}</span>
-                  <span className="combatmodal__votetimer-unit">s</span>
-                </div>
-              </div>
-              <div className="combatmodal__voteropts">
-                {room.currentVote.options.map((opt, i) => {
-                  const count = voteCounts[opt.id] ?? 0
-                  const maxVotes = Math.max(1, ...room.currentVote!.options.map((o) => voteCounts[o.id] ?? 0))
-                  const barPct = maxVotes > 0 ? count / maxVotes : 0
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className="combatmodal__voteopt"
-                      disabled={busy}
-                      aria-pressed={myVote === opt.id}
-                      onClick={() => void sendVote(opt.id)}
-                    >
-                      <div className="combatmodal__voteopt-bar" style={{ transform: `scaleX(${barPct})` }} />
-                      <div className="combatmodal__voteopt-inner">
-                        <span className="combatmodal__voteopt-key">{i + 1}</span>
-                        <span className="combatmodal__voteopt-body">
-                          <span className="combatmodal__voteopt-name">{opt.name}</span>
-                          <span className="combatmodal__voteopt-desc">{opt.description}</span>
-                        </span>
-                        <span className="combatmodal__voteopt-count">{count}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="combatmodal__votewait">
-                {myVote !== undefined
-                  ? `you chose ${myVote}`
-                  : 'awaiting your voice'}
-              </p>
-            </div>
-            ) : (
-              <div className="combatmodal__votewait">gathering voices…</div>
-            )
+            <div className="combatmodal__votewait">the party decides…</div>
           ) : (
           <div className="combatgrid">
             <div className="combatgrid__actions">
@@ -1353,11 +1467,12 @@ function CombatModal({
                   {actionList.map((action, i) => (
                     <button
                       type="button"
+                      tabIndex={-1}
                       key={`${i}-${action.label}`}
-                      className="combatgrid__act"
+                      className={`combatgrid__act${i === selectedIdx ? ' combatgrid__act--selected' : ''}`}
                       disabled={busy}
                       title={action.title}
-                      onClick={action.invoke}
+                      onClick={() => { setSelectedIdx(i); action.invoke() }}
                     >
                       <span className="combatgrid__actkey">{i + 1}</span>
                       <span className="combatgrid__actlabel">{action.label}</span>
@@ -1369,9 +1484,10 @@ function CombatModal({
               {isMyTurn && needsTarget && (
                 <div className="combatgrid__actionsbody">
                   {pendingTargetKind === 'ally' &&
-                    (pending?.type === 'revive' ? downedAllies : allies).map((p, i) => (
+                    allies.map((p, i) => (
                       <button
                         type="button"
+                        tabIndex={-1}
                         key={p.playerPublicId}
                         className="combatgrid__act combatgrid__act--target"
                         disabled={busy}
@@ -1387,6 +1503,10 @@ function CombatModal({
                   {pendingTargetKind === 'enemy' && (
                     <p className="combatmodal__wait">select a foe above</p>
                   )}
+                </div>
+              )}
+              {isMyTurn && needsTarget && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                   <button
                     type="button"
                     className="combatgrid__act combatgrid__act--cancel"
@@ -1429,7 +1549,7 @@ function CombatModal({
                           }${isTargetable ? ' combatcard--targetable' : ''}`}
                           onClick={isTargetable ? () => pickEnemy(e.id) : undefined}
                           role={isTargetable ? 'button' : undefined}
-                          tabIndex={isTargetable ? 0 : undefined}
+                          tabIndex={isTargetable ? -1 : undefined}
                           onKeyDown={isTargetable ? (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pickEnemy(e.id); } } : undefined}
                         >
                           <div className="combatcard__top">
@@ -1618,6 +1738,7 @@ function MapCanvas({ map, onSelectRoom }: { map: MapPublicJSON; onSelectRoom?: (
   }, [])
 
   const positions = computePositions(map)
+  const roomsWithItems = new Set(map.rooms.map((r, i) => ({ r, i })).filter(({ r }) => r.droppedItems.length > 0).map(({ i }) => i))
   const visibleRooms = map.rooms
     .map((r, i) => ({ ...r, index: i }))
     .filter((r) => r.isVisited)
@@ -1813,6 +1934,9 @@ function MapCanvas({ map, onSelectRoom }: { map: MapPublicJSON; onSelectRoom?: (
             aria-label={ROOM_LABELS[node.type] ?? node.type}
           >
             <span className="map__room-label">{node.isCurrentRoom ? `${romanNumeral(node.index + 1)} ✦` : romanNumeral(node.index + 1)}</span>
+            {roomsWithItems.has(node.index) && (
+              <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '8px', height: '8px', borderRadius: '50%', background: '#d4af37', border: '1px solid #0c0b0f' }} />
+            )}
           </button>
         ))}
       </div>
@@ -1983,6 +2107,23 @@ function MapModal({ room, onClose }: { room: RoomData; onClose: () => void }) {
                   )
                 })()}
 
+                {/* Dropped Items */}
+                {selectedRoom.droppedItems.length > 0 && (
+                  <div className="mapmodal__side-section">
+                    <span className="mapmodal__side-section-label">Dropped Items ({selectedRoom.droppedItems.length})</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {selectedRoom.droppedItems.map((item, i) => (
+                        <div key={`${item.id}-${i}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.25rem 0.375rem', background: 'rgba(212,175,55,0.05)', border: '1px solid rgba(212,175,55,0.1)', borderRadius: '0.25rem' }}>
+                          <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.6875rem', color: '#ece4d4' }}>{item.name}</span>
+                          <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', textTransform: 'uppercase', color: item.rarity.name === 'legendary' ? '#dc2626' : item.rarity.name === 'epic' ? '#d4af37' : item.rarity.name === 'rare' ? '#8b5cf6' : item.rarity.name === 'uncommon' ? '#34d399' : '#6e6656' }}>
+                            {item.rarity.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedRoom.isCurrentRoom && (
                   <div className="mapmodal__side-current">
                     <span className="material-symbols-outlined" style={{ fontSize: '0.75rem', color: '#f2ca50' }}>star</span>
@@ -2013,15 +2154,12 @@ function VoteModal({
   selfPublicId,
   onVote,
 }: VoteModalProps) {
-  const voteRef = useRef<HTMLDivElement>(null)
-  const firstButtonRef = useRef<HTMLButtonElement>(null)
+  const [selectedIdx, setSelectedIdx] = useState(0)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    firstButtonRef.current?.focus()
-
     const tick = () => setNow(Date.now())
     const id = window.setInterval(tick, 250)
     return () => {
@@ -2030,10 +2168,54 @@ function VoteModal({
     }
   }, [])
 
+  useEffect(() => {
+    setSelectedIdx(0)
+  }, [vote.options.length])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+
+      const opts = vote.options
+      if (opts.length === 0) return
+
+      const timeLeft = Math.max(0, vote.deadlineAt - Date.now())
+      if (timeLeft <= 0) return
+
+      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setSelectedIdx((i) => (i > 0 ? i - 1 : opts.length - 1))
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+        event.preventDefault()
+        setSelectedIdx((i) => (i < opts.length - 1 ? i + 1 : 0))
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        setSelectedIdx((i) => {
+          if (i >= 0 && i < opts.length) {
+            onVote(opts[i].id)
+          }
+          return i
+        })
+      } else {
+        const n = numberKeyIndex(event.key)
+        if (n >= 0 && n < opts.length) {
+          event.preventDefault()
+          setSelectedIdx(n)
+          onVote(opts[n].id)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [vote.options, onVote])
+
   const myVote = selfPublicId !== null ? vote.votes[selfPublicId] : undefined
   const hasSpoken = myVote !== undefined
   const remainingMs = Math.max(0, vote.deadlineAt - now)
   const remainingSec = Math.ceil(remainingMs / 1000)
+  const expired = remainingMs <= 0
   const pct = totalVoters > 0 && vote.duration > 0 ? Math.min(100, (remainingMs / vote.duration) * 100) : 0
   const totalVotesCast = Object.keys(vote.votes).length
 
@@ -2059,7 +2241,6 @@ function VoteModal({
         role="dialog"
         aria-modal="true"
         aria-label="Party vote"
-        ref={voteRef}
       >
         <header className="bento__head" style={{ position: 'relative' }}>
           <div className="bento__head-left">
@@ -2090,14 +2271,20 @@ function VoteModal({
             {optionCounts.map((opt, i) => {
               const barPct = maxCount > 0 ? opt.count / maxCount : 0
               const isChosen = myVote === opt.id
+              const isSelected = i === selectedIdx
               return (
                 <button
                   key={opt.id}
-                  ref={i === 0 ? firstButtonRef : undefined}
                   type="button"
+                  tabIndex={-1}
+                  disabled={expired}
                   className={`bento-card${isChosen ? ' bento-card--accent' : ''}`}
-                  style={{ position: 'relative', overflow: 'hidden', textAlign: 'left', cursor: 'pointer' }}
-                  onClick={() => onVote(opt.id)}
+                  style={{
+                    position: 'relative', overflow: 'hidden', textAlign: 'left', cursor: expired ? 'default' : 'pointer',
+                    outline: isSelected ? '2px solid #f2ca50' : 'none',
+                    outlineOffset: '-2px',
+                  }}
+                  onClick={() => { if (!expired) onVote(opt.id) }}
                 >
                   <div
                     style={{
@@ -2109,9 +2296,11 @@ function VoteModal({
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span style={{
                       fontFamily: '"JetBrains Mono", monospace', fontSize: '0.625rem', fontWeight: 700,
-                      color: isChosen ? '#d4af37' : '#6e6656', background: isChosen ? 'rgba(212,175,55,0.15)' : 'rgba(110,102,86,0.2)',
+                      color: isSelected ? '#f2ca50' : isChosen ? '#d4af37' : '#6e6656',
+                      background: isSelected ? 'rgba(242,202,80,0.2)' : isChosen ? 'rgba(212,175,55,0.15)' : 'rgba(110,102,86,0.2)',
                       width: '1.5rem', height: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: `1px solid ${isChosen ? 'rgba(212,175,55,0.4)' : 'rgba(110,102,86,0.3)'}`,
+                      border: `1px solid ${isSelected ? 'rgba(242,202,80,0.6)' : isChosen ? 'rgba(212,175,55,0.4)' : 'rgba(110,102,86,0.3)'}`,
+                      transition: 'all 0.1s',
                     }}>
                       {i + 1}
                     </span>
@@ -2174,6 +2363,7 @@ interface InventoryModalProps {
   onClose: () => void
   onEquip: (index: number) => void
   onUse: (id: string) => void
+  onDrop: (index: number) => void
   busy: boolean
 }
 
@@ -2190,7 +2380,7 @@ function sortItems(items: RunItem[], key: SortKey): RunItem[] {
   return sorted
 }
 
-function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: InventoryModalProps) {
+function InventoryModal({ player, isSelf, onClose, onEquip, onUse, onDrop, busy }: InventoryModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
@@ -2296,7 +2486,16 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: Inven
         })
       } else if (event.key === 'Enter' && selectedIdx !== null) {
         event.preventDefault()
-        setSelectedIdx((prev) => prev === null ? null : (prev === selectedIdx ? null : prev))
+        const item = activeItems[selectedIdx]
+        if (!item || !isSelf) {
+          setSelectedIdx((prev) => prev === null ? null : (prev === selectedIdx ? null : prev))
+        } else if (item.type === 'gear' && item.slot) {
+          const idx = stats.items ? stats.items.indexOf(item) : -1
+          const canEquip = idx >= 0 && meetsRequired(item.required_stats ?? {}, effectiveStats)
+          if (canEquip) onEquip(idx)
+        } else if (item.type === 'consumable' || item.type === 'scroll') {
+          onUse(item.id)
+        }
       } else if (event.key === 'Tab') {
         event.preventDefault()
         const current = pocketIds.indexOf(activePocket)
@@ -2420,14 +2619,26 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: Inven
                       }}>
                         {item.rarity.name}
                       </span>
-                      {item.type === 'gear' && item.slot && (
-                        <span style={{
-                          fontFamily: '"JetBrains Mono", monospace', fontSize: '0.4375rem',
-                          color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em',
-                        }}>
-                          {item.slot}
-                        </span>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                        {item.count > 1 && (
+                          <span style={{
+                            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem',
+                            background: 'rgba(212,175,55,0.15)', color: '#d4af37',
+                            padding: '0.0625rem 0.375rem', borderRadius: '0.25rem',
+                            border: '1px solid rgba(212,175,55,0.2)',
+                          }}>
+                            ×{item.count}
+                          </span>
+                        )}
+                        {item.type === 'gear' && item.slot && (
+                          <span style={{
+                            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.4375rem',
+                            color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em',
+                          }}>
+                            {item.slot}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <span style={{
                       fontFamily: '"Cinzel", serif', fontSize: '0.75rem', fontWeight: 700,
@@ -2491,6 +2702,14 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: Inven
                     {selectedItem.slot}
                   </span>
                 )}
+                {selectedItem.count > 1 && (
+                  <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', background: 'rgba(212,175,55,0.15)', color: '#d4af37', padding: '0.0625rem 0.375rem', borderRadius: '0.25rem', border: '1px solid rgba(212,175,55,0.2)' }}>
+                    ×{selectedItem.count}
+                  </span>
+                )}
+                <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', color: '#6e6656', marginLeft: 'auto' }}>
+                  sell: {Math.floor(selectedItem.buyPrice * 0.5)}g
+                </span>
               </div>
               <h3 className="bento-detail__name">{selectedItem.name}</h3>
               {selectedItem.description && (
@@ -2541,7 +2760,7 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: Inven
                 </div>
               )}
               {isSelf && (
-                <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid rgba(212,175,55,0.1)' }}>
+                <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid rgba(212,175,55,0.1)', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                   {selectedItem.type === 'consumable' && (
                     <button type="button" className="bento-btn" style={{ width: '100%' }} disabled={busy} onClick={() => onUse(selectedItem.id)}>
                       use
@@ -2571,6 +2790,12 @@ function InventoryModal({ player, isSelf, onClose, onEquip, onUse, busy }: Inven
                       </span>
                     ) : null
                   })()}
+                  <button type="button" className="bento-btn bento-btn--ghost" style={{ width: '100%', color: '#dc2626' }} disabled={busy} onClick={() => {
+                    const idx = stats.items ? stats.items.indexOf(selectedItem) : -1
+                    if (idx >= 0) onDrop(idx)
+                  }}>
+                    drop
+                  </button>
                 </div>
               )}
             </div>
@@ -2590,7 +2815,7 @@ function meetsRequired(required: Partial<Stats>, stats: Stats): boolean {
   return true
 }
 
-function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ability[]; emptyText?: string }) {
+function AbilityList({ abilities, emptyText = 'none mastered', effectiveStats, playerLevel }: { abilities: Ability[]; emptyText?: string; effectiveStats?: Stats; playerLevel?: number }) {
   if (abilities.length === 0) {
     return <span className="filecard__empty">{emptyText}</span>
   }
@@ -2598,6 +2823,9 @@ function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ab
     <ul className="filecard__ability-list">
       {abilities.map((ability) => {
         const reqEntries = Object.entries(ability.minimumStats ?? {}).filter(([, v]) => v !== 0)
+        const meetsLevel = playerLevel != null ? playerLevel >= ability.minimumLevel : true
+        const meetsStats = effectiveStats ? reqEntries.every(([k, v]) => (effectiveStats[k as keyof Stats] ?? 0) >= (v as number)) : true
+        const reqMet = meetsLevel && meetsStats
         return (
           <li className="filecard__ability" key={ability.id}>
             <span className="filecard__ability-head">
@@ -2609,7 +2837,7 @@ function AbilityList({ abilities, emptyText = 'none mastered' }: { abilities: Ab
             <span className="filecard__ability-flavor">{ability.flavor_text}</span>
             <span className="filecard__ability-desc">{ability.description}</span>
             {(ability.minimumLevel > 0 || reqEntries.length > 0) && (
-              <span className="filecard__ability-req">
+              <span className="filecard__ability-req" style={reqMet ? { color: '#9d9280' } : undefined}>
                 requires lvl {ability.minimumLevel}
                 {reqEntries.length > 0 &&
                   ` · ${reqEntries.map(([k, v]) => `${k} ${v}`).join(', ')}`}
@@ -2908,6 +3136,15 @@ function GearModal({
   const [activeSection, setActiveSection] = useState<'gear' | 'active' | 'ability'>('gear')
 
   const stats = player.stats
+  const temp = stats.temp_stat_modifiers
+  const effectiveStats: Stats = {
+    hp: stats.base_stats.hp + stats.stat_modifiers.hp + temp.hp,
+    strength: stats.base_stats.strength + stats.stat_modifiers.strength + temp.strength,
+    dexterity: stats.base_stats.dexterity + stats.stat_modifiers.dexterity + temp.dexterity,
+    intelligence: stats.base_stats.intelligence + stats.stat_modifiers.intelligence + temp.intelligence,
+    wisdom: stats.base_stats.wisdom + stats.stat_modifiers.wisdom + temp.wisdom,
+    agility: stats.base_stats.agility + stats.stat_modifiers.agility + temp.agility,
+  }
 
   const FALLBACK_RARITY: Rarity = { name: 'common', rarityLevel: 1 }
 
@@ -3172,7 +3409,7 @@ function GearModal({
                       mastered abilities{stats.abilities.length > 0 ? ` · ${stats.abilities.length}` : ''}
                     </span>
                   </div>
-                  <AbilityList abilities={stats.abilities} emptyText="none mastered — read scrolls from your inventory to learn abilities" />
+                  <AbilityList abilities={stats.abilities} emptyText="none mastered — read scrolls from your inventory to learn abilities" effectiveStats={effectiveStats} playerLevel={stats.level} />
                 </>
               )
             })()}
@@ -3212,6 +3449,15 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
   previousRef.current = previous
 
   const stats = player.stats
+  const temp = stats.temp_stat_modifiers
+  const effectiveStats: Stats = {
+    hp: stats.base_stats.hp + stats.stat_modifiers.hp + temp.hp,
+    strength: stats.base_stats.strength + stats.stat_modifiers.strength + temp.strength,
+    dexterity: stats.base_stats.dexterity + stats.stat_modifiers.dexterity + temp.dexterity,
+    intelligence: stats.base_stats.intelligence + stats.stat_modifiers.intelligence + temp.intelligence,
+    wisdom: stats.base_stats.wisdom + stats.stat_modifiers.wisdom + temp.wisdom,
+    agility: stats.base_stats.agility + stats.stat_modifiers.agility + temp.agility,
+  }
   const health = stats.health
   const healthPct =
     health.MaxHealth > 0
@@ -3225,6 +3471,16 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
   const canModifyStats =
     player.playerId === selfPlayerId && currentRoomType === "grace"
 
+  const tabs = ['stats', 'gear', 'active', 'ability'] as const
+  const onChangeStatRef = useRef(onChangeStat)
+  onChangeStatRef.current = onChangeStat
+  const canModifyStatsRef = useRef(canModifyStats)
+  canModifyStatsRef.current = canModifyStats
+  const activeTabRef = useRef(activeTab)
+  activeTabRef.current = activeTab
+  const setActiveTabRef = useRef(setActiveTab)
+  setActiveTabRef.current = setActiveTab
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -3236,34 +3492,67 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
         onCloseRef.current()
         return
       }
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault()
-        onSwitchRef.current(previousRef.current.playerId)
-        return
-      }
-      if (event.key === 'ArrowRight') {
-        event.preventDefault()
-        onSwitchRef.current(nextRef.current.playerId)
-        return
-      }
       if (event.key === 'p' || event.key === 'P') {
         event.preventDefault()
         onCloseRef.current()
         return
       }
-      if (event.key !== 'Tab' || !dialogRef.current) return
-      const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      )
-      if (focusables.length === 0) return
-      const first = focusables[0]
-      const last = focusables[focusables.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.key === '1') { event.preventDefault(); setActiveTabRef.current('stats'); return }
+      if (event.key === '2') { event.preventDefault(); setActiveTabRef.current('gear'); return }
+      if (event.key === '3') { event.preventDefault(); setActiveTabRef.current('active'); return }
+      if (event.key === '4') { event.preventDefault(); setActiveTabRef.current('ability'); return }
+      if ((event.key === 'Tab' && !event.ctrlKey && !event.altKey && !event.metaKey) && dialogRef.current) {
         event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
+        const idx = tabs.indexOf(activeTabRef.current)
+        const nextIdx = event.shiftKey ? (idx - 1 + tabs.length) % tabs.length : (idx + 1) % tabs.length
+        setActiveTabRef.current(tabs[nextIdx])
+        return
+      }
+      if (canModifyStatsRef.current && activeTabRef.current === 'stats') {
+        const el = document.activeElement as HTMLElement | null
+        const hasStatFocus = el?.hasAttribute('data-stat')
+        if (event.key === 'ArrowDown') {
+          event.preventDefault()
+          const currentKey = el?.getAttribute('data-stat')
+          const idx = currentKey ? SHEET_STATS.findIndex((s) => s.key === currentKey) : -1
+          const nextIdx = idx < SHEET_STATS.length - 1 ? idx + 1 : 0
+          const nextRow = dialogRef.current?.querySelector(`[data-stat="${SHEET_STATS[nextIdx].key}"]`) as HTMLElement | null
+          nextRow?.focus()
+          return
+        }
+        if (event.key === 'ArrowUp') {
+          event.preventDefault()
+          const currentKey = el?.getAttribute('data-stat')
+          const idx = currentKey ? SHEET_STATS.findIndex((s) => s.key === currentKey) : -1
+          const prevIdx = idx > 0 ? idx - 1 : SHEET_STATS.length - 1
+          const prevRow = dialogRef.current?.querySelector(`[data-stat="${SHEET_STATS[prevIdx].key}"]`) as HTMLElement | null
+          prevRow?.focus()
+          return
+        }
+        if (hasStatFocus && (event.key === '+' || event.key === '=')) {
+          event.preventDefault()
+          const statKey = el!.getAttribute('data-stat') as keyof Stats | null
+          if (statKey) onChangeStatRef.current(statKey, +1)
+          return
+        }
+        if (hasStatFocus && event.key === '-') {
+          event.preventDefault()
+          const statKey = el!.getAttribute('data-stat') as keyof Stats | null
+          if (statKey) onChangeStatRef.current(statKey, -1)
+          return
+        }
+      }
+      const activeEl = document.activeElement as HTMLElement | null
+      const statFocused = activeEl?.hasAttribute('data-stat')
+      if (!statFocused && event.key === 'ArrowLeft') {
         event.preventDefault()
-        first.focus()
+        onSwitchRef.current(previousRef.current.playerId)
+        return
+      }
+      if (!statFocused && event.key === 'ArrowRight') {
+        event.preventDefault()
+        onSwitchRef.current(nextRef.current.playerId)
+        return
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -3278,7 +3567,7 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
     <div className="bento-scrim" onClick={onClose}>
       <div
         className="bento"
-        style={{ maxWidth: '36rem' }}
+        style={{ maxWidth: '42rem' }}
         role="dialog"
         aria-modal="true"
         aria-label={`${player.name} — expeditioner file`}
@@ -3311,7 +3600,20 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
         </div>
 
         <div className="bento__body" style={{ flexDirection: 'column' }}>
-          <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', overflow: 'hidden' }}>
+            {/* Hero: avatar + name + kit */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: 'rgba(12,11,15,0.5)', border: '1px solid rgba(43,38,56,0.5)', overflow: 'hidden' }}>
+              <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', background: 'rgba(192,132,252,0.12)', border: '2px solid rgba(192,132,252,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon icon={STARTER_KITS.find((k) => k.id === player.kit)?.icon ?? 'game-icons:boots'} style={{ fontSize: '1.75rem', color: '#c084fc' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem', minWidth: 0, overflow: 'hidden' }}>
+                <span style={{ fontFamily: '"Cinzel", serif', fontSize: '1rem', fontWeight: 700, color: '#ece4d4', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{player.name}</span>
+                <span style={{ fontFamily: '"EB Garamond", serif', fontSize: '0.8125rem', color: '#8a702b', fontStyle: 'italic', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {STARTER_KITS.find((k) => k.id === player.kit)?.name ?? 'Wanderer'}
+                </span>
+              </div>
+            </div>
+
             {/* HP + XP bars */}
             <div className="bento-grid bento-grid--2" style={{ padding: 0 }}>
               <div className="bento-card">
@@ -3336,7 +3638,6 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                 </div>
               </div>
             </div>
-
           </div>
 
           <div className="bento-tabs">
@@ -3370,7 +3671,7 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
                     const mod = stats.stat_modifiers[key]
                     const buff = stats.temp_stat_modifiers[key]
                     return (
-                      <li className="sheet__row" key={key}>
+                      <li className="sheet__row" key={key} data-stat={key} tabIndex={0}>
                         <span className="sheet__row-k">{label}</span>
                         <span className="sheet__row-v">
                           {base}
@@ -3497,7 +3798,7 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
               />
             )}
 
-            {activeTab === 'ability' && <AbilityList abilities={stats.abilities} />}
+            {activeTab === 'ability' && <AbilityList abilities={stats.abilities} effectiveStats={effectiveStats} playerLevel={stats.level} />}
           </div>
 
           <footer style={{ display: 'flex', justifyContent: 'space-between', padding: '0.625rem 0.75rem', borderTop: '1px solid rgba(212,175,55,0.1)', background: 'rgba(12,11,15,0.4)' }}>
@@ -3520,6 +3821,407 @@ function DossierCard({ player, players, selfPlayerId, hostPublicId, currentRoomT
               <span />
             )}
           </footer>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface MerchantModalProps {
+  stock: RunItem[]
+  playerItems: RunItem[]
+  playerGold: number
+  equippedArmor: { head: { stats: Stats } | null; chest: { stats: Stats } | null; greaves: { stats: Stats } | null }
+  equippedWeapon: { stats: Stats } | null
+  effectiveStats: Stats
+  onClose: () => void
+  onBuy: (itemId: string) => Promise<void>
+  onSell: (index: number) => Promise<void>
+  busy: boolean
+}
+
+function MerchantModal({ stock, playerItems, playerGold, equippedArmor, equippedWeapon, effectiveStats, onClose, onBuy, onSell, busy }: MerchantModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy')
+  const [qty, setQty] = useState(1)
+
+  const items = activeTab === 'buy' ? stock : playerItems
+  const selectedItem = selectedIdx !== null ? items[selectedIdx] ?? null : null
+  const selectedItemPrice = selectedItem ? (activeTab === 'buy' ? selectedItem.buyPrice : Math.floor(selectedItem.buyPrice * 0.5)) : 0
+  const totalCost = selectedItemPrice * qty
+
+  useEffect(() => { setQty(1) }, [selectedIdx, activeTab])
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+
+      if (event.key === 'Escape' || event.key === 'k' || event.key === 'K') {
+        event.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (event.key === 'Tab') {
+        event.preventDefault()
+        setActiveTab((t) => t === 'buy' ? 'sell' : 'buy')
+        setSelectedIdx(null)
+        return
+      }
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
+        event.preventDefault()
+        setSelectedIdx((i) => {
+          const len = items.length
+          if (len === 0) return null
+          if (i === null) return 0
+          return i < len - 1 ? i + 1 : 0
+        })
+        return
+      }
+      if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setSelectedIdx((i) => {
+          const len = items.length
+          if (len === 0) return null
+          if (i === null) return len - 1
+          return i > 0 ? i - 1 : len - 1
+        })
+        return
+      }
+      if (selectedItem && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault()
+        if (activeTab === 'buy') {
+          onBuy(selectedItem.id)
+        } else {
+          const idx = playerItems.indexOf(selectedItem)
+          if (idx >= 0) onSell(idx)
+        }
+      }
+      if (selectedItem && selectedItem.stackable) {
+        if (event.key === '+' || event.key === '=') {
+          event.preventDefault()
+          setQty((q) => Math.min(q + 1, selectedItem.count))
+        } else if (event.key === '-') {
+          event.preventDefault()
+          setQty((q) => Math.max(1, q - 1))
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [selectedItem, activeTab, playerItems, onBuy, onSell, items])
+
+  const totalStockValue = stock.reduce((s, item) => s + item.buyPrice, 0)
+  const totalSellValue = playerItems.reduce((s, item) => s + Math.floor(item.buyPrice * 0.5) * item.count, 0)
+
+  return (
+    <div className="bento-scrim" onClick={onClose}>
+      <div
+        className="bento"
+        style={{ maxWidth: '52rem' }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="merchant"
+        ref={dialogRef}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bento__head">
+          <div className="bento__head-left">
+            <span className="bento__eyebrow">merchant</span>
+            <h2 className="bento__title">The Wandering Purveyor</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span className="bento__subtitle" style={{ color: '#d4af37' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '0.875rem', verticalAlign: 'middle' }}>paid</span>
+                {' '}{playerGold} gold
+              </span>
+              <span className="bento__subtitle">
+                {activeTab === 'buy' ? `${stock.length} wares` : `${playerItems.length} items`}
+              </span>
+            </div>
+          </div>
+          <div className="bento__head-right">
+            <button ref={closeRef} type="button" className="bento__close" onClick={onClose} aria-label="Close">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="bento-tabs">
+          <button
+            type="button"
+            className={`bento-tab${activeTab === 'buy' ? ' bento-tab--active' : ''}`}
+            onClick={() => { setActiveTab('buy'); setSelectedIdx(null) }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>shopping_cart</span>
+            buy
+            <span className="bento-tab__count">{stock.length}</span>
+          </button>
+          <button
+            type="button"
+            className={`bento-tab${activeTab === 'sell' ? ' bento-tab--active' : ''}`}
+            onClick={() => { setActiveTab('sell'); setSelectedIdx(null) }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>sell</span>
+            sell
+            <span className="bento-tab__count">{playerItems.length}</span>
+          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.375rem', paddingRight: '0.75rem' }}>
+            <span style={{
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5625rem',
+              color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em',
+            }}>
+              {activeTab === 'buy' ? 'total value' : 'sell value'}
+            </span>
+            <span style={{
+              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.625rem',
+              color: '#d4af37',
+            }}>
+              {activeTab === 'buy' ? totalStockValue : totalSellValue}g
+            </span>
+          </div>
+        </div>
+
+        <div className="bento__body">
+            <div className="bento-grid bento-grid--auto" style={{ alignContent: 'start' }}>
+              {items.length === 0 ? (
+                <div className="bento-empty" style={{ gridColumn: '1 / -1' }}>
+                  {activeTab === 'buy' ? 'No wares available.' : 'Nothing to sell.'}
+                </div>
+              ) : (
+                items.map((item, i) => {
+                  const isSelected = selectedIdx === i
+                  const price = activeTab === 'buy' ? item.buyPrice : Math.floor(item.buyPrice * 0.5)
+                  const itemCanAfford = activeTab === 'buy' ? playerGold >= item.buyPrice : true
+                  return (
+                    <button
+                      key={`${item.id}-${i}`}
+                      type="button"
+                      data-selected={isSelected || undefined}
+                      className={`bento-card${isSelected ? ' bento-card--accent' : ''}`}
+                      style={{
+                        cursor: 'pointer', textAlign: 'left',
+                        borderLeft: `3px solid ${
+                          item.rarity.name === 'legendary' ? '#dc2626' :
+                          item.rarity.name === 'epic' ? '#d4af37' :
+                          item.rarity.name === 'rare' ? '#8b5cf6' :
+                          item.rarity.name === 'uncommon' ? '#34d399' :
+                          'rgba(110,102,86,0.5)'
+                        }`,
+                        opacity: activeTab === 'buy' && !itemCanAfford ? 0.4 : 1,
+                      }}
+                      onClick={() => setSelectedIdx(isSelected ? null : i)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.375rem' }}>
+                        <span style={{
+                          fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem',
+                          textTransform: 'uppercase', letterSpacing: '0.1em',
+                          color: item.rarity.name === 'legendary' ? '#dc2626' :
+                                 item.rarity.name === 'epic' ? '#d4af37' :
+                                 item.rarity.name === 'rare' ? '#8b5cf6' :
+                                 item.rarity.name === 'uncommon' ? '#34d399' :
+                                 '#6e6656',
+                        }}>
+                          {item.rarity.name}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                          {item.count > 1 && (
+                            <span style={{
+                              fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem',
+                              background: 'rgba(212,175,55,0.15)', color: '#d4af37',
+                              padding: '0.0625rem 0.375rem', borderRadius: '0.25rem',
+                              border: '1px solid rgba(212,175,55,0.2)',
+                            }}>
+                              ×{item.count}
+                            </span>
+                          )}
+                          <span style={{
+                            fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem',
+                            color: activeTab === 'sell' ? '#34d399' : '#d4af37',
+                          }}>
+                            {price}g
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontFamily: '"Cinzel", serif', fontSize: '0.75rem', fontWeight: 700,
+                        color: '#ece4d4', lineHeight: 1.2,
+                      }}>
+                        {item.name}
+                      </span>
+                      {item.type === 'gear' && item.slot && (
+                        <span style={{
+                          fontFamily: '"JetBrains Mono", monospace', fontSize: '0.4375rem',
+                          color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em',
+                        }}>
+                          {item.slot}
+                        </span>
+                      )}
+                      {item.type === 'scroll' && item.ability && (
+                        <span style={{
+                          fontFamily: '"EB Garamond", serif', fontSize: '0.6875rem',
+                          color: '#8a702b', fontStyle: 'italic',
+                        }}>
+                          teaches {item.ability}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+
+          {selectedItem && (
+            <div className="bento-detail">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className={`bento-list-item__rarity bento-list-item__rarity--${selectedItem.rarity.name}`}>
+                  {selectedItem.rarity.name}
+                </span>
+                {selectedItem.type === 'gear' && selectedItem.slot && (
+                  <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', color: '#6e6656', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.0625rem 0.375rem', border: '1px solid rgba(110,102,86,0.3)' }}>
+                    {selectedItem.slot}
+                  </span>
+                )}
+                {selectedItem.count > 1 && (
+                  <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5rem', background: 'rgba(212,175,55,0.15)', color: '#d4af37', padding: '0.0625rem 0.375rem', borderRadius: '0.25rem', border: '1px solid rgba(212,175,55,0.2)' }}>
+                    ×{selectedItem.count}
+                  </span>
+                )}
+              </div>
+              <h3 className="bento-detail__name">{selectedItem.name}</h3>
+              {selectedItem.description && (
+                <p className="bento-detail__desc">{selectedItem.description}</p>
+              )}
+              {selectedItem.type === 'scroll' && selectedItem.ability && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="bento-card__label">teaches</span>
+                  <span style={{ fontFamily: '"Cinzel", serif', fontSize: '0.8125rem', fontWeight: 700, color: '#c084fc' }}>
+                    {selectedItem.ability}
+                  </span>
+                  {selectedItem.ability_description && (
+                    <span style={{ fontFamily: '"EB Garamond", serif', fontSize: '0.75rem', color: '#8a702b', fontStyle: 'italic', marginTop: '0.125rem' }}>
+                      {selectedItem.ability_description}
+                    </span>
+                  )}
+                </div>
+              )}
+              {selectedItem.stats && (() => {
+                const currentStats = selectedItem.type === 'gear'
+                  ? (selectedItem.slot === 'weapon' ? equippedWeapon?.stats ?? null
+                    : selectedItem.slot ? equippedArmor[selectedItem.slot]?.stats ?? null : null)
+                  : null
+                const allStatKeys = new Set<string>([
+                  ...Object.keys(selectedItem.stats).filter(k => (selectedItem.stats as Stats)[k as keyof Stats] !== 0),
+                  ...(currentStats ? Object.keys(currentStats).filter(k => (currentStats as Stats)[k as keyof Stats] !== 0) : []),
+                ])
+                if (allStatKeys.size === 0) return null
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span className="bento-card__label">{currentStats ? 'stat comparison' : 'stats'}</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                      {Array.from(allStatKeys).map((k) => {
+                        const newVal = (selectedItem.stats as Stats)[k as keyof Stats] ?? 0
+                        const currentVal = currentStats ? (currentStats as Stats)[k as keyof Stats] ?? 0 : 0
+                        const diff = newVal - currentVal
+                        return (
+                          <span className="stat-chip" key={k} style={diff > 0 ? { borderColor: 'rgba(52,211,153,0.4)' } : diff < 0 ? { borderColor: 'rgba(220,38,38,0.4)' } : undefined}>
+                            <span className="stat-chip__label">{k}</span>
+                            <span className={`stat-chip__value${newVal > 0 ? ' stat-chip__value--pos' : ''}`}>
+                              {currentStats
+                                ? `${currentVal} → ${newVal}${diff > 0 ? ` (+${diff})` : diff < 0 ? ` (${diff})` : ''}`
+                                : `${newVal > 0 ? '+' : ''}${newVal}`
+                              }
+                            </span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+              {selectedItem.required_stats && Object.entries(selectedItem.required_stats).filter(([, v]) => v !== 0).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <span className="bento-card__label">requires</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                    {Object.entries(selectedItem.required_stats).filter(([, v]) => v !== 0).map(([k, v]) => {
+                      const met = effectiveStats[k as keyof Stats] >= (v as number)
+                      return (
+                        <span className={`stat-chip${met ? ' stat-chip--met' : ''}`} key={k} style={met ? { borderColor: 'rgba(52,211,153,0.4)' } : { borderColor: 'rgba(110,102,86,0.3)' }}>
+                          <span className="stat-chip__label">{k}</span>
+                          <span className="stat-chip__value">{v}</span>
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid rgba(212,175,55,0.1)', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                {selectedItem.stackable && selectedItem.count > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className="bento-btn bento-btn--ghost bento-btn--sm"
+                      disabled={qty <= 1}
+                      onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    >
+                      −
+                    </button>
+                    <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.6875rem', color: '#d4af37', minWidth: '2rem', textAlign: 'center' }}>
+                      {qty}
+                    </span>
+                    <button
+                      type="button"
+                      className="bento-btn bento-btn--ghost bento-btn--sm"
+                      disabled={qty >= selectedItem.count}
+                      onClick={() => setQty((q) => Math.min(q + 1, selectedItem!.count))}
+                    >
+                      +
+                    </button>
+                    <span style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.5625rem', color: '#6e6656' }}>
+                      of {selectedItem.count}
+                    </span>
+                  </div>
+                )}
+                {activeTab === 'buy' ? (
+                  <button
+                    type="button"
+                    className="bento-btn"
+                    style={{ width: '100%' }}
+                    disabled={busy || playerGold < totalCost}
+                    onClick={() => onBuy(selectedItem.id)}
+                  >
+                    buy{qty > 1 ? ` ×${qty}` : ''} — {totalCost}g
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="bento-btn"
+                    style={{ width: '100%' }}
+                    disabled={busy}
+                    onClick={() => {
+                      const idx = playerItems.indexOf(selectedItem)
+                      if (idx >= 0) onSell(idx)
+                    }}
+                  >
+                    sell{qty > 1 ? ` ×${qty}` : ''} — {totalCost}g
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
