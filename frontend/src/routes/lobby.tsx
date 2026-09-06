@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Icon } from '@iconify/react'
-import { useAuth } from '../auth'
 import { LedgerFrame } from '../components/LedgerFrame'
 import { Fleuron } from '../components/Fleuron'
 import { DisconnectCountdown } from '../components/DisconnectCountdown'
@@ -57,7 +56,6 @@ function isGhost(status: PlayerPublic['status']): boolean {
 }
 
 function Lobby() {
-  useAuth()
   const navigate = useNavigate()
 
   const [roomToken, setRoomToken] = useState<string | null>(() => getRoomToken())
