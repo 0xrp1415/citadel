@@ -17,11 +17,6 @@ export class UserRepository {
         return this.UserMap.get(userId) || null;
     }
 
-    public async updateUser(userId: string, user: IUser): Promise<IUser> {
-        this.UserMap.set(userId, user);
-        return user;
-    }
-
     public async hasUser(userId: string): Promise<boolean> {
         return this.UserMap.has(userId);
     }
