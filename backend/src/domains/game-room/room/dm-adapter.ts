@@ -74,4 +74,8 @@ export class GameRoomDMAdapter implements IGameRoomDungeonMasterAdapter {
         let narration = await this.dungeonMaster.Narrate(eventText);
         return narration;
     }
+
+    public Reset(): void {
+        this.dungeonMaster.Reset();
+    }
 }

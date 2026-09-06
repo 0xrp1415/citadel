@@ -1,9 +1,18 @@
-import { IStats } from "../../../../procedural-engine/index.js";
+import { IStats, getItemById, ERoomType, MulberryRNG, rollLoot } from "../../../../procedural-engine/index.js";
 import { TGearSlot } from "../../../../procedural-engine/gear/interface.js";
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { ActionHandler } from "../../utils/types.js";
 import { CombatAction, CombatTarget } from "../../utils/helpers/encounter/types.js";
 import { enterRoom } from "./enter-room.js";
+import { IItem } from "../../../../procedural-engine/item/base.js";
+import { removeMerchantItem } from "../../utils/helpers/map/merchant-stock.js";
+
+function requireAlive(player: { Combat: { Health: { CurrentHealth: number } } }): { ok: false; status: number; error: string } | null {
+    if (player.Combat.Health.CurrentHealth <= 0) {
+        return { ok: false, status: 403, error: "You are dead and cannot act." };
+    }
+    return null;
+}
 
 export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
     return (playerId, payload) => {
@@ -13,6 +22,8 @@ export function changePlayerStats(ctx: IGameRoomContext): ActionHandler {
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
+        const dead = requireAlive(player);
+        if (dead) return dead;
 
         if (amount === 0) {
             return { ok: false, status: 400, error: "No change requested" };
@@ -40,6 +51,8 @@ export function equipItem(ctx: IGameRoomContext): ActionHandler {
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
+        const dead = requireAlive(player);
+        if (dead) return dead;
 
         const { index } = (payload ?? {}) as { index?: number };
         if (typeof index !== "number" || index < 0) {
@@ -62,6 +75,8 @@ export function useInventoryItem(ctx: IGameRoomContext): ActionHandler {
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
+        const dead = requireAlive(player);
+        if (dead) return dead;
 
         const { id } = (payload ?? {}) as { id?: string };
         if (typeof id !== "string") {
@@ -85,6 +100,8 @@ export function setActiveAbility(ctx: IGameRoomContext): ActionHandler {
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
+        const dead = requireAlive(player);
+        if (dead) return dead;
 
         const { id, slot } = (payload ?? {}) as { id?: string; slot?: number };
         if (typeof slot !== "number" || slot < 0) {
@@ -110,6 +127,8 @@ export function unequipItem(ctx: IGameRoomContext): ActionHandler {
         if (!player) {
             return { ok: false, status: 404, error: "Player not found" };
         }
+        const dead = requireAlive(player);
+        if (dead) return dead;
 
         const { slot } = (payload ?? {}) as { slot?: string };
         if (typeof slot !== "string" || UNEQUIP_SLOTS.indexOf(slot as TGearSlot) === -1) {
@@ -133,7 +152,7 @@ export function vote(ctx: IGameRoomContext): ActionHandler {
             return { ok: false, status: 404, error: "Player not found" };
         }
         if (!ctx.Vote.HasActive) {
-            return { ok: false, status: 409, error: "No vote is pending" };
+            return { ok: true, value: null };
         }
 
         const { optionId } = (payload ?? {}) as { optionId?: string };
@@ -231,6 +250,9 @@ function parseCombatAction(raw: { type?: string; abilityId?: string }): CombatAc
     if (raw.type === "defend") {
         return { type: "defend" };
     }
+    if (raw.type === "revive") {
+        return { type: "revive" };
+    }
     if (raw.type === "ability" && typeof raw.abilityId === "string" && raw.abilityId.length > 0) {
         return { type: "ability", abilityId: raw.abilityId };
     }
@@ -246,4 +268,133 @@ function parseCombatTarget(payload: unknown): CombatTarget | null {
         return { kind: raw.kind, id: raw.id } as CombatTarget;
     }
     return null;
+}
+
+export function buyItem(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        const dead = requireAlive(player);
+        if (dead) return dead;
+
+        const roomType = ctx.Map.CurrentRoom?.type;
+        if (roomType !== ERoomType.GRACE) {
+            return { ok: false, status: 400, error: "Merchant only available in grace rooms" };
+        }
+
+        const { itemId } = (payload ?? {}) as { itemId?: string };
+        if (typeof itemId !== "string") {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        const item = removeMerchantItem(
+            ctx.Identity.Config.seed,
+            ctx.Map.CurrentRoomIndex,
+            itemId,
+        );
+        if (!item) {
+            return { ok: false, status: 404, error: "Item not in stock" };
+        }
+
+        if (player.Inventory.Gold < item.buyPrice) {
+            return { ok: false, status: 400, error: "Not enough gold" };
+        }
+
+        player.Inventory.removeGold(item.buyPrice);
+        player.Inventory.addItem(item);
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: { gold: player.Inventory.Gold } };
+    };
+}
+
+export function sellItem(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        const dead = requireAlive(player);
+        if (dead) return dead;
+
+        const roomType = ctx.Map.CurrentRoom?.type;
+        if (roomType !== ERoomType.GRACE) {
+            return { ok: false, status: 400, error: "Merchant only available in grace rooms" };
+        }
+
+        const { index } = (payload ?? {}) as { index?: number };
+        if (typeof index !== "number" || index < 0) {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        const inventory = player.Inventory.Inventory;
+        if (index >= inventory.length) {
+            return { ok: false, status: 400, error: "Invalid inventory index" };
+        }
+
+        const [item, qty] = inventory[index]!;
+        const sellPrice = Math.floor(item.buyPrice * 0.5) * qty;
+
+        player.Inventory.removeItem(item, qty);
+        player.Inventory.addGold(sellPrice);
+
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: { gold: player.Inventory.Gold, sold: sellPrice } };
+    };
+}
+
+export function dropItem(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        const dead = requireAlive(player);
+        if (dead) return dead;
+
+        const { index, qty } = (payload ?? {}) as { index?: number; qty?: number };
+        if (typeof index !== "number" || index < 0) {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        const inventory = player.Inventory.Inventory;
+        if (index >= inventory.length) {
+            return { ok: false, status: 400, error: "Invalid inventory index" };
+        }
+
+        const [item, maxQty] = inventory[index]!;
+        const dropQty = Math.min(qty ?? maxQty, maxQty);
+
+        player.Inventory.removeItem(item, dropQty);
+        ctx.Map.DropItems(Array.from({ length: dropQty }, () => item));
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
+
+export function pickUpItem(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+        const dead = requireAlive(player);
+        if (dead) return dead;
+
+        const { itemIndex } = (payload ?? {}) as { itemIndex?: number };
+        if (typeof itemIndex !== "number" || itemIndex < 0) {
+            return { ok: false, status: 400, error: "Invalid payload" };
+        }
+
+        const item = ctx.Map.PickupItem(itemIndex);
+        if (!item) {
+            return { ok: false, status: 404, error: "Item not found on ground" };
+        }
+
+        player.Inventory.addItem(item);
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
 }

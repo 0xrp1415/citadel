@@ -8,6 +8,7 @@ import { PlayerSocket } from "./socket.js";
 import { PlayerPublic, PlayerRunEntityJSON, PlayerStatus } from "./types.js";
 export type { PlayerPublic, PlayerRunEntityJSON, PlayerStatus } from "./types.js";
 import { IAbility } from "../../procedural-engine/index.js";
+import { StarterKitId, getStarterKit } from "./kits.js";
 
 export class Player {
     public status: PlayerStatus;
@@ -17,11 +18,13 @@ export class Player {
     private combat: PlayerCombat;
     private progression: PlayerProgression;
     private inventory: PlayerInventory;
-    private abilities: PlayerAbilities;
+    private abilities!: PlayerAbilities;
+    private kit: StarterKitId;
 
-    constructor(userId: string, playerId: string, playerPublicId: string, name: string, startingAbilities: IAbility[] = []) {
+    constructor(userId: string, playerId: string, playerPublicId: string, name: string, startingAbilities: IAbility[] = [], kit: StarterKitId = "wanderer") {
         this.identity = new PlayerIdentity(userId, playerId, playerPublicId, name);
         this.status = "joined";
+        this.kit = kit;
 
         this.socket = new PlayerSocket();
         this.progression = new PlayerProgression(DefaultSkillPoints());
@@ -33,11 +36,27 @@ export class Player {
         this.progression.onLevelChange((newLevel) => this.combat.onLevelChange(newLevel));
         
         this.inventory = new PlayerInventory(DefaultGold());
-        for (const item of DefaultStartingInventory()) {
+        this.populateInventory(startingAbilities);
+    }
+
+    private populateInventory(startingAbilities: IAbility[]): void {
+        const kitData = getStarterKit(this.kit);
+        const abilityIds = kitData?.abilities ?? [];
+        const items = DefaultStartingInventory(this.kit);
+        for (const item of items) {
             this.inventory.addItem(item);
         }
-        this.abilities = new PlayerAbilities(startingAbilities);
+        this.abilities = new PlayerAbilities(startingAbilities.length > 0 ? startingAbilities : []);
+    }
 
+    public setKit(kit: StarterKitId): void {
+        this.kit = kit;
+        this.inventory = new PlayerInventory(DefaultGold());
+        this.populateInventory([]);
+    }
+
+    public get Kit(): StarterKitId {
+        return this.kit;
     }
 
     public get Socket(): PlayerSocket {
@@ -78,7 +97,7 @@ export class Player {
             skill_points: this.progression.SkillPoints,
             gold: this.inventory.Gold,
             consumables: this.inventory.Consumables,
-            items: this.inventory.Inventory.map(toItem),
+            items: this.inventory.Inventory.map(([item, count]) => toItem(item, count)),
             health: this.combat.Health,
             abilities: this.abilities.Details,
             activeAbilities: this.abilities.ActiveAbilitySlots,
@@ -92,6 +111,7 @@ export class Player {
             name: this.identity.name,
             status: this.status,
             disconnectedAt: this.socket.DisconnectedAt,
+            kit: this.kit,
             stats: this.JSON,
         };
     }

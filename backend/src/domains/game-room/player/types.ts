@@ -1,4 +1,5 @@
 import { IEntityHealthStatGetters, IStats, IRarity, TGearSlot } from "../../procedural-engine/index.js";
+import { StarterKitId } from "./kits.js";
 
 export type PlayerStatus =
     | "joined"
@@ -39,7 +40,9 @@ export type PlayerRunEntityItem = {
     type: "gear" | "consumable" | "scroll";
     rarity: IRarity;
     stackable: boolean;
+    maxStackQty: number;
     buyPrice: number;
+    count: number;
     slot?: TGearSlot;
     stats?: IStats;
     required_stats?: IStats;
@@ -84,5 +87,6 @@ export interface PlayerPublic {
     name: string;
     status: PlayerStatus;
     disconnectedAt: number | null;
+    kit: StarterKitId;
     stats: PlayerRunEntityJSON;
 }

@@ -1,4 +1,4 @@
-import { IMap, IRoomMetadata } from "../../../../procedural-engine/index.js";
+import { IMap, IItem, IRoomMetadata, MulberryRNG } from "../../../../procedural-engine/index.js";
 import { IMapPublicJSON } from "../../types.js";
 import { IGameRoomConfig } from "../types.js";
 
@@ -11,6 +11,9 @@ export interface IGameRoomMapContext {
     UnlockEventless(): void;
     MarkRoomCleared(targetRoomIndex?: number): void;
     IsRoomCleared(targetRoomIndex: number): boolean;
+    CreateRng(): MulberryRNG;
+    DropItems(items: IItem[]): void;
+    PickupItem(itemIndex: number): IItem | null;
     readonly Floor: number;
     readonly CurrentRoomIndex: number;
     readonly CurrentRoom: IRoomMetadata | null;

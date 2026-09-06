@@ -10,7 +10,7 @@ export type TGearSlot = "weapon" | "head" | "chest" | "greaves";
 export class PlayerInventory {
     private gold: number;
 
-    private inventory: IItem[];
+    private inventory: [IItem, number][];
 
     private gear: Record<"head" | "chest" | "greaves", IGear | null>;
     private weapon: IGear | null;
@@ -26,7 +26,7 @@ export class PlayerInventory {
         return this.gold;
     }
 
-    public get Inventory(): IItem[] {
+    public get Inventory(): [IItem, number][] {
         return this.inventory;
     }
 
@@ -52,24 +52,33 @@ export class PlayerInventory {
     }
 
 
-    public addItem(item: IItem): void {
-        this.inventory.push(item);
+    public addItem(item: IItem, qty: number = 1): void {
+        if (item.stackable) {
+            const entry = this.inventory.find(([i]) => i.id === item.id);
+            if (entry) {
+                entry[1] = Math.min(entry[1] + qty, item.maxStackQty);
+                return;
+            }
+        }
+        this.inventory.push([item, qty]);
     }
 
-    public removeItem(item: IItem): boolean {
-        const index = this.inventory.indexOf(item);
-        if (index === -1) {
-            return false;
+    public removeItem(item: IItem, qty: number = 1): boolean {
+        const index = this.inventory.findIndex(([i]) => i.id === item.id);
+        if (index === -1) return false;
+        const entry = this.inventory[index]!;
+        entry[1] -= qty;
+        if (entry[1] <= 0) {
+            this.inventory.splice(index, 1);
         }
-        this.inventory.splice(index, 1);
         return true;
     }
 
     public CountOf(id: string): number {
         let count = 0;
-        for (const item of this.inventory) {
+        for (const [item, qty] of this.inventory) {
             if (item.id === id) {
-                count++;
+                count += qty;
             }
         }
         return count;
@@ -95,7 +104,7 @@ export class PlayerInventory {
             const previous = this.weapon;
             if (previous) {
                 previous.metadata.onUnequip(entity);
-                this.inventory.push(previous);
+                this.inventory.push([previous, 1]);
             }
             this.weapon = gear;
             gear.metadata.onEquip(entity);
@@ -104,7 +113,7 @@ export class PlayerInventory {
             const previous = this.gear[slot];
             if (previous) {
                 previous.metadata.onUnequip(entity);
-                this.inventory.push(previous);
+                this.inventory.push([previous, 1]);
             }
             this.gear[slot] = gear;
             gear.metadata.onEquip(entity);
@@ -118,11 +127,11 @@ export class PlayerInventory {
         if (index < 0 || index >= this.inventory.length) {
             return false;
         }
-        const item = this.inventory[index];
+        const [item] = this.inventory[index]!;
         if (!item || item.type !== "gear") {
             return false;
         }
-        if (!this.EquipGear(item, stats, entity)) {
+        if (!this.EquipGear(item as IGear, stats, entity)) {
             return false;
         }
         this.inventory.splice(index, 1);
@@ -135,7 +144,7 @@ export class PlayerInventory {
                 return false;
             }
             this.weapon.metadata.onUnequip(entity);
-            this.inventory.push(this.weapon);
+            this.inventory.push([this.weapon, 1]);
             this.weapon = null;
             return true;
         }
@@ -144,7 +153,7 @@ export class PlayerInventory {
             return false;
         }
         piece.metadata.onUnequip(entity);
-        this.inventory.push(piece);
+        this.inventory.push([piece, 1]);
         this.gear[slot] = null;
         return true;
     }
@@ -152,26 +161,24 @@ export class PlayerInventory {
     public useItem(id: string, entity: EntityCombat, abilities?: PlayerAbilities): boolean {
         if (id === "health_potion") {
             const index = this.inventory.findIndex(
-                (item) => item.id === "health_potion" && item.type === "consumable"
+                ([item]) => item.id === "health_potion" && item.type === "consumable"
             );
-            if (index === -1) {
-                return false;
+            if (index === -1) return false;
+            const entry = this.inventory[index]!;
+            entry[1] -= 1;
+            if (entry[1] <= 0) {
+                this.inventory.splice(index, 1);
             }
-            this.inventory.splice(index, 1);
             entity.changeHealthBy(POTION_HEAL);
             return true;
         }
         if (abilities) {
             const index = this.inventory.findIndex(
-                (item) => item.id === id && item.type === "scroll"
+                ([item]) => item.id === id && item.type === "scroll"
             );
-            if (index === -1) {
-                return false;
-            }
-            const scroll = this.inventory[index];
-            if (!scroll || scroll.type !== "scroll") {
-                return false;
-            }
+            if (index === -1) return false;
+            const [scroll] = this.inventory[index]!;
+            if (!scroll || scroll.type !== "scroll") return false;
             this.inventory.splice(index, 1);
             abilities.learn(scroll.metadata.ability);
             return true;

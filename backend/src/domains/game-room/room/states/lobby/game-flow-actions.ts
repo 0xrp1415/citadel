@@ -1,6 +1,29 @@
 import { IGameRoomContext } from "../../utils/interface/index.js";
 import { ActionHandler, TResult } from "../../utils/types.js";
 import { InRunState } from "../run/index.js";
+import { StarterKitId, STARTER_KITS } from "../../../player/kits.js";
+
+export function setKit(ctx: IGameRoomContext): ActionHandler {
+    return (playerId, payload) => {
+        const player = ctx.Party.getPlayer(playerId);
+        if (!player) {
+            return { ok: false, status: 404, error: "Player not found" };
+        }
+
+        if (player.Socket.SocketId === null) {
+            return { ok: false, status: 409, error: "Cannot change kit while disconnected" };
+        }
+
+        const { kit } = (payload ?? {}) as { kit?: string };
+        if (!kit || !STARTER_KITS.some((k) => k.id === kit)) {
+            return { ok: false, status: 400, error: "Invalid kit" };
+        }
+
+        player.setKit(kit as StarterKitId);
+        ctx.Broadcaster.RoomUpdate();
+        return { ok: true, value: null };
+    };
+}
 
 export function toggleReady(ctx: IGameRoomContext): ActionHandler {
     return (playerId) => {

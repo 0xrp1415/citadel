@@ -1,7 +1,7 @@
 import { GameRoomState } from "../base/index.js";
 import { ActionHandler } from "../../utils/types.js";
 import { playerConnect, playerDisconnect } from "../base/shared-actions.js";
-import { changePlayerStats, combatSelectAction, combatSelectTarget, equipItem, resolvePlayerAction, setActiveAbility, unequipItem, useInventoryItem, vote } from "./player-actions.js";
+import { changePlayerStats, combatSelectAction, combatSelectTarget, equipItem, resolvePlayerAction, setActiveAbility, unequipItem, useInventoryItem, vote, buyItem, sellItem, dropItem, pickUpItem } from "./player-actions.js";
 import { enterRoom } from "./enter-room.js";
 
 export class InRunState extends GameRoomState {
@@ -19,6 +19,10 @@ export class InRunState extends GameRoomState {
         vote:              vote(this.context),
         combat_select_action: combatSelectAction(this.context),
         combat_select_target: combatSelectTarget(this.context),
+        buy_item:          buyItem(this.context),
+        sell_item:         sellItem(this.context),
+        drop_item:         dropItem(this.context),
+        pick_up_item:      pickUpItem(this.context),
     };
 
     public async onEnterState(): Promise<void> {

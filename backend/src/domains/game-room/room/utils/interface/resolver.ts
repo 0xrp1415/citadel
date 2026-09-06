@@ -5,6 +5,7 @@ export interface IGameRoomResolver {
     NarrateRoom(description: string): Promise<void>;
     NarrateEncounterOutcome(message: string, opts: { enemiesDead: boolean }): Promise<void>;
     NarrateEndOfRun(): Promise<void>;
+    Reset(): void;
     get DungeonMasterMessages(): { from: string, message: string }[];
     get IsBusy(): boolean;
 }

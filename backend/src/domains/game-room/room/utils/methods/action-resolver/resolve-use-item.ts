@@ -31,7 +31,8 @@ export async function resolveUseItem(action: DmAction, actor: Player | undefined
             return;
         }
         default: {
-            const item = actor.Inventory.Inventory.find((entry) => entry.id === id);
+            const entry = actor.Inventory.Inventory.find(([item]) => item.id === id);
+            const [item] = entry ?? [];
             if (item && item.type === "scroll") {
                 if (!actor.Inventory.useItem(id, actor.Combat, actor.Abilities)) {
                     await narrate(`${name} reaches for a scroll, but none are left.`);

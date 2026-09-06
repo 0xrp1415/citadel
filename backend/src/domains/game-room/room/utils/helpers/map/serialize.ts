@@ -23,6 +23,7 @@ export function serializeMap(map: IMap, currentRoomIndex: number, visitedRooms: 
                 description: enemy.description,
             })),
             exits: deriveRoomExits(roomId, meta.exits),
+            droppedItems: meta.droppedItems,
         };
     });
 

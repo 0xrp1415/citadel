@@ -98,4 +98,9 @@ export class GameRoomResolver implements IGameRoomResolver {
     get IsBusy(): boolean {
         return this.isBusy;
     }
+
+    public Reset(): void {
+        this.dungeonMasterMessages = [];
+        this.isBusy = false;
+    }
 }

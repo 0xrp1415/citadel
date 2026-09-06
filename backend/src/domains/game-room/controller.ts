@@ -103,7 +103,7 @@ GameRoomRouter.post("/action", requireRoomToken, async (req, res) => {
     return;
   }
 
-  res.status(200).json({ success: true });
+  res.status(200).json({ success: true, data: result.value });
 });
 
 GameRoomRouter.put("/room", requireRoomToken, async (req, res) => {

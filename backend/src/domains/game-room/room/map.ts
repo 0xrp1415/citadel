@@ -1,4 +1,4 @@
-import { generateMap, IMap, IMapConfig, IRoomMetadata, MulberryRNG } from "../../procedural-engine/index.js";
+import { generateMap, IMap, IMapConfig, IItem, IRoomMetadata, MulberryRNG } from "../../procedural-engine/index.js";
 import { IMapPublicJSON } from "./types.js";
 import { IGameRoomMapContext } from "./utils/interface/index.js";
 import { IGameRoomConfig } from "./utils/types.js";
@@ -18,6 +18,7 @@ const DIFFICULTY_RANK = {
 
 export class GameRoomMap implements IGameRoomMapContext {
     private rng: MulberryRNG | null = null;
+    private seed: string = "";
     private map: IMap | null = null;
     private floor: number = 1;
     private currentRoomIndex: number = 0;
@@ -25,8 +26,10 @@ export class GameRoomMap implements IGameRoomMapContext {
     private clearedRooms: Set<number> = new Set();
 
     public GenerateMap(config: IGameRoomConfig): void {
-        if (!this.rng)
+        if (!this.rng) {
+            this.seed = config.seed;
             this.rng = MulberryRNG.fromSeed(config.seed);
+        }
 
         this.map = generateMap(this.rng, this.RoomConfigToMapConfig(config), this.floor);
         this.currentRoomIndex = this.map.startRoomIndex;
@@ -35,6 +38,7 @@ export class GameRoomMap implements IGameRoomMapContext {
     public ResetMap(): void {
         this.map = null;
         this.rng = null;
+        this.seed = "";
         this.floor = 1;
         this.currentRoomIndex = 0;
         this.visitedRooms = new Set();
@@ -72,6 +76,23 @@ export class GameRoomMap implements IGameRoomMapContext {
 
     public IsRoomCleared(targetRoomIndex: number): boolean {
         return this.clearedRooms.has(targetRoomIndex);
+    }
+
+    public CreateRng(): MulberryRNG {
+        if (!this.seed) throw new Error("Cannot create RNG before map is generated");
+        return MulberryRNG.fromSeed(this.seed);
+    }
+
+    public DropItems(items: IItem[]): void {
+        const room = this.CurrentRoom;
+        if (!room) return;
+        room.droppedItems.push(...items);
+    }
+
+    public PickupItem(itemIndex: number): IItem | null {
+        const room = this.CurrentRoom;
+        if (!room || itemIndex < 0 || itemIndex >= room.droppedItems.length) return null;
+        return room.droppedItems.splice(itemIndex, 1)[0] ?? null;
     }
 
     public UnlockEventless(): void {

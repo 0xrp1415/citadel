@@ -39,6 +39,7 @@ export interface IGameRoomEncounterContext {
     SubmitAction(player: Player, action: CombatAction): boolean;
     SubmitTarget(player: Player, target: CombatTarget): boolean;
     OnPlayerDisconnect(playerId: string): void;
+    Reset(): void;
     readonly Active: boolean;
     readonly Phase: EncounterPhase;
     readonly State: EncounterPublicState;

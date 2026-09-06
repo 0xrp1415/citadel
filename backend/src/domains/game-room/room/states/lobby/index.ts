@@ -3,7 +3,8 @@ import { ActionHandler } from "../../utils/types.js";
 import { playerConnect, playerDisconnect } from "../base/shared-actions.js";
 import { joinPlayer, leavePlayer, kickPlayer } from "./player-actions.js";
 import { updateConfig } from "./config-actions.js";
-import { toggleReady, startGame, confirmStart } from "./game-flow-actions.js";
+import { toggleReady, startGame, confirmStart, setKit } from "./game-flow-actions.js";
+import { clearMerchantStock } from "../../utils/helpers/map/merchant-stock.js";
 
 export class LobbyState extends GameRoomState {
     protected readonly _id: string = "lobby";
@@ -15,6 +16,7 @@ export class LobbyState extends GameRoomState {
         player_leave:       leavePlayer(this.context),
         kick_player:        kickPlayer(this.context),
         update_config:      updateConfig(this.context),
+        set_kit:            setKit(this.context),
         player_toggle_ready: toggleReady(this.context),
         start_game:         startGame(this.context),
         confirm_start:      confirmStart(this.context),
@@ -25,6 +27,11 @@ export class LobbyState extends GameRoomState {
             player.status = "connected";
         }
         this.context.Map.ResetMap();
+        this.context.Resolver.Reset();
+        this.context.DMAdapter.Reset();
+        this.context.Broadcaster.Reset();
+        this.context.Encounter.Reset();
+        clearMerchantStock();
         this.context.Broadcaster.RoomUpdate();
     }
 

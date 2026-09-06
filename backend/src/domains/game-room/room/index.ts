@@ -12,6 +12,7 @@ import { GameRoomResolver } from "./resolver.js";
 import { GameRoomBroadcaster } from "./broadcaster.js";
 import { GameRoomVoteManager } from "./vote.js";
 import { GameRoomEncounterManager } from "./encounter.js";
+import { getMerchantStock } from "./utils/helpers/map/merchant-stock.js";
 
 
 
@@ -51,6 +52,14 @@ export class GameRoom implements IGameRoomContext {
     }
 
     public get JSON(): GameRoomPublicData {
+        const roomType = this.Map.CurrentRoom?.type ?? "normal";
+        const merchant = getMerchantStock(
+            this.Identity.Config.seed,
+            this.Map.CurrentRoomIndex,
+            roomType,
+            this.Map.Floor,
+        );
+
         return {
             players: this.Party.PlayerPublicData,
             totalPlayers: this.Party.PlayerCount,
@@ -64,7 +73,10 @@ export class GameRoom implements IGameRoomContext {
             map: this.Map.Map ? this.Map.JSON : null,
             hostPublicId: this.Party.LeaderPublicId,
             encounter: this.Encounter.State,
+            merchantDetails: merchant.available ? merchant : null,
             currentVote: this.Vote.CurrentVote,
+            runSummary: null,
+            acceptedPlayerIds: [],
         };
     }
 

@@ -174,7 +174,7 @@ export class GameRoomService {
     return { ok: true, value: gameRoom.JSON };
   }
 
-  public async executePlayerAction(userId: string, roomId: string, action: string, payload?: unknown): Promise<Result<boolean>> {
+  public async executePlayerAction(userId: string, roomId: string, action: string, payload?: unknown): Promise<Result<unknown>> {
     if (!roomId) {
       return { ok: false, status: 400, error: "Room ID is missing in the request." };
     }
@@ -197,7 +197,7 @@ export class GameRoomService {
       return { ok: false, status: result.status, error: result.error };
     }
 
-    return { ok: true, value: true };
+    return { ok: true, value: result.value };
   }
 
   public verifyRoomMembership(token: string): Result<{ room: GameRoom; userId: string; playerId: string }> {

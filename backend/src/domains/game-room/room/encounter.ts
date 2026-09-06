@@ -1,7 +1,8 @@
 import { IGameRoomContext } from "./utils/interface/index.js";
 import { Player } from "../player/index.js";
 import { PlayerAbilityActor } from "./utils/helpers/ability/actor.js";
-import { EnemyEntity, IAbility, IAbilityActiveContext, IAbilityActor, CombatManager, BASE_ATTACK_POWER } from "../../procedural-engine/index.js";
+import { EnemyEntity, IAbility, IAbilityActiveContext, IAbilityActor, CombatManager, BASE_ATTACK_POWER, MulberryRNG, rollLoot, ERoomType } from "../../procedural-engine/index.js";
+import { IItem } from "../../procedural-engine/item/base.js";
 import { classifyAbility, isMultiTargetAbility, isSelfAbility, isSingleTargetEnemyAbility } from "./utils/helpers/encounter/ability-role.js";
 import { CombatAction, CombatTarget } from "./utils/helpers/encounter/types.js";
 import { EndRunState } from "./states/end/index.js";
@@ -12,9 +13,9 @@ import {
     InitiativeEntry,
 } from "./utils/interface/encounter.js";
 
-const AMBUSH_DC_BASE = 10;
+const AMBUSH_DC_BASE = 18;
 const AMBUSH_ROLL_SIDES = 20;
-const AMBUSH_STAT_DIVISOR = 4;
+const AMBUSH_STAT_DIVISOR = 8;
 
 export class GameRoomEncounterManager implements IGameRoomEncounterContext {
     private readonly context: IGameRoomContext;
@@ -31,9 +32,28 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
 
     private defendingPlayerIds: Set<string> = new Set();
     private log: string[] = [];
+    private combatRng: MulberryRNG | null = null;
 
     constructor(context: IGameRoomContext) {
         this.context = context;
+    }
+
+    private getRng(): MulberryRNG {
+        if (!this.combatRng) this.combatRng = this.context.Map.CreateRng();
+        return this.combatRng;
+    }
+
+    public Reset(): void {
+        this.phase = "";
+        this.round = 0;
+        this.currentTurnIndex = -1;
+        this.initiative = [];
+        this.enemies = [];
+        this.playerActions = {};
+        this.playerTargets = {};
+        this.defendingPlayerIds = new Set();
+        this.log = [];
+        this.combatRng = null;
     }
 
 
@@ -56,7 +76,7 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
             "The party must choose their approach.",
             [
                 { id: "battle", name: "Battle", description: "Face the foes head-on." },
-                { id: "ambush", name: "Ambush", description: "Strike from the shadows." },
+                { id: "ambush", name: "Ambush", description: "A risky gamble — strike first or alert them all." },
             ],
             "majority",
             (winnerId) => this.resolveApproach(winnerId === "battle"),
@@ -175,7 +195,7 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
             return;
         }
 
-        this.pushLog("The ambush fails — the foes are alerted and battle begins.");
+        this.pushLog("The ambush fails — a foot scrapes stone, and the foes turn with bared fangs. Battle begins.");
         this.startCombat();
     }
 
@@ -198,7 +218,7 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
     }
 
     private roll(min: number, max: number): number {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        return this.getRng().roll(min, max);
     }
 
     private totalThreat(): number {
@@ -614,9 +634,11 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
                 : enemiesDead
                     ? "The last foe falls, and the way ahead lies open. The party has triumphed."
                     : "Without bloodshed the foes are overcome, and the way ahead lies open. The party has triumphed.";
+
+            this.awardRewards();
         } else {
             this.pushLog("The party has been overwhelmed.");
-            outcome = "The survivors of the fray pull back, battered and bloodied. The party has been overwhelmed.";
+            outcome = "The survivors of the fray pull back, battered and bloodied. The party has overwhelmed.";
         }
 
         this.context.Broadcaster.RoomUpdate();
@@ -625,6 +647,50 @@ export class GameRoomEncounterManager implements IGameRoomEncounterContext {
         if (opts.endOfRun) {
             narration.then(() => this.context.StateMachine.TransitionTo(new EndRunState(this.context)));
         }
+    }
+
+    private awardRewards(): void {
+        const connected = this.connectedPlayers();
+        if (connected.length === 0) return;
+
+        const alivePlayers = connected.filter((p) => p.Combat.Health.CurrentHealth > 0);
+        const xpShare = alivePlayers.length > 0 ? alivePlayers : connected;
+
+        const xpPerEnemy = 8;
+        const totalXP = this.enemies.reduce((sum, e) => {
+            return sum + Math.round(xpPerEnemy * (1 + (e.threatLevel - 1) * 0.5));
+        }, 0);
+        const xpEach = Math.max(1, Math.floor(totalXP / xpShare.length));
+
+        const roomType = this.context.Map.CurrentRoom?.type ?? "normal" as ERoomType;
+        const floor = this.context.Map.Floor;
+        const rng = this.context.Map.CreateRng();
+        const droppedItems: IItem[] = [];
+
+        for (const player of xpShare) {
+            player.Progression.addExperience(xpEach);
+
+            const loot = rollLoot(roomType, floor, rng);
+            for (const item of loot.items) {
+                droppedItems.push(item);
+            }
+            if (loot.gold > 0) {
+                player.Inventory.addGold(loot.gold);
+            }
+
+            const xpLog = `Gained ${xpEach} experience.`;
+            this.pushLog(xpLog);
+
+            if (loot.items.length > 0 || loot.gold > 0) {
+                const lootParts: string[] = [];
+                if (loot.gold > 0) lootParts.push(`${loot.gold} gold`);
+                if (loot.items.length > 0) lootParts.push(`${loot.items.length} item${loot.items.length > 1 ? "s" : ""}`);
+                const lootLog = `Found: ${lootParts.join(", ")}.`;
+                this.pushLog(lootLog);
+            }
+        }
+
+        this.context.Map.DropItems(droppedItems);
     }
 
     private pushLog(message: string): void {
