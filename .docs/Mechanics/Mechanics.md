@@ -1,14 +1,14 @@
 
-- **[[Mechanics/Characters]]** — stats, bonus points
-- **[[Mechanics/Leveling]]** — XP, levels, stat points
-- **[[Mechanics/Stasis]]** — the rest room and merchant
-- **[[Mechanics/Equipment]]** — weapon, armor slots, drops
-- **[[Mechanics/Items]]** — consumables: potions, keys, lockpicks
-- **[[Mechanics/Abilities]]** — scrolls, passive vs active, slots
-- **[[Mechanics/Action Tools]]** — how players act
-- **[[Mechanics/Action Validation]]** — how the Citadel judges actions
-- **[[Mechanics/Resolution]]** — dice, turns, and outcomes
-- **[[Mechanics/Fainting]]** — downed players and revives
-- **[[Mechanics/Difficulty & Pacing]]** — scaling and session length
+- **[[Mechanics/Characters]]** — stats, starter kits, bonus points
+- **[[Mechanics/Leveling]]** — XP (awarded per encounter), levels, stat points
+- **[[Mechanics/Stasis]]** — grace rooms, rest, merchant, revival
+- **[[Mechanics/Equipment]]** — starter kits, weapon/armor slots, loot tables, drops, merchant
+- **[[Mechanics/Items]]** — consumables, dropped items, inventory stacking
+- **[[Mechanics/Abilities]]** — starter kit abilities, scrolls, passive vs active, slots
+- **[[Mechanics/Action Tools]]** — how players act (turn-based, one action per turn)
+- **[[Mechanics/Action Validation]]** — how the Citadel judges actions (vote gating)
+- **[[Mechanics/Resolution]]** — initiative, dice, turns, ambush, outcomes
+- **[[Mechanics/Fainting]]** — downed players, revives (abilities + grace), dead restrictions
+- **[[Mechanics/Difficulty & Pacing]]** — scaling, session length, tactical archive
 
 Encounters are **turn-based and text-based** throughout.

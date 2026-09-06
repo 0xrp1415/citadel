@@ -24,13 +24,15 @@ The game itself. One instance per expedition, authoritative over everything that
   - **Player mapping** — `user_id → player_id`. A user becomes a *player* the moment they join a room; the map is the bridge between the account layer and gameplay.
   - **Character sheets** — per `player_id`, run-scoped (STR / DEX / INT / WIS / AGI / HP). Created at staging, dead at run end.
   - **Room state & lifecycle** — staging → ready → gate open → running → ended.
-  - **Run/encounter loop** — the authoritative state machine: stasis → scene → action intake → validation orchestration → resolution → fainting → boss → next dungeon → run end (wipe).
+  - **Run/encounter loop** — the authoritative state machine: stasis → scene → action intake → validation orchestration → resolution → encounter rewards → boss → next dungeon → run end (wipe).
 - **Internal submodules:**
   - `lobby` — members, ready flags, gate open, leader authority
   - `characters` — sheet creation/customization, stat access for resolution, per-player XP/level and banked stat points
-  - `run` — run state, seed, dungeon index, dungeon sequence, party gold, run end stats
-  - `stasis` — rest/merchant state, stat-point spending, gear buy/sell
-  - `encounter` — the scene state machine, action intake, round move budget (3 moves/round), resolution pipeline
+  - `run` — run state, seed, dungeon index, dungeon sequence, run end stats
+  - `encounter` — the scene state machine, action intake, turn-based initiative, resolution pipeline, loot drops, XP awards
+  - `vote` — party vote manager for room advancement (timer-based, all-connected-players-must-agree)
+  - `map` — room state, dropped items, merchant stock (per-room seeded generation)
+  - `broadcaster` — scene updates, run summaries, player acceptance tracking
 - **Key rule:** it never rolls, generates, or resolves itself — it *asks* dungeon-master to structure/judge/narrate and *hands* validated actions to procedural-engine to resolve. It owns state and sequencing, not generation or outcome math.
 
 ## Dungeon Master
@@ -43,13 +45,13 @@ The AI agent — the game's voice, scribe, and judge.
   - Called on **action intake** (`Resolve`) and **after resolution** (`Narrate`). It never decides outcomes — `execute` actions go to procedural-engine, which resolves them.
   - Never owns game state; it reads through `roomViewGenerator`, it can't mutate anything.
   - If the model output fails to parse, `Resolve` falls back to `not_allowed`; a session never blocks on the AI.
-- **Notes:** the model is bound to Groq (`openai/gpt-oss-120b`, structured-output `jsonMode`) inside `CreateDungeonMaster`.
+- **Notes:** the model is bound to Groq (`openai/gpt-oss-20b`, structured-output `jsonMode`) inside `CreateDungeonMaster`.
 
 ## Procedural Engine
 
 Every number in the game comes from here — the single source of randomness and the solver of outcomes.
 
-- **Owns:** the seeded RNG and everything derived from it: dungeon generation, scene selection, boss selection, difficulty classes (DCs), dice rolls, AGI tie-break order, party-size scaling — and **resolving validated actions** into deterministic outcomes (damage, success/failure, side effects). GameRoom hands it validated actions ([[Mechanics/Action Validation]]) and gets results back.
+- **Owns:** the seeded RNG and everything derived from it: dungeon generation, scene selection, boss selection, difficulty classes (DCs), dice rolls, AGI tie-break order, party-size scaling, **loot table generation** (rarity-weighted item drops by room type and depth), **merchant stock generation** (seeded per room), and **resolving validated actions** into deterministic outcomes (damage, success/failure, side effects). GameRoom hands it validated actions ([[Mechanics/Action Validation]]) and gets results back.
 - **Key rule:** *all* `roll()` calls and outcome math route through it. GameRoom never rolls directly, which is what makes "same seed + same party = same run" reproducible.
 - **Pure:** no I/O, no AI, no side effects. Inputs in, outputs out. Deterministic for a given seed — trivially unit-testable and safe to call from anywhere.
 - **Not random at runtime:** seeding is fixed at run start (from the expedition), so within one run it behaves like a deterministic generator the GameRoom consumes.

@@ -16,10 +16,11 @@ The dungeon-master resolves once: it reads the room facts, produces a structured
 
 If the AI is down, the **schema check alone** decides. A session never blocks on the AI — a denied action is always replayable by the player.
 
-## Move budget
+## Vote gating
 
-- The party has **3 moves per round** ([[Mechanics/Resolution]]); each action spends 1
-- An action submitted when the round's moves are gone is **denied** ("no moves remain this round") — the player can act again next round
+- Actions that advance the run (moving to a new room) require a **party vote**
+- Every connected (socket-alive) player must vote yes for the action to proceed
+- The vote has a time limit; uncast votes default to no
 
 ## Why it matters
 

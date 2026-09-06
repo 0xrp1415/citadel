@@ -4,16 +4,15 @@ How a validated action becomes a result — turn-based, text-based.
 
 Each round has two phases:
 
-1. **Party round** — the party shares **3 moves**, freely allocated among players
+1. **Party round** — each living player takes a turn in initiative order (sorted by AGI); on your turn, choose one action (attack, defend, or use an ability)
 2. **Enemy round** — monsters respond after the party acts
 
-## The 3-move budget
+## Initiative
 
-- The party gets **3 moves per round**, split between players however they choose
-- **Each action costs 1 move** (attack, ability, item, etc.)
-- **AGI only breaks ties** — when moves resolve together, highest AGI goes first. It no longer grants each player a free turn
-- Unspent moves are **lost** at round end, then monsters respond
-- Rationale: a bounded action economy keeps the fight fair for monsters — a large party can't bury them under unlimited actions
+- Initiative is sorted by **AGI** (highest first)
+- Players act in order; each living player gets exactly **one action per turn**
+- **Downed players** (0 HP) are **skipped** in initiative — they cannot act
+- Enemies act after all living players have taken their turn
 
 ## The roll
 
@@ -31,12 +30,19 @@ On a success the passage unlocks; on a failure it stays barred and may be retrie
 
 ## Resolution steps
 
-1. **Party round** — the party spends its 3 moves; players allocate them freely
-2. **Roll die** — `d20 + stat + modifiers` vs the dungeon's difficulty class
-3. **Process party** — moves resolve with AGI breaking ties; the engine picks targets
-4. **Action result** — deterministic outcome: damage, success/failure, side effects
-5. **Enemy round** — monsters respond
+1. **Initiative** — sort all living combatants by AGI
+2. **Party round** — each living player takes their turn in order (one action each)
+3. **Roll die** — `d20 + stat + modifiers` vs the difficulty class
+4. **Process action** — deterministic outcome: damage, success/failure, side effects
+5. **Enemy round** — monsters respond after all living players have acted
 6. **Narrate outcome** — the AI dramatizes the decided result
+
+## Ambush mechanic
+
+- When entering a room with enemies, the party may be **ambushed**
+- Ambush check: `d20 + (agility + strength) / 8 ≥ 18 + total threat`
+- **Success** — the party acts first in the encounter
+- **Failure** — enemies act first (initiative disadvantage)
 
 ## Determinism
 

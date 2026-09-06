@@ -9,14 +9,28 @@ A rest room like a Site of Grace — the party's checkpoint between fights.
 
 | Action | Effect |
 |---|---|
-| **Rest** | Restore HP for the party |
+| **Rest** | Restore HP for the party (the `rest` action heals to full) |
 | **Spend stat points** | Allocate banked points from leveling ([[Mechanics/Leveling]]) |
-| **Merchant** | Buy equipment with gold / sell equipment for gold |
+| **Merchant** | Buy equipment, consumables, and scrolls with gold; sell inventory items |
+
+## Grace room revival
+
+- Entering a grace room **automatically revives all downed players** to full HP
+- Revived players are announced by the officer: *"{name} is restored by the sanctum's light, rising from the brink."*
+- No action required — the sanctum's power is immediate
 
 ## Merchant
 
-- **Buy** equipment with gold — the shop refreshes per stasis
-- **Sell** — sell your currently equipped gear for gold
-- **Buy/sell only** — no gear upgrades here; gear improves via drops ([[Mechanics/Equipment]]) and purchases
+- **Buy** equipment, consumables, and scrolls — the shop refreshes per grace room
+- Stock includes **guaranteed health potions** (3×) plus random gear, scrolls, and consumables via the loot table system
+- **Sell** items from your inventory for gold (sell price = 50% of buy price)
+- **Buy/sell only** — no gear upgrades; gear improves via drops ([[Mechanics/Equipment]]) and purchases
+- Only available **in grace rooms** — the merchant is absent elsewhere
+- **Dead players** cannot access the merchant
+
+## Keyboard
+
+- **K** opens/closes the merchant modal (when in a grace room)
+- Arrow keys navigate the item list; Tab switches buy/sell; Enter/Space buys or sells; +/- adjusts quantity for stackable items
 
 See also: [[Mechanics/Mechanics]] · [[Mechanics/Leveling]] · [[Mechanics/Equipment]]

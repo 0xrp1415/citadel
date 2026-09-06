@@ -4,7 +4,7 @@
 
 Inspired by **Written Realms**, **Slay the Spire**, and **Shape of Dreams**.
 
-> **Status: Core loop functional.** Foundation, rooms, identity, procedural generation, character system, the full ability system, the AI DM (wired into the run loop as judge + narrator), turn-based combat with enemies, damage calculation, and trial challenges are all implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration). What's **not yet built**: XP/level-up awards during runs, loot drop logic, the merchant, gear dismantling, difficulty scaling, and scroll acquisition.
+> **Status: Core loop complete.** Foundation, rooms, identity, procedural generation, character system, starter kits, the full ability system, the AI DM (wired into the run loop as judge + narrator), turn-based combat with enemies, damage calculation, trial challenges, XP awards, loot drops, the merchant, inventory stacking, dropped items, grace revival, and dead-player restrictions are all implemented. The free-text action pipeline works end-to-end (structured verdict → procedural resolution → narration).
 
 
 ## Overview
@@ -16,7 +16,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 ## How it works
 
 1. **Form an expedition** — you get an expedition code to share with friends
-2. **Join the party** — everyone enters their name and picks a character
+2. **Join the party** — everyone enters their name and picks a starter kit
 3. **Descend together** — the host opens the gate and the run begins
 4. **Act as a party** — read the scene, submit actions, and face the results
 5. **See how far you get** — each dungeon climbs; the run ends only when the whole party is wiped
@@ -27,13 +27,18 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - **Turn-based combat** — initiative sorted by agility; each player selects attack, defend, or an ability on their turn; enemies act automatically with heuristic AI; defend redirects enemy targeting
 - **Deterministic resolution** — every roll is `d20 + stat` vs a difficulty class, resolved by a seeded procedural engine; **same seed + same party = same run**
 - **Characters** — STR / DEX / INT / WIS / AGI / HP; every stat starts at base 20, plus **50 bonus points** (max 40 per stat at creation), with race as a cosmetic choice
-- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; XP awards are *planned* — leveling infrastructure exists but XP is not yet awarded during runs
-- **Stasis rooms** — grace rooms restore HP on rest; stat point spending works in-run; merchant is *planned*
-- **Equipment** — weapon and armor slots with equip/unequip; 80-item static catalog (20 weapons, 20 heads, 20 chests, 20 greaves) with rarity tiers and stat bonuses; drops and merchant are *planned*
-- **Abilities from scrolls** — 1 active + 2 passive slots; 97-ability system with components and targeting is built; scroll acquisition is *planned*
-- **Fainting & revives** — a player at 0 HP is skipped in initiative; a full party wipe ends the run; revive ability component exists as a stub
-- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size; difficulty scaling is *planned*
+- **Starter kits** — 5 kits (Vanguard, Blade, Shadow, Arcane, Wanderer) with pre-set gear, consumables, and starting abilities
+- **Run-scoped leveling** — equal XP for the whole party; each level banks **+3 stat points** and raises every stat cap by 1; XP awards from combat encounters (8 XP × threat multiplier per enemy, split among alive players)
+- **Loot drops** — combat encounters drop items via seeded loot tables; rarity tiers (common → legendary) shift with depth; items land on the ground for players to pick up
+- **Gold economy** — gold from encounter rewards; spent at the merchant (buy gear, consumables, scrolls) or earned by selling
+- **Merchant** — buy/sell in grace rooms; stock generated per-room with guaranteed health potions; sell price = 50% of buy price
+- **Inventory** — stackable items with cap; equip gear, use consumables, bind abilities from scrolls
+- **Abilities** — 97-ability system with active/passive components, targeting, and cooldowns; abilities come from starter kits and scrolls found in the dungeon
+- **Fainting & revives** — a player at 0 HP is skipped in initiative; revive via abilities (30% MaxHP heal) or automatically at grace rooms; dead players can't act, pick up items, or interact with gear/merchant
+- **Dropped items** — items on the ground are visible to all; pick up to claim; dead players can't pick up
+- **Escalating descent** — dungeons grow harder with each cleared floor and scale with party size
 - **Pacing that doesn't stall** — the run advances only when every connected (socket-alive) player votes yes; narration lands as each event resolves
+- **Grace rooms** — sanctuary checkpoints; rest restores HP; auto-revive downed players to full; merchant available
 
 ## Roadmap
 
@@ -57,13 +62,14 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 ### Characters
 - [x] Stat system (STR / DEX / INT / WIS / AGI / HP)
 - [x] Lobby character creation (50-point budget, floor 20, cap 40)
-- [x] Race selection (cosmetic: elf / dwarf / human / orc / goblin / troll)
+- [x] 5 starter kits with pre-set gear, consumables, and starting abilities
 - [x] Run-scoped leveling (cubic XP curve, +3 skill points per level)
 - [x] Skill point allocation
 - [x] Ability system (97 abilities across 6 stat trees, with active/passive, components, targeting)
 - [x] In-run stat modification (skill-point spend at grace rooms)
-- [ ] Per-encounter XP awards and boss bonus XP — XP is not yet awarded during a run
-- [ ] Scroll acquisition — abilities exist but scrolls cannot be picked up mid-run yet
+- [x] Per-encounter XP awards (8 XP × threat multiplier per enemy, split among alive players)
+- [x] Boss bonus XP
+- [x] Scroll acquisition (abilities learned from scrolls found in dungeon)
 
 ### Procedural generation
 - [x] Seeded RNG (MulberryRNG, FNV-1a string hash)
@@ -80,14 +86,14 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 
 ### Equipment & gear
 - [x] Data model (weapon / armor slots, consumables, gold)
-- [x] Default starter gear (wooden helmet / chestplate / greaves / bat)
-- [x] Consumables (health potion works; gold key / lockpick tracked but have no game effect yet)
+- [x] 5 starter kits with default gear per archetype
 - [x] Static gear catalog (80 items across 4 slots, rarity tiers, stat bonuses, buy prices)
 - [x] Equip / unequip actions (backend + full frontend UI)
-- [ ] Gear drop logic (rewards from rooms)
-- [ ] Loot tables (random item generation)
-- [ ] Merchant / shop (buy / sell in stasis rooms)
-- [ ] Gear dismantling for XP
+- [x] Loot tables (random item generation with depth-scaled rarity weights)
+- [x] Gear drop logic (combat rewards, room loot for treasure/secret rooms)
+- [x] Merchant / shop (buy / sell in grace rooms; guaranteed health potions + random stock)
+- [x] Inventory stacking (stackable items with max stack qty)
+- [x] Dropped items system (items on ground, pick up to claim)
 
 ### AI Dungeon Master
 - [x] Structure free text into structured verdicts (intent / target / direction / resource)
@@ -97,7 +103,7 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 
 ### Frontend
 - [x] Login / identity page
-- [x] Lobby (expedition management, invite codes, player roster, host controls, character modal)
+- [x] Lobby (expedition management, invite codes, player roster, host controls, kit selection with keyboard nav)
 - [x] Run page layout (party manifest, field log, room card)
 - [x] Map visualization (interactive canvas with pan/zoom, room type colors, connectors, side-panel inspection)
 - [x] Action input UI (text field for player actions, @mention autocomplete)
@@ -105,8 +111,11 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Scene description display (room card + DM narration)
 - [x] Fog of war / explored vs unexplored rooms (only visited rooms serialize)
 - [x] Combat modal (initiative, action buttons, clickable foe cards, target selection, combat log)
+- [x] Vote modal with keyboard navigation (arrow keys, number keys, Enter/Space)
 - [x] Inventory & gear modals (equip/unequip, consumable use, ability binding)
-- [ ] Room navigation from map (map is view-only; navigation via text composer)
+- [x] Merchant modal (buy/sell tabs, keyboard navigation, stat comparison, quantity selector)
+- [x] Dropped items panel (pick up from ground in right rail)
+- [x] Tactical archive (end-of-run summary with accept-to-continue)
 
 ### Combat & encounters
 - [x] Combat state machine and encounter loop (vote → combat → finish)
@@ -115,12 +124,15 @@ The Citadel itself is the narrator. It describes the world, judges your party's 
 - [x] Turn-based initiative (agility-sorted, player turns wait for input, enemy turns auto-resolve with heuristic AI)
 - [x] Defend mechanic (redirects enemy targeting, clears on next turn)
 - [x] Full party wipe = run end (EndRunState with narration)
-- [ ] Fainting & revive mechanics (Revive component is a stub; no downed state or death-save)
+- [x] Fainting & revive mechanics (revive ability heals 30% MaxHP; grace rooms auto-revive to full)
+- [x] Dead player restrictions (can't act, pick up items, use merchant, equip/unequip)
+- [x] Ambush mechanic (stealth check on entering enemy rooms; failure = combat with initiative disadvantage)
 
 ### Stasis rooms
 - [x] Grace room rest behavior (HP restore) — the `rest` action heals to full in grace rooms
 - [x] In-run stat point spending — `change_player_stats` action works in-run
-- [ ] Merchant / shop UI (buy / sell)
+- [x] Merchant / shop (buy/sell in grace rooms; stock generated per room with guaranteed health potions)
+- [x] Grace room auto-revive (downed players restored to full HP with narration)
 
 ## Theme
 

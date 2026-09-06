@@ -38,21 +38,39 @@ If you add or rename route files, the route tree regenerates automatically on `p
 
 ```
 frontend/
-  .oxlintrc.json          # oxlint rules (routes dir exempted from fast-refresh rule)
-  index.html              # SPA entry HTML
-  vite.config.ts          # Vite + React + Tailwind + TanStack Router plugins
-  tsconfig.json           # project references
-  tsconfig.app.json       # app TS config
+  index.html              # SPA entry — loads Google Fonts (Cinzel, EB Garamond, JetBrains Mono, Playfair Display)
+  vite.config.ts          # Vite + React + TanStack Router + Tailwind v4 plugins
+  tsconfig.json           # project references (app + node)
+  tsconfig.app.json       # app TS config (strict, JSX react-jsx)
   tsconfig.node.json      # Vite/config TS config
+  .oxlintrc.json          # oxlint rules (routes dir exempted from fast-refresh rule)
   public/
     favicon.svg
+  ref/                    # design reference materials (Grimoire Nocturna spec, mockups)
   src/
-    index.css             # Tailwind import + base styles
-    main.tsx              # entry: createRouter + RouterProvider
-    routeTree.gen.ts      # generated route tree (committed)
+    main.tsx              # entry: creates TanStack router + AuthProvider + RouterProvider
+    index.css             # ALL styles: Tailwind v4 @theme block + bento system + combat grid + custom classes (~3750 lines)
+    routeTree.gen.ts      # auto-generated route tree — never edit manually; regenerate with `pnpm exec tsr generate`
+    stages.ts             # 5-stage navigation system (0=Gate, 1=Chamber, 2=Lobby, 3=Run, 4=Archive)
+    auth.tsx              # AuthProvider context — localStorage token management, login/register
+    rooms.ts              # all REST + Socket.io helpers + shared types (RoomData, PlayerPublic, EncounterPublicState, etc.)
+    roomSession.ts        # room token encode/decode/save (localStorage.citadel.roomToken)
+    useRoomSocket.ts      # Socket.io connection hook with reconnect + token auth
+    toast.tsx             # ToastProvider + useToast() hook for in-app notifications
+    api.ts                # base fetch wrapper for REST calls
     routes/
-      __root.tsx          # root layout (Outlet + nav)
-      index.tsx           # /
-      lobby.tsx           # /lobby
-      run.tsx             # /run
+      __root.tsx          # root layout: stage-based guards, auth redirect, Outlet
+      index.tsx           # / — The Gate: inscription/login (stage 0)
+      chamber.tsx         # /chamber — Chamber Nexus: create or join expedition (stage 1)
+      lobby.tsx           # /lobby — Staging Grounds: party lobby, kit selection, host controls (stage 2)
+      run.tsx             # /run — The Descent: live run, combat, merchant, quickbar, modals (stage 3)
+      archive.tsx         # /archive — Tactical Archive: end-of-run summary, accept to continue (stage 4)
+    components/
+      OfficerLine.tsx     # DM narration line component (violet border, officer voice)
+      Fleuron.tsx         # ornamental separator graphic
+      LedgerFrame.tsx     # bordered frame for ledger/log displays
+      PageHead.tsx        # page title with gold underline
+      PermitCopy.tsx      # copy-to-clipboard button
+      Roundel.tsx         # circular decorative element
+      DisconnectCountdown.tsx  # reconnect timer when socket drops
 ```

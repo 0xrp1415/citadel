@@ -3,12 +3,20 @@ What happens when a character hits 0 HP.
 ## Downed
 
 - At **0 HP** a player is **downed** for the rest of the encounter
-- A downed player can't act that turn
+- A downed player is **skipped in initiative** — they cannot act
+- A downed player **cannot** pick up items, equip/unequip gear, use the merchant, or spend stat points
 
 ## Revive
 
-- An ally can take a **revive action** to bring them back
-- Revives restore HP but leave the character vulnerable until the next turn
+### Via abilities
+- An ally can use a **revive ability** on their turn to bring a downed player back
+- Revives restore **30% of MaxHP** — the character is alive but vulnerable until healed further
+- Revive targets **downed allies only** — cannot target living players
+
+### Via grace rooms
+- Entering a grace room **automatically revives all downed players** to full HP
+- No action required — the sanctum's power is immediate
+- The officer narrates the revival for each revived player
 
 ## Party effects
 

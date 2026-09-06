@@ -65,13 +65,29 @@ How the game looks and how the officer writes.
 
 ### Combat display
 
-Combat actions render as a horizontal row of buttons (Attack, Defend, Ability) spanning the modal width. Foe cards are clickable targets when attacking — hover shows a gold glow to indicate targetability.
+Combat renders as a bento modal with:
+- **Action buttons** — Attack, Defend, Ability (horizontal row)
+- **Foe cards** — clickable targets when attacking; gold glow on hover
+- **Target selection** — ally or enemy targeting for abilities
+- **Combat log** — initiative order, damage dealt, effects applied
+- **Vote modal** — during ambush decisions, keyboard-navigable with arrow keys
 
 ## UI structure
 
 - **Gate** — sacred-geometry background, center inscription desk only, four gold corner accents
 - **Chamber Nexus** — create or join paths; cipher input with violet accent
-- **Staging Grounds** — chamber banner (cipher code, cadre count, quorum status, host name) + delver cards with corner accents, stat grids, HP bars
-- **The Descent** — three-column layout: foes | field log + composer | party; combat grid with clickable enemy cards; map modal with SVG dot-pattern background, circular room nodes, pixel-based connector lines, and a side panel for room details
+- **Staging Grounds** — chamber banner (cipher code, cadre count, quorum status, host name) + delver cards with corner accents, stat grids, HP bars; kit selection with keyboard navigation
+- **The Descent** — three-column layout: foes | field log + composer | party; right rail with quickbar (Gear, Inventory, Player Sheet, Merchant); combat grid with clickable enemy cards; map modal with SVG dot-pattern background, circular room nodes, pixel-based connector lines, and a side panel for room details
+- **Tactical Archive** — end-of-run summary with player stats, loot found, XP earned; accept-to-continue flow
+
+## Modal system
+
+All modals use a unified **bento** system:
+- `bento-scrim` — frosted glass backdrop (`rgba(12, 11, 15, 0.82)` + `blur(4px)`)
+- `bento` — modal container with `bento__head`, `bento__body`
+- `bento-card` — selectable item/option cards
+- `bento-tab` — tab navigation
+- `bento-btn` — action buttons
+- Keyboard: Escape closes, arrow keys navigate, Enter/Space selects
 
 Related: [[Theme/Theme]] · [[Theme/Lore]]
