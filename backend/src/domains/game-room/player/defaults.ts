@@ -55,22 +55,6 @@ export const BASE_PLAYER_HP = 50;
 export const DefaultSkillPoints = (): number => 50;
 export const DefaultGold = (): number => 200;
 
-// A starter kit for testing the inventory and gear flows: carried (unequipped) gear,
-// HEALING + utility consumables, and ability scrolls. war_hammer's strength 26 gate
-// deliberately exceeds the 20 base, so the blocked-equip state is testable.
-const STARTING_ITEM_IDS = [
-    "health_potion",
-    "health_potion",
-    "health_potion",
-    "gold_key",
-    "lockpick",
-    "rusty_dagger",
-    "wooden_helmet",
-    "iron_chestplate",
-    "cloth_wraps",
-    "war_hammer",
-] as const;
-
 export const DefaultStartingInventory = (kit: StarterKitId = "wanderer"): IItem[] => {
     const kitData = getStarterKit(kit);
     const items: IItem[] = [];
@@ -94,11 +78,6 @@ export const DefaultStartingInventory = (kit: StarterKitId = "wanderer"): IItem[
         for (const abilityId of kitData.abilities) {
             const scroll = getItemById("scroll_" + abilityId);
             if (scroll) items.push(scroll);
-        }
-    } else {
-        for (const id of STARTING_ITEM_IDS) {
-            const item = getItemById(id);
-            if (item) items.push(item);
         }
     }
 

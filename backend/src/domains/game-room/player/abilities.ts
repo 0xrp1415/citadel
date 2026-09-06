@@ -53,18 +53,10 @@ export class PlayerAbilities {
             .map(([slot, id]) => ({ slot, id }));
     }
 
-    public get Slots(): number[] {
-        return [...this.activeAbilitySlots.keys()].sort((a, b) => a - b);
-    }
-
     public get ActiveAbilityIds(): string[] {
         return [...this.activeAbilitySlots.entries()]
             .sort((a, b) => a[0] - b[0])
             .map(([, id]) => id);
-    }
-
-    public get isFull(): boolean {
-        return this.activeAbilitySlots.size >= PlayerAbilities.SLOT_COUNT;
     }
 
     public has(abilityName: string): boolean {
@@ -114,27 +106,6 @@ export class PlayerAbilities {
             return false;
         }
         return this.activeAbilitySlots.delete(slot);
-    }
-
-    public getActiveAbility(slot: number): IAbility | undefined {
-        const abilityId = this.activeAbilitySlots.get(slot);
-        if (!abilityId) {
-            return undefined;
-        }
-        return this.getAbilityById(abilityId);
-    }
-
-    public getActiveAbilityId(slot: number): string | undefined {
-        return this.activeAbilitySlots.get(slot);
-    }
-
-    public removeAbility(abilityId: string): void {
-        this.abilities = this.abilities.filter((a) => a.id !== abilityId);
-        for (const [slot, id] of this.activeAbilitySlots) {
-            if (id === abilityId) {
-                this.activeAbilitySlots.delete(slot);
-            }
-        }
     }
 
     private checkAbilityActive(ability: IAbility): boolean {

@@ -18,7 +18,7 @@ export type { IGameRoomDungeonMasterAdapter } from "./dm-adapter.js";
 export type { IGameRoomBroadcaster } from "./broadcaster.js";
 export type { IGameRoomVoteContext } from "./vote.js";
 export type { IGameRoomEncounterContext } from "./encounter.js";
-export type { RoomEventType, MessageUpdatePayload } from "./broadcaster.js";
+export type { RoomEventType } from "./broadcaster.js";
 export type { VoteRule } from "./vote.js";
 
 export interface IGameRoomContext {

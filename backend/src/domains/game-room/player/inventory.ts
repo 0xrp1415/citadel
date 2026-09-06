@@ -1,11 +1,10 @@
-import { EntityCombat, IStats, IGear, IItem } from "../../procedural-engine/index.js";
+import { EntityCombat, IStats, IGear, IItem, TGearSlot } from "../../procedural-engine/index.js";
 import { PlayerAbilities } from "./abilities.js";
 import { Consumables } from "./types.js";
 
 export const POTION_HEAL = 20;
 
 const GEAR_SLOTS = ["head", "chest", "greaves"] as const;
-export type TGearSlot = "weapon" | "head" | "chest" | "greaves";
 
 export class PlayerInventory {
     private gold: number;

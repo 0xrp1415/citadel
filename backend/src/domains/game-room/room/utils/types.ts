@@ -1,4 +1,5 @@
 import z from "zod";
+import { Result } from "../../types.js";
 
 export const ZGameRoomConfigSchema = z.object({
   maxPlayers: z.number().int().min(3).max(8).default(4),
@@ -15,8 +16,6 @@ export interface IGameRoomIdentity {
   defaultConfig?: IGameRoomConfig;
 }
 
-export type TResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; status: number; error: string };
+export type TResult<T> = Result<T>;
 
 export type ActionHandler = (playerId: string, payload?: unknown) => Promise<TResult<unknown>> | TResult<unknown>;

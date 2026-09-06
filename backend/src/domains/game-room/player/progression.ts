@@ -35,9 +35,6 @@ export class PlayerProgression {
         this.levelChangeListeners.push(listener);
     }
 
-    public removeLevelChangeListener(listener: (newLevel: number) => void): void {
-        this.levelChangeListeners = this.levelChangeListeners.filter(l => l !== listener);
-    }
     public get Level(): number {
         return this.level;
     }

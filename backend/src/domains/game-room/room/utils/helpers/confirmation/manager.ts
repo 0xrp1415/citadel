@@ -24,10 +24,6 @@ export class ConfirmationManager {
         return confirmActor;
     }
 
-    public getConfirmation(id: string): ConfirmActor | undefined {
-        return this.votes[id];
-    }
-
     public removeConfirmation(id: string): boolean {
         if (this.votes[id]) {
             delete this.votes[id];
