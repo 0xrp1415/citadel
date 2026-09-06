@@ -11,6 +11,7 @@ export type { TRoomViewGenerator }
 export interface IDungeonMaster {
     Resolve(text: string, speaker: string): Promise<DmVerdict>;
     Narrate(eventText: string): Promise<string>;
+    Reset(): void;
     State: "idle" | "active";
     onStateChange?: (state: "idle" | "active") => void;
 }
@@ -72,6 +73,10 @@ class DungeonMaster implements IDungeonMaster {
 
     public get State() {
         return this.state;
+    }
+
+    public Reset(): void {
+        this.messages = [];
     }
 }
 
