@@ -3,13 +3,7 @@ export interface IEntityHealthStatGetters {
     get CurrentHealth(): number;
 }
 
-export interface IEntityHealthStat extends IEntityHealthStatGetters {
-    setMaxHealth(maxHealth: number): void;
-    changeCurrentHealthBy(amount: number): void;
-    isDead(): boolean;
-}
-
-export class EntityHealthStatImpl implements IEntityHealthStat {
+export class EntityHealthStatImpl implements IEntityHealthStatGetters {
     private maxHealthSource: number;
     private currentHealth: number;
     private readonly resolveMaxHealth?: () => number;

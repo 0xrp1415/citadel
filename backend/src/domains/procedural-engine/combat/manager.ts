@@ -8,17 +8,13 @@ export class CombatManager {
         return entity.Health.CurrentHealth > 0;
     }
 
-    public static IsDead(entity: EntityCombat): boolean {
-        return entity.Health.CurrentHealth <= 0;
-    }
-
     public static DealDamage(
         dealer: EntityCombat,
         target: EntityCombat,
         damageType: "physical" | "magical",
         basePower: number,
     ): number {
-        if (basePower <= 0 || CombatManager.IsDead(target)) return 0;
+        if (basePower <= 0 || !CombatManager.IsAlive(target)) return 0;
 
         const level = dealer.StatMultiplier;
         const dealerStats = dealer.EffectiveStats;
@@ -36,14 +32,14 @@ export class CombatManager {
     }
 
     public static Kill(target: EntityCombat): number {
-        if (CombatManager.IsDead(target)) return 0;
+        if (!CombatManager.IsAlive(target)) return 0;
         const before = target.Health.CurrentHealth;
         target.changeHealthBy(-before);
         return before;
     }
 
     public static Heal(target: EntityCombat, amount: number): number {
-        if (amount <= 0 || CombatManager.IsDead(target)) return 0;
+        if (amount <= 0 || !CombatManager.IsAlive(target)) return 0;
 
         const before = target.Health.CurrentHealth;
         target.changeHealthBy(amount);

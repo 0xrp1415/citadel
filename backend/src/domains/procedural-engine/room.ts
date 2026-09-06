@@ -20,20 +20,7 @@ export const ROOM_BASE_DIFFICULTY: Record<ERoomType, number> = {
     [ERoomType.BOSS]: 4,
 };
 
-export interface IRoomPublic {
-    get ID(): number;
-    get Type(): ERoomType;
-    get BaseDifficulty(): number;
-    get DistanceBonus(): number;
-    get AdjacentPassages(): {
-        north: Passage | null,
-        south: Passage | null,
-        east: Passage | null,
-        west: Passage | null
-    };
-}
-
-export class Room implements IRoomPublic {
+export class Room {
     id: number;
     type: ERoomType = ERoomType.NORMAL;
     baseDifficulty: number = ROOM_BASE_DIFFICULTY[ERoomType.NORMAL];

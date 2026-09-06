@@ -11,16 +11,7 @@ export interface IPassageEvent {
     difficulty: number;
 }
 
-export interface IPassagePublic {
-    get ID(): number;
-    get RoomA(): number;
-    get RoomB(): number;
-    get Direction(): Direction | null;
-    get Event(): IPassageEvent | null;
-    get Unlocked(): boolean;
-}
-
-export class Passage implements IPassagePublic {
+export class Passage {
     private id: number;
     private roomA: number;
     private roomB: number;

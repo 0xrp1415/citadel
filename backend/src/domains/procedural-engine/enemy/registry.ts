@@ -22,11 +22,3 @@ export function getEnemyById(id: string): IEnemyBaseData | undefined {
 export function getEnemiesByThreat(threatLevel: number): IEnemyBaseData[] {
     return ENEMY_BASE_CATALOG.filter((enemy) => enemy.threatLevel === threatLevel);
 }
-
-export function allEnemies(): IEnemyBaseData[] {
-    return ENEMY_BASE_CATALOG;
-}
-
-export function getEnemyAbilityById(id: string) {
-    return ENEMY_ABILITIES.find((ability) => ability.id === id);
-}
