@@ -8,6 +8,7 @@ import { generatePassageEvents } from "./generation/events.js";
 import { generateTopology } from "./generation/topology.js";
 import { selectEnemiesForRoom } from "./generation/encounters.js";
 import { EnemyEntity } from "./enemy/entity.js";
+import { IItem } from "./item/base.js";
 
 export interface IMapConfig {
     minRoomCount: number;
@@ -30,6 +31,7 @@ export interface IRoomMetadata {
     distanceBonus: number;
     exits: IRoomExits;
     encounters? : IEncounter;
+    droppedItems: IItem[];
 }
 
 export interface IEncounter {
@@ -58,6 +60,7 @@ export function generateMap(rng: MulberryRNG, mapConfig: IMapConfig, floor: numb
             baseDifficulty: room.BaseDifficulty,
             distanceBonus: room.DistanceBonus,
             exits: room.AdjacentPassages,
+            droppedItems: [],
             ...(roomEncounters ? { encounters: { enemies: roomEncounters } } : {}),
         };
     }
